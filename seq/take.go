@@ -2,7 +2,7 @@ package seq
 
 import "iter"
 
-// Take は先頭から最大 n 個の要素を保持する Operator を返す。
+// Take は先頭から最大 n 個の要素を取得するための設定値を返す。
 // n が 0 以下なら上流を実行しない。
 // Pipe に Take(n).Type を渡すと、入力から要素型を推論する。
 func Take(n int) takeOperator {
@@ -36,7 +36,7 @@ func (t takeOperator) Type[T any](src iter.Seq[T]) iter.Seq[T] {
 	return t.Apply(src)
 }
 
-// Take2 は先頭から最大 n 個のキーと値の組を保持する Operator を返す。
+// Take2 は先頭から最大 n 個のキーと値の組を取得するための設定値を返す。
 // n が 0 以下なら上流を実行しない。
 // Pipe に Take2(n).Type を渡すと、入力からキーと値の型を推論する。
 func Take2(n int) take2Operator {
