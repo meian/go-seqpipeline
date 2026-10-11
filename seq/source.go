@@ -23,7 +23,8 @@ func FromSeq2[K, V any](src iter.Seq2[K, V]) Seq2[K, V] {
 	return Seq2[K, V](src)
 }
 
-// FromMap は map のキーと値を反復する Seq2 を返す。
+// FromMap は map を、パイプラインを構築するための Seq2 に変換する。
+// キーと値を組として反復する。
 // map をコピーせず、反復順序を保証しない。
 func FromMap[K comparable, V any](values map[K]V) Seq2[K, V] {
 	return FromSeq2(maps.All(values))
