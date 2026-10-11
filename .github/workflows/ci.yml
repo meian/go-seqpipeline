@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        check: [gofmt, vet, build, test]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.x'
+          cache: false
+      - name: gofmt
+        if: matrix.check == 'gofmt'
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+      - name: go vet
+        if: matrix.check == 'vet'
+        run: go vet ./...
+      - name: go build
+        if: matrix.check == 'build'
+        run: go build ./...
+      - name: go test
+        if: matrix.check == 'test'
+        run: go test ./... -count=1
