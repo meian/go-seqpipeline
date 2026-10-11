@@ -19,7 +19,8 @@ func ToSeq2[K, V any](s Seq2[K, V]) iter.Seq2[K, V] {
 }
 
 // ToSlice は Seq を評価し、要素を反復順にスライスへ収集する。
-// 空のシーケンスでは nil を返し、nil の入力では slices.Collect と同様に panic する。
+// 空のシーケンスでは nil を返す。
+// nil の入力では slices.Collect と同様に panic する。
 func ToSlice[T any](s Seq[T]) []T {
 	return slices.Collect(ToSeq(s))
 }
