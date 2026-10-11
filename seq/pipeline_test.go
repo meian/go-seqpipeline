@@ -217,8 +217,30 @@ func TestSingleUseSource(t *testing.T) {
 }
 
 func TestExternalOperator(t *testing.T) {
-	got := seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(seq.OperatorFunc(repeatOperator{}.Apply)).Pipe(seq.Take(3).Type))
+	var op seq.Operator[int, string] = repeatOperator{}
+	got := seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(op.Apply).Pipe(seq.Take(3).Type))
 	assertEqual(t, got, []string{"1", "1", "2"})
+}
+
+func TestDirectTransformPipeline(t *testing.T) {
+	var transform func(iter.Seq[int]) iter.Seq[string] = seq.Map(strconv.Itoa)
+	var limit func(iter.Seq[string]) iter.Seq[string] = seq.Take(2).Type
+	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(transform).Pipe(limit)
+	for round := 0; round < 2; round++ {
+		assertEqual(t, seq.ToSlice(pipeline), []string{"1", "2"})
+	}
+}
+
+func TestDirectTransform2Pipeline(t *testing.T) {
+	var op seq.Operator2[int, int, string, int] = keyTextOperator{}
+	var transform func(iter.Seq2[string, int]) iter.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
+		return v > 1
+	})
+	var limit func(iter.Seq2[string, int]) iter.Seq2[string, int] = seq.Take2(1).Type
+	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe(op.Apply).Pipe(transform).Pipe(limit)
+	for round := 0; round < 2; round++ {
+		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
+	}
 }
 
 func TestOperatorFuncPipeline(t *testing.T) {

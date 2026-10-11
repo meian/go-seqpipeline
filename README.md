@@ -95,8 +95,8 @@ func main() {
 
 ## 独自オペレーター
 
-`Pipe` は、イテレーターを変換する関数を返すファクトリ関数を受け取ります。  
-`Seq` では `func() func(iter.Seq[I]) iter.Seq[O]`、`Seq2` では `func() func(iter.Seq2[K,V]) iter.Seq2[K2,V2]` です。  
+`Pipe` は、イテレーターを変換する関数を直接受け取ります。  
+`Seq` では `func(iter.Seq[I]) iter.Seq[O]`、`Seq2` では `func(iter.Seq2[K,V]) iter.Seq2[K2,V2]` です。  
 
 生成関数が専用の関数型を返せば、`Pipe(Multiply(10))` のように接続できます。  
 オペレーターの追加に `Seq` / `Seq2` の変更は不要です。  
@@ -113,26 +113,24 @@ import (
 
 // 生成関数は型が確定した専用の関数型を返します。
 func Multiply(factor int) multiplyOperator {
-	return func() func(iter.Seq[int]) iter.Seq[int] {
-		return func(src iter.Seq[int]) iter.Seq[int] {
-			return func(yield func(int) bool) {
-				if src == nil {
+	return func(src iter.Seq[int]) iter.Seq[int] {
+		return func(yield func(int) bool) {
+			if src == nil {
+				return
+			}
+			for v := range src {
+				if !yield(v * factor) {
 					return
-				}
-				for v := range src {
-					if !yield(v * factor) {
-						return
-					}
 				}
 			}
 		}
 	}
 }
 
-type multiplyOperator func() func(iter.Seq[int]) iter.Seq[int]
+type multiplyOperator func(iter.Seq[int]) iter.Seq[int]
 
 func (m multiplyOperator) Apply(src iter.Seq[int]) iter.Seq[int] {
-	return m()(src)
+	return m(src)
 }
 
 var _ seq.Operator[int, int] = multiplyOperator(nil)
@@ -150,7 +148,7 @@ func main() {
 
 `OperatorFunc` / `Operator2Func` は、イテレーター変換関数を `Pipe` に接続できる専用の関数型へ包みます。  
 `Operator` / `Operator2` インターフェイスは、変換を行う `Apply` メソッドの契約を表します。  
-構造体で実装したオペレーターも、`seq.OperatorFunc(op.Apply)` / `seq.Operator2Func(op.Apply)` で接続できます。  
+構造体で実装したオペレーターは、`Pipe(op.Apply)` で直接接続できます。  
 
 ```go
 package main
@@ -184,7 +182,7 @@ func main() {
 `yield(false)`、`range` の `break`、`Take` / `Take2` の上限到達で、上流の反復も停止します。  
 `Take(n)` / `Take2(n)` は `n <= 0` なら上流を実行しません。  
 
-独自オペレーターのファクトリ関数やイテレーター変換関数では入力を評価せず、返すイテレーターの実行時に処理してください。  
+独自オペレーターのイテレーター変換関数では入力を評価せず、返すイテレーターの実行時に処理してください。  
 下流の `yield` が `false` を返したら、上流の反復を停止してください。  
 
 ### 再評価と入力の参照

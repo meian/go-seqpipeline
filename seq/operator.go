@@ -17,28 +17,26 @@ type Operator2[K, V, K2, V2 any] interface {
 
 // OperatorFunc は Iterator 変換関数を Pipe に渡せる Operator に変換する。
 func OperatorFunc[I, O any](fn func(iter.Seq[I]) iter.Seq[O]) operatorFunc[I, O] {
-	return func() func(iter.Seq[I]) iter.Seq[O] { return fn }
+	return operatorFunc[I, O](fn)
 }
 
-// operatorFunc は Pipe のファクトリ引数に直接渡せる関数型である。
-// ファクトリは要素を評価せず、保持した変換関数を返す。
-type operatorFunc[I, O any] func() func(iter.Seq[I]) iter.Seq[O]
+// operatorFunc は Pipe に直接渡せる Iterator 変換関数型である。
+type operatorFunc[I, O any] func(iter.Seq[I]) iter.Seq[O]
 
 // Apply は変換関数を呼び出して Iterator を返す。
 func (f operatorFunc[I, O]) Apply(src iter.Seq[I]) iter.Seq[O] {
-	return f()(src)
+	return f(src)
 }
 
 // Operator2Func は Iterator 変換関数を Seq2 の Pipe に渡せる Operator に変換する。
 func Operator2Func[K, V, K2, V2 any](fn func(iter.Seq2[K, V]) iter.Seq2[K2, V2]) operator2Func[K, V, K2, V2] {
-	return func() func(iter.Seq2[K, V]) iter.Seq2[K2, V2] { return fn }
+	return operator2Func[K, V, K2, V2](fn)
 }
 
-// operator2Func は Seq2 の Pipe のファクトリ引数に直接渡せる関数型である。
-// ファクトリは要素を評価せず、保持した変換関数を返す。
-type operator2Func[K, V, K2, V2 any] func() func(iter.Seq2[K, V]) iter.Seq2[K2, V2]
+// operator2Func は Seq2 の Pipe に直接渡せる Iterator 変換関数型である。
+type operator2Func[K, V, K2, V2 any] func(iter.Seq2[K, V]) iter.Seq2[K2, V2]
 
 // Apply は変換関数を呼び出して Iterator を返す。
 func (f operator2Func[K, V, K2, V2]) Apply(src iter.Seq2[K, V]) iter.Seq2[K2, V2] {
-	return f()(src)
+	return f(src)
 }

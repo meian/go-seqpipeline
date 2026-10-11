@@ -30,10 +30,10 @@ func (t takeOperator) Apply[T any](src iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
-// Type は指定した要素型の Iterator 変換関数を返す。
+// Type は入力に先頭件数の制限を適用した Iterator を返す。
 // Pipe には Type を呼び出さずにメソッド値として渡し、要素型を推論させる。
-func (t takeOperator) Type[T any]() func(iter.Seq[T]) iter.Seq[T] {
-	return t.Apply[T]
+func (t takeOperator) Type[T any](src iter.Seq[T]) iter.Seq[T] {
+	return t.Apply(src)
 }
 
 // Take2 は先頭から最大 n 個のキーと値の組を保持する Operator を返す。
@@ -64,8 +64,8 @@ func (t take2Operator) Apply[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
 	}
 }
 
-// Type は指定したキーと値の型の Iterator 変換関数を返す。
+// Type は入力に先頭件数の制限を適用した Iterator を返す。
 // Pipe には Type を呼び出さずにメソッド値として渡し、キーと値の型を推論させる。
-func (t take2Operator) Type[K, V any]() func(iter.Seq2[K, V]) iter.Seq2[K, V] {
-	return t.Apply[K, V]
+func (t take2Operator) Type[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
+	return t.Apply(src)
 }
