@@ -12,14 +12,12 @@ func FromSlice[T any](values []T) Seq[T] {
 	return FromSeq(slices.Values(values))
 }
 
-// FromSeq は Iterator を Seq に変換する。
-// nil はそのまま保持する。
+// FromSeq は標準の iter.Seq を、Pipe でパイプラインを構築できる Seq に変換する。
 func FromSeq[T any](src iter.Seq[T]) Seq[T] {
 	return Seq[T](src)
 }
 
-// FromSeq2 は Iterator を Seq2 に変換する。
-// nil はそのまま保持する。
+// FromSeq2 は標準の iter.Seq2 を、Pipe でパイプラインを構築できる Seq2 に変換する。
 func FromSeq2[K, V any](src iter.Seq2[K, V]) Seq2[K, V] {
 	return Seq2[K, V](src)
 }

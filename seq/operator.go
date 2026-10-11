@@ -20,6 +20,8 @@ func OperatorFunc[I, O any](fn func(iter.Seq[I]) iter.Seq[O]) operatorFunc[I, O]
 	return func() func(iter.Seq[I]) iter.Seq[O] { return fn }
 }
 
+// operatorFunc は Pipe のファクトリ引数に直接渡せる関数型である。
+// ファクトリは要素を評価せず、保持した変換関数を返す。
 type operatorFunc[I, O any] func() func(iter.Seq[I]) iter.Seq[O]
 
 // Apply は変換関数を呼び出して Iterator を返す。
@@ -32,6 +34,8 @@ func Operator2Func[K, V, K2, V2 any](fn func(iter.Seq2[K, V]) iter.Seq2[K2, V2])
 	return func() func(iter.Seq2[K, V]) iter.Seq2[K2, V2] { return fn }
 }
 
+// operator2Func は Seq2 の Pipe のファクトリ引数に直接渡せる関数型である。
+// ファクトリは要素を評価せず、保持した変換関数を返す。
 type operator2Func[K, V, K2, V2 any] func() func(iter.Seq2[K, V]) iter.Seq2[K2, V2]
 
 // Apply は変換関数を呼び出して Iterator を返す。
