@@ -2,23 +2,19 @@
 
 `iter.Seq` / `iter.Seq2` を使い、型安全なパイプラインをメソッドチェーンで構築するライブラリです。  
 
-## 環境要件
+## 環境要件とインストール
 
-- Go 1.27.1以降
-
-## インストール
+Go 1.27.1 以降が必要です。  
 
 ```sh
 go get github.com/meian/go-seqpipeline
 ```
 
-## Seqのパイプライン
+## 使い方
 
-入力は `From` で始まる関数、出力への変換は `To` で始まる関数で扱います。  
-
-`Pipe` でオペレーターを接続し、型変換を含むパイプラインを構築します。  
-型が一致しない接続はコンパイルエラーになります。  
-`ToSlice` でスライスへ収集し、`ToSeq` で標準の `iter.Seq` を取得できます。  
+`From` で始まる関数で入力を取り込み、`Pipe` でオペレーターを接続します。  
+接続する処理の入出力から型が推論され、型が一致しない処理は指定できません。  
+結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  
 
 ```go
 package main
@@ -31,99 +27,96 @@ import (
 )
 
 func main() {
-	values := []int{1, 22, 333, 4444}
-	pipeline := seq.FromSlice(values).
+	pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
 		Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
 		Pipe(seq.Take(1).Type)
 
+	// パイプラインの結果をスライスとして受け取る
 	fmt.Println(seq.ToSlice(pipeline)) // [333]
-	for v := range seq.ToSeq(pipeline) {
-		fmt.Println(v) // 333
-		break
+
+	// パイプラインを直接反復する
+	for s := range pipeline {
+		fmt.Println(s) // 333
 	}
 }
 ```
 
-生成関数の引数から型を推論できるオペレーターは、戻り値をそのまま `Pipe` に渡します。  
-生成関数の引数から型を推論できないオペレーターは、入力の要素型から推論させるために、戻り値の `.Type` を `Pipe` に渡します。  
+## Seq / Seq2
 
-既存の `iter.Seq[T]` は `FromSeq` で変換できます。  
-`Seq[T]` は `iter.Seq[T]` を基にした定義型なので、`for v := range pipeline` でも反復できます。  
-`slices.Sorted` など標準の `iter.Seq[T]` を受け取る関数には、`ToSeq` で変換して渡します。  
+このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
+`Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
+`Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
+`Seq` と `Seq2` をまたぐ変換は提供していません。  
 
-## Seq2のパイプライン
+## 入力と出力
 
-`Map2` はキーと値を同時に変換し、`Filter2` はキーと値を使って選別します。  
-`Take2(n)` は先頭から最大n組を取り出すための設定値を返します。  
-入力からキーと値の型を推論させるため、`Pipe` には `Take2(n).Type` を渡します。  
-`ToMap` は、キーが `comparable` の場合にmapへ収集します。  
-標準の `maps.Collect` を使い、同じキーでは後の値を採用します。  
-`ToSeq2` で標準の `iter.Seq2` を取得できます。  
-比較できないキーも、`ToSeq2` や直接の反復で扱えます。  
-`Seq2[K,V]` も関数型であり、`for k, v := range pipeline` で直接反復できます。  
+`From` で始まる関数は、コレクションや標準イテレーターをパイプラインの入力へ変換します。  
+`To` で始まる関数は、結果をコレクションへ収集するか、標準イテレーターへ変換します。  
+
+| 操作 | Seq | Seq2 |
+| --- | --- | --- |
+| コレクションから入力 | `FromSlice` | `FromMap` |
+| 標準イテレーターから入力 | `FromSeq` | `FromSeq2` |
+| コレクションへ収集 | `ToSlice` | `ToMap`（キーは `comparable`） |
+| 標準イテレーターへ変換 | `ToSeq` | `ToSeq2` |
+
+標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
+
+## オペレーター
+
+このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
+`Seq2` では、`Seq2` を別の `Seq2` に変換します。  
+`Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
+
+### ライブラリが提供するオペレーター
+
+要素の変換や選別、取得件数の制限などの機能を提供しています。  
+`Seq` 用の `Filter` と `Seq2` 用の `Filter2` など同じ機能のオペレーターを用意し、`Seq2` 用のオペレーター名には `2` を付けて提供しています。  
+
+### 型推論
+
+生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡すことができます。  
+コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
+
+生成関数の引数から型を推論できない場合は、戻り値の `.Type` をメソッド値として `Pipe` に渡す必要があります。  
+要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
+
+### 接続
+
+`Pipe` は、次の変換関数を直接受け取ります。  
+
+- `Seq`: `func(seq.Seq[I]) seq.Seq[O]`
+- `Seq2`: `func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`
+
+`Pipe` は渡された変換関数をその場で呼び出します。  
+独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
+関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
+
+`OperatorFunc` / `Operator2Func` は、変換関数を `Apply` メソッドを持つ専用の関数型へ包みます。  
+戻り値は `Pipe` に直接渡せるほか、`Operator` / `Operator2` として扱えます。  
 
 ```go
-package main
-
-import (
-	"fmt"
-	"slices"
-	"strconv"
-
-	"github.com/meian/go-seqpipeline/seq"
-)
-
-func main() {
-	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Map2(func(k int, v string) (string, int) {
-			return strconv.Itoa(k), len(v)
-		})).
-		Pipe(seq.Filter2(func(k string, v int) bool { return v >= 2 })).
-		Pipe(seq.Take2(2).Type)
-
-	fmt.Println(seq.ToMap(pipeline)) // map[1:3 2:2]
-	for k, v := range seq.ToSeq2(pipeline) {
-		fmt.Println(k, v)
-	}
-
-	// FromMapの反復順序はGo標準のmapに従い、保証しません。
-	for k, v := range seq.ToSeq2(seq.FromMap(map[string]int{"a": 1, "b": 2})) {
-		fmt.Println(k, v)
-	}
-}
+text := seq.OperatorFunc(func(src seq.Seq[int]) seq.Seq[string] {
+	return src.Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) }))
+})
+pipeline := seq.FromSlice([]int{1, 2}).Pipe(text)
+fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 ```
 
-## 独自オペレーター
+### 独自オペレーターの実装
 
-`Pipe` は、このライブラリの `Seq` / `Seq2` を変換する関数を直接受け取ります。  
-`Seq` では `func(seq.Seq[I]) seq.Seq[O]`、`Seq2` では `func(seq.Seq2[K,V]) seq.Seq2[K2,V2]` です。  
+`Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
+`Operator` / `Operator2` の契約に沿って `Apply` メソッドを実装し、`Pipe(op.Apply)` に渡すことで独自の変換処理を提供します。  
+変換関数型で実装すれば、オペレーターを `Pipe` に直接渡すこともできます。  
 
-生成関数が専用の関数型を返せば、`Pipe(Multiply(10))` のように接続できます。  
-オペレーターの追加に `Seq` / `Seq2` の変更は不要です。  
+次の例では、既存の `Map` を使って乗算オペレーターを作ります。  
+`Pipe(Multiply(10))` で接続できます。  
 
 ```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/meian/go-seqpipeline/seq"
-)
-
-// 生成関数は型が確定した専用の関数型を返します。
 func Multiply(factor int) multiplyOperator {
 	return func(src seq.Seq[int]) seq.Seq[int] {
-		return func(yield func(int) bool) {
-			if src == nil {
-				return
-			}
-			for v := range src {
-				if !yield(v * factor) {
-					return
-				}
-			}
-		}
+		return src.Pipe(seq.Map(func(v int) int { return v * factor }))
 	}
 }
 
@@ -134,90 +127,45 @@ func (m multiplyOperator) Apply(src seq.Seq[int]) seq.Seq[int] {
 }
 
 var _ seq.Operator[int, int] = multiplyOperator(nil)
-
-func main() {
-	fmt.Println(seq.ToSlice(seq.FromSlice([]int{1, 2, 3}).Pipe(Multiply(10)))) // [10 20 30]
-}
 ```
 
-専用の関数型には、必要に応じて公開の設定メソッドを追加できます。  
-型自体が非公開でも、公開メソッドは外部パッケージから呼び出せます。  
-入力型が未確定のオペレーターには、型パラメーターを持つ `Type` メソッドを用意し、そのメソッド値を `Pipe` に渡します。  
+入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
+入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Type` メソッドを用意し、`.Type` を `Pipe` に渡します。  
 
-### 変換関数や既存オペレーターの接続
+## 評価と利用上の仕様
 
-`OperatorFunc` / `Operator2Func` は、`Seq` / `Seq2` の変換関数を `Pipe` に接続できる専用の関数型へ包みます。  
-`Operator` / `Operator2` インターフェイスは、変換を行う `Apply` メソッドの契約を表します。  
-構造体で実装したオペレーターは、`Pipe(op.Apply)` で直接接続できます。  
-Operator の入出力は、このライブラリの `Seq` / `Seq2` に統一しています。  
-標準の `iter.Seq` / `iter.Seq2` は `FromSeq` / `FromSeq2` で変換して渡します。  
-Operator 内部でも、`src.Pipe(...)` によって他のオペレーターを合成できます。  
+### 遅延評価と途中終了
 
-```go
-package main
+組み込みオペレーターによるパイプライン構築と `ToSeq` / `ToSeq2` では、要素を評価しません。  
+`ToSlice` / `ToMap` の呼び出し、またはイテレーターの実行時に、入力の反復順序で処理します。  
 
-import (
-	"fmt"
-	"strconv"
+下流の `yield` が `false` を返すか、`range` を `break` すると、上流の反復も停止します。  
+例えば `Take` / `Take2` は、`n <= 0` なら上流を実行しません。  
+上限に達すると `return` で `range` を抜けて上流へ停止を伝えるため、それ以降の上流の処理も停止します。  
 
-	"github.com/meian/go-seqpipeline/seq"
-)
-
-func main() {
-	text := seq.OperatorFunc[int, string](func(src seq.Seq[int]) seq.Seq[string] {
-		return func(yield func(string) bool) {
-			for v := range src {
-				if !yield(strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	})
-	fmt.Println(seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(text))) // [1 2]
-}
-```
-
-## 評価と途中終了
-
-パイプラインの構築や `ToSeq` / `ToSeq2` の呼び出しでは、要素を評価しません。  
-`ToSlice` / `ToMap` の呼び出し、またはイテレーターの実行時に評価し、入力の反復順序で処理します。  
-`yield(false)`、`range` の `break`、`Take` / `Take2` の上限到達で、上流の反復も停止します。  
-`Take(n)` / `Take2(n)` は `n <= 0` なら上流を実行しません。  
-
-独自オペレーターのイテレーター変換関数では入力を評価せず、返すイテレーターの実行時に処理してください。  
-下流の `yield` が `false` を返したら、上流の反復を停止してください。  
+独自オペレーターも、返すイテレーターの実行時に処理し、下流からの停止を上流へ伝える必要があります。  
 
 ### 再評価と入力の参照
 
-パイプラインを再評価できるかどうかは、元のイテレーターに従います。  
-`Take` / `Take2` の残り件数は、評価ごとに初期化します。  
+再評価できるかどうかは元のイテレーターに従います。  
+`Take` / `Take2` の残り件数は評価ごとに初期化します。  
 `FromSlice` / `FromMap` は入力をコピーせず、評価時点の要素を参照します。  
-`FromMap` の反復順序は保証しません。  
+スライスは元の順序で反復し、map の反復順序は保証しません。  
+`ToMap` は同じキーでは反復順で後の値を採用します。  
 
-コールバックが状態を保持する場合は、呼び出し側で状態の再利用や並行アクセスを管理してください。  
-ライブラリはgoroutineやchannelを使用しません。  
-`Seq` と `Seq2` をまたぐ変換や、非同期イベント処理は初期実装の対象外です。  
+ライブラリは goroutine や channel を使わず、非同期イベント処理を提供しません。  
+状態を持つコールバックの再利用や並行アクセスは、呼び出し側で管理してください。  
 
-### nilの扱い
+### nil と空の入力
 
-各組み込みオペレーターの `Apply` は、nilの入力イテレーターを空として扱います。  
-`ToSeq` / `ToSeq2` はnilをそのまま返します。  
-`ToSlice` / `ToMap` は、標準の収集関数と同様にnilの入力でpanicします。  
-空のイテレーターを収集した場合は、`ToSlice` はnil、`ToMap` は空の非nilのmapを返します。  
+`Seq` / `Seq2` のゼロ値と、nil の標準イテレーターから変換した値は nil です。  
+組み込みの `Map` / `Filter` / `Take` とその `Seq2` 用 API は、nil の入力イテレーターを空として扱います。  
+`OperatorFunc` / `Operator2Func` や独自オペレーターの nil の扱いは、渡した変換関数の実装に従います。  
 
-`Seq` / `Seq2` のゼロ値や、nilのイテレーターから変換した値はnilです。  
-nil値を直接呼び出したり `range` で反復したりするとpanicします。  
+`ToSeq` / `ToSeq2` は nil をそのまま返します。  
+nil を直接呼び出す、`range` で反復する、`ToSlice` / `ToMap` に渡すと panic します。  
+空の非 nil イテレーターを収集すると、`ToSlice` は nil、`ToMap` は空の非 nil の map を返します。  
 
-## 開発
+## ライセンス
 
-次のコマンドで整形と検証を行います。  
-`go` が選択したツールチェーンに付属する `gofmt` を使い、Goのバージョンを揃えます。  
-
-```sh
-"$(go env GOROOT)/bin/gofmt" -w seq
-go vet ./...
-go build ./...
-go test ./... -count=1
-```
-
-CIでは `gofmt`、`go vet`、`go build`、`go test` を個別のジョブで実行します。  
+[MIT License](LICENSE)  
