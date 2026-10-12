@@ -66,6 +66,8 @@ func main() {
 ## オペレーター
 
 このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
+`Seq` 用の関数型 `Operator[I, O]` は、`func(Seq[I]) Seq[O]` と定義されています。  
+`Map` / `Filter` は、この `Operator` を返します。  
 `Seq2` では、`Seq2` を別の `Seq2` に変換します。  
 `Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
 
@@ -84,12 +86,13 @@ func main() {
 
 ### 接続
 
-`Pipe` は、次の変換関数を直接受け取ります。  
+`Pipe` は、次の型の変換関数を直接受け取ります。  
 
-- `Seq`: `func(seq.Seq[I]) seq.Seq[O]`
+- `Seq`: `seq.Operator[I, O]`（`func(seq.Seq[I]) seq.Seq[O]`）
 - `Seq2`: `func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`
 
 `Pipe` は渡された変換関数をその場で呼び出します。  
+`Operator` は関数型なので、`op(src)` の形でも直接呼び出せます。  
 独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
 関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
 
@@ -112,7 +115,7 @@ fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 `Pipe(Multiply(10))` で接続できます。  
 
 ```go
-func Multiply(factor int) func(seq.Seq[int]) seq.Seq[int] {
+func Multiply(factor int) seq.Operator[int, int] {
 	return func(src seq.Seq[int]) seq.Seq[int] {
 		return src.Pipe(seq.Map(func(v int) int { return v * factor }))
 	}

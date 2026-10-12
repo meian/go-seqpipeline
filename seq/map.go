@@ -1,9 +1,9 @@
 package seq
 
-// Map は各要素に fn を適用する変換関数を返す。
+// Map は各要素に fn を適用する Operator を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
-func Map[I, O any](fn func(I) O) func(Seq[I]) Seq[O] {
+func Map[I, O any](fn func(I) O) Operator[I, O] {
 	return func(src Seq[I]) Seq[O] {
 		return func(yield func(O) bool) {
 			if src == nil {

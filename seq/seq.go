@@ -8,9 +8,9 @@ import "iter"
 // nil を直接呼び出したり、range で反復したり、収集関数に渡したりすると panic する。
 type Seq[T any] iter.Seq[T]
 
-// Pipe は、この Seq に変換関数 op を適用した新しい Seq を返す。
+// Pipe は、この Seq に Operator op を適用した新しい Seq を返す。
 // この時点では要素を評価しない。
-func (s Seq[T]) Pipe[U any](op func(Seq[T]) Seq[U]) Seq[U] {
+func (s Seq[T]) Pipe[U any](op Operator[T, U]) Seq[U] {
 	return op(s)
 }
 

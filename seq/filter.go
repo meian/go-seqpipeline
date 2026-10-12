@@ -1,9 +1,9 @@
 package seq
 
-// Filter は predicate が true を返す要素を保持する変換関数を返す。
+// Filter は predicate が true を返す要素を保持する Operator を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
-func Filter[T any](predicate func(T) bool) func(Seq[T]) Seq[T] {
+func Filter[T any](predicate func(T) bool) Operator[T, T] {
 	return func(src Seq[T]) Seq[T] {
 		return func(yield func(T) bool) {
 			if src == nil {

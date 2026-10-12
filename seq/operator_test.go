@@ -34,10 +34,23 @@ func TestTransform(t *testing.T) {
 	assertEqual(t, seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(op)), []string{"1", "2"})
 }
 
-func takeWith[T any](n int, predicate func(T) bool) func(seq.Seq[T]) seq.Seq[T] {
+func takeWith[T any](n int, predicate func(T) bool) seq.Operator[T, T] {
 	return func(src seq.Seq[T]) seq.Seq[T] {
 		return src.Pipe(seq.Filter(predicate)).Pipe(seq.Take(n).Operator)
 	}
+}
+
+func TestOperatorDirectCall(t *testing.T) {
+	// 生成関数の戻り値が Operator 型であることも確認する。
+	var mapFactory func(func(int) string) seq.Operator[int, string] = seq.Map[int, string]
+	var filterFactory func(func(string) bool) seq.Operator[string, string] = seq.Filter[string]
+	mapped := mapFactory(strconv.Itoa)
+	filtered := filterFactory(func(v string) bool { return len(v) > 1 })
+	var limit seq.Operator[string, string] = seq.Take(1).Operator
+	var custom seq.Operator[int, string] = repeat
+	src := seq.FromSlice([]int{1, 22, 333})
+	assertEqual(t, seq.ToSlice(limit(filtered(mapped(src)))), []string{"22"})
+	assertEqual(t, seq.ToSlice(src.Pipe(custom).Pipe(filtered).Pipe(limit)), []string{"22"})
 }
 
 func TestComposedOperator(t *testing.T) {

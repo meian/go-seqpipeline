@@ -124,10 +124,10 @@ func TestExternalOperator(t *testing.T) {
 	assertEqual(t, got, []string{"1", "1", "2"})
 }
 
-// TestDirectTransformPipeline は、Map と Take.Operator を Seq 変換関数へ代入して直接接続し、型推論と再評価を確認する。
+// TestDirectTransformPipeline は、Map と Take.Operator を Operator へ代入して直接接続し、型推論と再評価を確認する。
 func TestDirectTransformPipeline(t *testing.T) {
-	var transform func(seq.Seq[int]) seq.Seq[string] = seq.Map(strconv.Itoa)
-	var limit func(seq.Seq[string]) seq.Seq[string] = seq.Take(2).Operator
+	var transform seq.Operator[int, string] = seq.Map(strconv.Itoa)
+	var limit seq.Operator[string, string] = seq.Take(2).Operator
 	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(transform).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1", "2"})
