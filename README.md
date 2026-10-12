@@ -69,6 +69,8 @@ func main() {
 `Seq` 用の関数型 `Operator[I, O]` は、`func(Seq[I]) Seq[O]` と定義されています。  
 `Map` / `Filter` は、この `Operator` を返します。  
 `Seq2` では、`Seq2` を別の `Seq2` に変換します。  
+`Seq2` 用の関数型 `Operator2[K, V, K2, V2]` は、`func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
+`Map2` / `Filter2` は、この `Operator2` を返します。  
 `Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
 
 ### ライブラリが提供するオペレーター
@@ -89,10 +91,10 @@ func main() {
 `Pipe` は、次の型の変換関数を直接受け取ります。  
 
 - `Seq`: `seq.Operator[I, O]`（`func(seq.Seq[I]) seq.Seq[O]`）
-- `Seq2`: `func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`
+- `Seq2`: `seq.Operator2[K, V, K2, V2]`（`func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`）
 
 `Pipe` は渡された変換関数をその場で呼び出します。  
-`Operator` は関数型なので、`op(src)` の形でも直接呼び出せます。  
+`Operator` / `Operator2` は関数型なので、`op(src)` の形でも直接呼び出せます。  
 独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
 関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
 

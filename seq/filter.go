@@ -18,10 +18,10 @@ func Filter[T any](predicate func(T) bool) Operator[T, T] {
 	}
 }
 
-// Filter2 は predicate が true を返すキーと値を保持する変換関数を返す。
+// Filter2 は predicate が true を返すキーと値を保持する Operator2 を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
-func Filter2[K, V any](predicate func(K, V) bool) func(Seq2[K, V]) Seq2[K, V] {
+func Filter2[K, V any](predicate func(K, V) bool) Operator2[K, V, K, V] {
 	return func(src Seq2[K, V]) Seq2[K, V] {
 		return func(yield func(K, V) bool) {
 			if src == nil {

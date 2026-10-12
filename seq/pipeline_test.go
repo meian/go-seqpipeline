@@ -256,13 +256,13 @@ func TestMap2Filter2DirectCall(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(filtered)), []pair[string, int]{{Key: "2", Value: 20}})
 }
 
-// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Seq2 変換関数として接続し、型推論と再評価を確認する。
+// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Operator2 として接続し、型推論と再評価を確認する。
 func TestDirectTransform2Pipeline(t *testing.T) {
 	op := keyText
-	var transform func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
+	var transform seq.Operator2[string, int, string, int] = seq.Filter2(func(k string, v int) bool {
 		return v > 1
 	})
-	var limit func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Take2(1).Operator
+	var limit seq.Operator2[string, int, string, int] = seq.Take2(1).Operator
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe(op).Pipe(transform).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
