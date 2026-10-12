@@ -112,7 +112,6 @@ fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 
 次の例では、既存の `Map` を使って乗算オペレーターを作ります。  
 `Pipe(Multiply(10))` で接続できます。  
-コードは宣言部分の抜粋で、`package` 宣言と `seq` の import を省略しています。  
 
 ```go
 func Multiply(factor int) multiplyOperator {
