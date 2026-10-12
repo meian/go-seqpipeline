@@ -35,7 +35,7 @@ func TestTake(t *testing.T) {
 					}
 				}
 			}
-			pipeline := seq.FromSeq(src).Pipe(seq.Take(tc.n).Type)
+			pipeline := seq.FromSeq(src).Pipe(seq.Take(tc.n).Operator)
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, seq.ToSlice(pipeline), tc.want)
 				assertEqual(t, []int{reads, starts, stops}, []int{tc.reads * round, tc.starts * round, tc.stops * round})
@@ -44,13 +44,13 @@ func TestTake(t *testing.T) {
 	}
 }
 
-func TestTakeApply(t *testing.T) {
+func TestTakeOperator(t *testing.T) {
 	op := seq.Take(2)
-	assertEqual(t, seq.ToSlice(op.Apply(seq.FromSlice([]int{3, 2, 1}))), []int{3, 2})
+	assertEqual(t, seq.ToSlice(op.Operator(seq.FromSlice([]int{3, 2, 1}))), []int{3, 2})
 }
 
 func TestTakeNilInput(t *testing.T) {
-	iterator := seq.Take(1).Apply[int](nil)
+	iterator := seq.Take(1).Operator[int](nil)
 	for round := 0; round < 2; round++ {
 		for range iterator {
 			t.Fatal("nil input yielded a value")
@@ -86,7 +86,7 @@ func TestTake2(t *testing.T) {
 					}
 				}
 			}
-			pipeline := seq.FromSeq2(src).Pipe(seq.Take2(tc.n).Type)
+			pipeline := seq.FromSeq2(src).Pipe(seq.Take2(tc.n).Operator)
 			iterator := seq.ToSeq2(pipeline)
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
@@ -97,14 +97,14 @@ func TestTake2(t *testing.T) {
 	}
 }
 
-func TestTake2Apply(t *testing.T) {
+func TestTake2Operator(t *testing.T) {
 	op := seq.Take2(2)
-	assertEqual(t, collectPairs(seq.ToSeq2(op.Apply(seq.FromSeq2(slices.All([]int{3, 2, 1}))))), []pair[int, int]{{Key: 0, Value: 3}, {Key: 1, Value: 2}})
+	assertEqual(t, collectPairs(seq.ToSeq2(op.Operator(seq.FromSeq2(slices.All([]int{3, 2, 1}))))), []pair[int, int]{{Key: 0, Value: 3}, {Key: 1, Value: 2}})
 }
 
 func TestTake2EmptyAndNilInput(t *testing.T) {
 	for _, src := range []seq.Seq2[int, string]{nil, seq.FromSeq2(slices.All([]string{}))} {
-		iterator := seq.Take2(1).Apply(src)
+		iterator := seq.Take2(1).Operator(src)
 		for round := 0; round < 2; round++ {
 			assertEqual(t, collectPairs(seq.ToSeq2(iterator)), []pair[int, string](nil))
 		}
@@ -122,7 +122,7 @@ func TestTake2DownstreamStop(t *testing.T) {
 			}
 		}
 	}
-	pipeline := seq.FromSeq2(src).Pipe(seq.Take2(3).Type)
+	pipeline := seq.FromSeq2(src).Pipe(seq.Take2(3).Operator)
 	for k, v := range seq.ToSeq2(pipeline) {
 		assertEqual(t, k, 1)
 		assertEqual(t, v, 10)

@@ -8,10 +8,8 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-// 外部パッケージはライブラリ側の変更なしに Operator を追加できる。
-type repeatOperator struct{}
-
-func (repeatOperator) Apply(src seq.Seq[int]) seq.Seq[string] {
+// 外部パッケージはライブラリ側の変更なしに変換関数を追加できる。
+func repeat(src seq.Seq[int]) seq.Seq[string] {
 	return func(yield func(string) bool) {
 		for v := range src {
 			for i := 0; i < 2; i++ {
@@ -23,10 +21,8 @@ func (repeatOperator) Apply(src seq.Seq[int]) seq.Seq[string] {
 	}
 }
 
-var _ seq.Operator[int, string] = repeatOperator{}
-
-func TestOperatorFunc(t *testing.T) {
-	op := seq.OperatorFunc[int, string](func(src seq.Seq[int]) seq.Seq[string] {
+func TestTransform(t *testing.T) {
+	op := func(src seq.Seq[int]) seq.Seq[string] {
 		return func(yield func(string) bool) {
 			for v := range src {
 				if !yield(strconv.Itoa(v)) {
@@ -34,27 +30,21 @@ func TestOperatorFunc(t *testing.T) {
 				}
 			}
 		}
-	})
-	var _ seq.Operator[int, string] = op
-	assertEqual(t, seq.ToSlice(op.Apply(seq.FromSlice([]int{1, 2}))), []string{"1", "2"})
+	}
+	assertEqual(t, seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(op)), []string{"1", "2"})
 }
 
-type takeWithOperator[T any] struct {
-	n         int
-	predicate func(T) bool
+func takeWith[T any](n int, predicate func(T) bool) func(seq.Seq[T]) seq.Seq[T] {
+	return func(src seq.Seq[T]) seq.Seq[T] {
+		return src.Pipe(seq.Filter(predicate)).Pipe(seq.Take(n).Operator)
+	}
 }
-
-func (op takeWithOperator[T]) Apply(src seq.Seq[T]) seq.Seq[T] {
-	return src.Pipe(seq.Filter(op.predicate)).Pipe(seq.Take(op.n).Type)
-}
-
-var _ seq.Operator[int, int] = takeWithOperator[int]{}
 
 func TestComposedOperator(t *testing.T) {
 	reads := 0
-	op := takeWithOperator[int]{n: 2, predicate: func(v int) bool { return v%2 == 0 }}
+	op := takeWith(2, func(v int) bool { return v%2 == 0 })
 	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 5, 6}).
-		Pipe(seq.Map(func(v int) int { reads++; return v })).Pipe(op.Apply)
+		Pipe(seq.Map(func(v int) int { reads++; return v })).Pipe(op)
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []int{2, 4})
@@ -67,9 +57,7 @@ func TestComposedOperator(t *testing.T) {
 	assertEqual(t, reads, 2)
 }
 
-type keyTextOperator struct{}
-
-func (keyTextOperator) Apply(src seq.Seq2[int, int]) seq.Seq2[string, int] {
+func keyText(src seq.Seq2[int, int]) seq.Seq2[string, int] {
 	return func(yield func(string, int) bool) {
 		for k, v := range src {
 			if !yield(strconv.Itoa(k), v) {
@@ -79,21 +67,18 @@ func (keyTextOperator) Apply(src seq.Seq2[int, int]) seq.Seq2[string, int] {
 	}
 }
 
-var _ seq.Operator2[int, int, string, int] = keyTextOperator{}
-
-func TestOperator2Func(t *testing.T) {
-	op := seq.Operator2Func(keyTextOperator{}.Apply)
-	var _ seq.Operator2[int, int, string, int] = op
-	got := collectPairs(seq.ToSeq2(op.Apply(seq.FromSeq2(slices.All([]int{4, 5})))))
+func TestTransform2(t *testing.T) {
+	op := keyText
+	got := collectPairs(seq.ToSeq2(seq.FromSeq2(slices.All([]int{4, 5})).Pipe(op)))
 	assertEqual(t, got, []pair[string, int]{{Key: "0", Value: 4}, {Key: "1", Value: 5}})
 }
 
 func TestComposedOperator2(t *testing.T) {
 	reads := 0
-	op := seq.Operator2Func(func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
+	op := func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
 		return src.Pipe(seq.Filter2(func(k, v int) bool { return v%2 == 0 })).
-			Pipe(seq.Take2(2).Type)
-	})
+			Pipe(seq.Take2(2).Operator)
+	}
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
 		Pipe(seq.Map2(func(k, v int) (int, int) { reads++; return k, v })).Pipe(op)
 	assertEqual(t, reads, 0)
