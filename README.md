@@ -10,11 +10,11 @@ Go 1.27.1 以降が必要です。
 go get github.com/meian/go-seqpipeline
 ```
 
-## 基本的な使い方
+## 使い方
 
-`From` で始まる関数で入力を取り込み、`Pipe` で変換・選別・件数制限を接続します。  
-入出力の型が一致しない接続はコンパイルエラーになります。  
-`To` で始まる関数で結果を収集するか、標準のイテレーターへ変換します。  
+`From` で始まる関数で入力を取り込み、`Pipe` でオペレーターを接続します。  
+接続する処理の入出力から型が推論され、型が一致しない処理は指定できません。  
+結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  
 
 ```go
 package main
@@ -32,16 +32,31 @@ func main() {
 		Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
 		Pipe(seq.Take(1).Type)
 
+	// パイプラインの結果をスライスとして受け取る
 	fmt.Println(seq.ToSlice(pipeline)) // [333]
+
+	// パイプラインを直接反復する
+	for s := range pipeline {
+		fmt.Println(s) // 333
+	}
 }
 ```
 
 ## Seq / Seq2 と命名規則
 
-`Seq[T]` は要素を、`Seq2[K, V]` はキーと値の組を扱う関数型です。  
-`Seq2` のキー型は、`ToMap` などで map を扱う場合を除き、`comparable` に制限されません。  
-対応する API の名前に `2` が付くものは `Seq2` 用です（`Map2`、`Filter2`、`Take2`、`Operator2` など）。  
+Go 標準の [`iter`](https://pkg.go.dev/iter) は、要素を扱う `iter.Seq[T]` と、キーと値などの組を扱う `iter.Seq2[K, V]` を提供します。  
+このライブラリの `Seq[T]` / `Seq2[K, V]` は、それぞれに `Pipe` を追加した互換性のある関数型です。  
+`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
+map を扱う `FromMap` / `ToMap` では、キー型が `comparable` に制限されます。  
+
+このライブラリでは、`Seq2` 用の処理は名前に `2` を付けて提供します。  
 スライスや map を扱う API は、対象を表す名前を使います。  
+`Seq` と `Seq2` をまたぐ変換は提供していません。  
+
+## 入力と出力
+
+`From` で始まる関数は、コレクションや標準イテレーターをパイプラインの入力へ変換します。  
+`To` で始まる関数は、結果をコレクションへ収集するか、標準イテレーターへ変換します。  
 
 | 操作 | Seq | Seq2 |
 | --- | --- | --- |
@@ -50,17 +65,15 @@ func main() {
 | コレクションへ収集 | `ToSlice` | `ToMap`（キーは `comparable`） |
 | 標準イテレーターへ変換 | `ToSeq` | `ToSeq2` |
 
-`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
-標準の `iter.Seq` / `iter.Seq2` を受け取る関数には、`ToSeq` / `ToSeq2` で変換して渡します。  
-`Seq` と `Seq2` をまたぐ変換は提供していません。  
+標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
 
 ## オペレーターの型推論
 
 生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡します。  
-`Map` / `Filter` とその `Seq2` 用 API は、コールバックの引数・戻り値から型が決まります。  
+コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
 
 生成関数の引数から型を推論できない場合は、戻り値の `.Type` をメソッド値として `Pipe` に渡します。  
-`Take(n)` / `Take2(n)` は件数だけを受け取るため、`Pipe(seq.Take(n).Type)` / `Pipe(seq.Take2(n).Type)` として入力型から推論します。  
+要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
 
 ## 関数オペレーターの接続
 
@@ -85,7 +98,7 @@ pipeline := seq.FromSlice([]int{1, 2}).Pipe(text)
 fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 ```
 
-## 独自オペレーターの拡張
+## 独自オペレーターの実装
 
 `Seq` / `Seq2` を変更せずにオペレーターを追加できます。  
 生成関数が変換関数型を返せば、その戻り値を `Pipe` に直接渡せます。  
