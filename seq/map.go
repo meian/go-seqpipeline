@@ -1,7 +1,9 @@
 package seq
 
-// Map は各要素に fn を適用する Operator を返す。
-func Map[I, O any](fn func(I) O) mapOperator[I, O] {
+// Map は各要素に fn を適用する変換関数を返す。
+// 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
+// nil の入力は空のシーケンスとして扱う。
+func Map[I, O any](fn func(I) O) func(Seq[I]) Seq[O] {
 	return func(src Seq[I]) Seq[O] {
 		return func(yield func(O) bool) {
 			if src == nil {
@@ -16,16 +18,10 @@ func Map[I, O any](fn func(I) O) mapOperator[I, O] {
 	}
 }
 
-type mapOperator[I, O any] func(Seq[I]) Seq[O]
-
-// Apply は変換を遅延評価する Seq を返す。
+// Map2 は各キーと値に fn を適用する変換関数を返す。
+// 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
-func (op mapOperator[I, O]) Apply(src Seq[I]) Seq[O] {
-	return op(src)
-}
-
-// Map2 は各キーと値に fn を適用する Operator を返す。
-func Map2[K, V, K2, V2 any](fn func(K, V) (K2, V2)) map2Operator[K, V, K2, V2] {
+func Map2[K, V, K2, V2 any](fn func(K, V) (K2, V2)) func(Seq2[K, V]) Seq2[K2, V2] {
 	return func(src Seq2[K, V]) Seq2[K2, V2] {
 		return func(yield func(K2, V2) bool) {
 			if src == nil {
@@ -38,12 +34,4 @@ func Map2[K, V, K2, V2 any](fn func(K, V) (K2, V2)) map2Operator[K, V, K2, V2] {
 			}
 		}
 	}
-}
-
-type map2Operator[K, V, K2, V2 any] func(Seq2[K, V]) Seq2[K2, V2]
-
-// Apply はキーと値の変換を遅延評価する Seq2 を返す。
-// nil の入力は空のシーケンスとして扱う。
-func (op map2Operator[K, V, K2, V2]) Apply(src Seq2[K, V]) Seq2[K2, V2] {
-	return op(src)
 }

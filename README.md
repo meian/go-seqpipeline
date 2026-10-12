@@ -30,7 +30,7 @@ func main() {
 	pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
 		Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
-		Pipe(seq.Take(1).Type)
+		Pipe(seq.Take(1).Operator)
 
 	// パイプラインの結果をスライスとして受け取る
 	fmt.Println(seq.ToSlice(pipeline)) // [333]
@@ -79,7 +79,7 @@ func main() {
 生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡すことができます。  
 コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
 
-生成関数の引数から型を推論できない場合は、戻り値の `.Type` をメソッド値として `Pipe` に渡す必要があります。  
+生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として `Pipe` に渡す必要があります。  
 要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
 
 ### 接続
@@ -93,13 +93,12 @@ func main() {
 独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
 関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
 
-`OperatorFunc` / `Operator2Func` は、変換関数を `Apply` メソッドを持つ専用の関数型へ包みます。  
-戻り値は `Pipe` に直接渡せるほか、`Operator` / `Operator2` として扱えます。  
+独自の変換関数も、そのまま `Pipe` に渡せます。  
 
 ```go
-text := seq.OperatorFunc(func(src seq.Seq[int]) seq.Seq[string] {
+text := func(src seq.Seq[int]) seq.Seq[string] {
 	return src.Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) }))
-})
+}
 pipeline := seq.FromSlice([]int{1, 2}).Pipe(text)
 fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 ```
@@ -107,30 +106,21 @@ fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 ### 独自オペレーターの実装
 
 `Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
-`Operator` / `Operator2` の契約に沿って `Apply` メソッドを実装し、`Pipe(op.Apply)` に渡すことで独自の変換処理を提供します。  
-変換関数型で実装すれば、オペレーターを `Pipe` に直接渡すこともできます。  
+変換関数を実装し、`Pipe` に直接渡します。  
 
 次の例では、既存の `Map` を使って乗算オペレーターを作ります。  
 `Pipe(Multiply(10))` で接続できます。  
 
 ```go
-func Multiply(factor int) multiplyOperator {
+func Multiply(factor int) func(seq.Seq[int]) seq.Seq[int] {
 	return func(src seq.Seq[int]) seq.Seq[int] {
 		return src.Pipe(seq.Map(func(v int) int { return v * factor }))
 	}
 }
-
-type multiplyOperator func(seq.Seq[int]) seq.Seq[int]
-
-func (m multiplyOperator) Apply(src seq.Seq[int]) seq.Seq[int] {
-	return m(src)
-}
-
-var _ seq.Operator[int, int] = multiplyOperator(nil)
 ```
 
 入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
-入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Type` メソッドを用意し、`.Type` を `Pipe` に渡します。  
+入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を `Pipe` に渡します。  
 
 ## 評価と利用上の仕様
 
@@ -160,7 +150,7 @@ var _ seq.Operator[int, int] = multiplyOperator(nil)
 
 `Seq` / `Seq2` のゼロ値と、nil の標準イテレーターから変換した値は nil です。  
 組み込みの `Map` / `Filter` / `Take` とその `Seq2` 用 API は、nil の入力イテレーターを空として扱います。  
-`OperatorFunc` / `Operator2Func` や独自オペレーターの nil の扱いは、渡した変換関数の実装に従います。  
+独自オペレーターの nil の扱いは、渡した変換関数の実装に従います。  
 
 `ToSeq` / `ToSeq2` は nil をそのまま返します。  
 nil を直接呼び出す、`range` で反復する、`ToSlice` / `ToMap` に渡すと panic します。  
