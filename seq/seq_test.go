@@ -8,7 +8,7 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func TestDefinedFunctionTypes(t *testing.T) {
+func TestSeqDefinedFunctionType(t *testing.T) {
 	src := slices.Values([]string{"1", "2"})
 	pipeline := seq.Seq[string](src)
 	var got []string
@@ -23,7 +23,9 @@ func TestDefinedFunctionTypes(t *testing.T) {
 	})
 	assertEqual(t, got, []string{"1"})
 	assertEqual(t, slices.Collect(iter.Seq[string](pipeline)), []string{"1", "2"})
+}
 
+func TestSeq2DefinedFunctionType(t *testing.T) {
 	src2 := func(yield func(string, int) bool) {
 		if !yield("0", 1) {
 			return

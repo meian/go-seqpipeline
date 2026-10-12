@@ -8,16 +8,22 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func TestNilConversions(t *testing.T) {
+func TestNilSeqConversions(t *testing.T) {
 	var zero seq.Seq[int]
-	var zero2 seq.Seq2[int, string]
-	if zero != nil || zero2 != nil {
+	if zero != nil {
 		t.Fatal("zero values must be nil")
 	}
 	for _, s := range []seq.Seq[int]{zero, seq.Seq[int](nil), seq.FromSeq[int](nil)} {
 		if seq.ToSeq(s) != nil {
 			t.Fatal("ToSeq must preserve nil")
 		}
+	}
+}
+
+func TestNilSeq2Conversions(t *testing.T) {
+	var zero2 seq.Seq2[int, string]
+	if zero2 != nil {
+		t.Fatal("zero values must be nil")
 	}
 	for _, s := range []seq.Seq2[int, string]{zero2, seq.Seq2[int, string](nil), seq.FromSeq2[int, string](nil)} {
 		if seq.ToSeq2(s) != nil {
@@ -26,9 +32,12 @@ func TestNilConversions(t *testing.T) {
 	}
 }
 
-func TestStandardIteratorConversions(t *testing.T) {
+func TestStandardSeqConversion(t *testing.T) {
 	s := seq.FromSlice([]int{3, 1, 2})
 	assertEqual(t, slices.Sorted(seq.ToSeq(s)), []int{1, 2, 3})
+}
+
+func TestStandardSeq2Conversion(t *testing.T) {
 	pairs := seq.FromMap(map[string]int{"a": 1, "b": 2})
 	assertEqual(t, maps.Collect(seq.ToSeq2(pairs)), map[string]int{"a": 1, "b": 2})
 }
@@ -111,13 +120,30 @@ func TestToSeqLazyAndStop(t *testing.T) {
 	}
 }
 
-func TestNilCollections(t *testing.T) {
+func TestNilSliceCollections(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		collect func()
 	}{
 		{name: "ToSlice", collect: func() { _ = seq.ToSlice[int](nil) }},
 		{name: "slices.Collect", collect: func() { _ = slices.Collect[int](nil) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Fatal("nil iterator must panic")
+				}
+			}()
+			tc.collect()
+		})
+	}
+}
+
+func TestNilMapCollections(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		collect func()
+	}{
 		{name: "ToMap", collect: func() { _ = seq.ToMap[string, int](nil) }},
 		{name: "maps.Collect", collect: func() { _ = maps.Collect[string, int](nil) }},
 	} {

@@ -7,21 +7,6 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func TestFromMap(t *testing.T) {
-	values := map[string]int{"a": 1, "b": 2}
-	pipeline := seq.FromMap(values)
-	values["c"] = 3
-	for round := 0; round < 2; round++ {
-		got := make(map[string]int)
-		pairs := collectPairs(seq.ToSeq2(pipeline))
-		for _, p := range pairs {
-			got[p.Key] = p.Value
-		}
-		assertEqual(t, len(pairs), len(values))
-		assertEqual(t, got, values)
-	}
-}
-
 func TestFromSlice(t *testing.T) {
 	values := []int{3, 1, 2}
 	source := seq.FromSlice(values)
@@ -36,6 +21,21 @@ func TestFromSeq(t *testing.T) {
 	source := seq.FromSeq(slices.Values([]int{3, 1, 2}))
 	for round := 0; round < 2; round++ {
 		assertEqual(t, seq.ToSlice(source), []int{3, 1, 2})
+	}
+}
+
+func TestFromMap(t *testing.T) {
+	values := map[string]int{"a": 1, "b": 2}
+	pipeline := seq.FromMap(values)
+	values["c"] = 3
+	for round := 0; round < 2; round++ {
+		got := make(map[string]int)
+		pairs := collectPairs(seq.ToSeq2(pipeline))
+		for _, p := range pairs {
+			got[p.Key] = p.Value
+		}
+		assertEqual(t, len(pairs), len(values))
+		assertEqual(t, got, values)
 	}
 }
 
