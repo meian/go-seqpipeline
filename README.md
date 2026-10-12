@@ -42,15 +42,15 @@ func main() {
 }
 ```
 
-## Seq / Seq2 と命名規則
+## Seq / Seq2
 
 Go 標準の [`iter`](https://pkg.go.dev/iter) は、要素を扱う `iter.Seq[T]` と、キーと値などの組を扱う `iter.Seq2[K, V]` を提供します。  
-このライブラリの `Seq[T]` / `Seq2[K, V]` は、それぞれに `Pipe` を追加した互換性のある関数型です。  
+このライブラリの `Seq[T]` / `Seq2[K, V]` は、`iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
 `for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
-map を扱う `FromMap` / `ToMap` では、キー型が `comparable` に制限されます。  
+`Seq2[K, V]` の `K` と `V` に型の制限はありません。  
+ただし、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
 
 このライブラリでは、`Seq2` 用の処理は名前に `2` を付けて提供します。  
-スライスや map を扱う API は、対象を表す名前を使います。  
 `Seq` と `Seq2` をまたぐ変換は提供していません。  
 
 ## 入力と出力
@@ -67,7 +67,13 @@ map を扱う `FromMap` / `ToMap` では、キー型が `comparable` に制限�
 
 標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
 
-## オペレーターの型推論
+## オペレーター
+
+このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
+`Seq2` では、`Seq2` を別の `Seq2` に変換します。  
+`Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
+
+### 型推論
 
 生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡します。  
 コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
@@ -75,7 +81,7 @@ map を扱う `FromMap` / `ToMap` では、キー型が `comparable` に制限�
 生成関数の引数から型を推論できない場合は、戻り値の `.Type` をメソッド値として `Pipe` に渡します。  
 要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
 
-## 関数オペレーターの接続
+### 接続
 
 `Pipe` は、次の変換関数を直接受け取ります。  
 
@@ -88,7 +94,6 @@ map を扱う `FromMap` / `ToMap` では、キー型が `comparable` に制限�
 
 `OperatorFunc` / `Operator2Func` は、変換関数を `Apply` メソッドを持つ専用の関数型へ包みます。  
 戻り値は `Pipe` に直接渡せるほか、`Operator` / `Operator2` として扱えます。  
-以下は `main` 関数内の抜粋で、`package` 宣言と `fmt`・`strconv`・`seq` の import を省略しています。  
 
 ```go
 text := seq.OperatorFunc(func(src seq.Seq[int]) seq.Seq[string] {
@@ -98,12 +103,11 @@ pipeline := seq.FromSlice([]int{1, 2}).Pipe(text)
 fmt.Println(seq.ToSlice(pipeline)) // [1 2]
 ```
 
-## 独自オペレーターの実装
+### 独自オペレーターの実装
 
-`Seq` / `Seq2` を変更せずにオペレーターを追加できます。  
-生成関数が変換関数型を返せば、その戻り値を `Pipe` に直接渡せます。  
-関数型には設定メソッドや `Apply` メソッドを追加できます。  
-型自体が非公開でも、公開メソッドは外部パッケージから呼び出せます。  
+`Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
+`Operator` / `Operator2` の契約に沿って `Apply` メソッドを実装し、`Pipe(op.Apply)` に渡すことで独自の変換処理を提供します。  
+変換関数型で実装すれば、オペレーターを `Pipe` に直接渡すこともできます。  
 
 次の例では、既存の `Map` を使って乗算オペレーターを作ります。  
 `Pipe(Multiply(10))` で接続できます。  
@@ -125,8 +129,6 @@ func (m multiplyOperator) Apply(src seq.Seq[int]) seq.Seq[int] {
 var _ seq.Operator[int, int] = multiplyOperator(nil)
 ```
 
-`Operator` / `Operator2` インターフェイスは、`Apply` による変換の契約を表します。  
-構造体などで実装したオペレーターは、`Pipe(op.Apply)` で接続します。  
 入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
 入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Type` メソッドを用意し、`.Type` を `Pipe` に渡します。  
 
