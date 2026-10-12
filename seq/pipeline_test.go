@@ -23,116 +23,6 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	}
 }
 
-// TestSeq2Pipeline は、Seq2 の Map2 と Filter2 を接続し、再評価と重複キーの保持、ToMap の後勝ちを確認する。
-func TestSeq2Pipeline(t *testing.T) {
-	src := func(yield func(int, string) bool) {
-		for _, p := range []pair[int, string]{{Key: 1, Value: "a"}, {Key: 1, Value: "bbb"}, {Key: 2, Value: "cc"}} {
-			if !yield(p.Key, p.Value) {
-				return
-			}
-		}
-	}
-	var pipeline seq.Seq2[string, int] = seq.FromSeq2(src).
-		Pipe(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
-		Pipe(seq.Filter2(func(k string, v int) bool { return k == "1" && v > 0 }))
-	want := []pair[string, int]{{Key: "1", Value: 1}, {Key: "1", Value: 3}}
-	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
-	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
-	assertEqual(t, seq.ToMap(pipeline), map[string]int{"1": 3})
-}
-
-// TestSeq2LazyAndStop は、Seq2 の構築時に上流を実行せず、途中終了が上流へ伝播し、再評価でも同じ動作になることを確認する。
-func TestSeq2LazyAndStop(t *testing.T) {
-	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
-	src := func(yield func(int, int) bool) {
-		starts++
-		for i := 1; i <= 10; i++ {
-			reads++
-			if !yield(i, i*10) {
-				stops++
-				return
-			}
-		}
-	}
-	pipeline := seq.FromSeq2(src).
-		Pipe(seq.Map2(func(k, v int) (string, int) { maps++; return strconv.Itoa(k), v })).
-		Pipe(seq.Filter2(func(k string, v int) bool { filters++; return v%20 == 0 }))
-	iterator := seq.ToSeq2(pipeline)
-	assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{0, 0, 0, 0, 0})
-	for round := 1; round <= 2; round++ {
-		for k, v := range iterator {
-			assertEqual(t, k, "2")
-			assertEqual(t, v, 20)
-			break
-		}
-		assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{round, 2 * round, 2 * round, 2 * round, round})
-	}
-}
-
-// TestSeq2EmptyAndZero は、Seq2 のゼロ値・nil・空の map では Map2 と Filter2 を呼び出さず、空として評価することを確認する。
-func TestSeq2EmptyAndZero(t *testing.T) {
-	var zero seq.Seq2[string, int]
-	for _, src := range []seq.Seq2[string, int]{zero, seq.FromSeq2[string, int](nil), seq.FromMap(map[string]int{}), seq.FromMap(map[string]int(nil))} {
-		pipeline := src.Pipe(seq.Map2(func(string, int) (string, int) { t.Fatal("Map2 called"); return "", 0 })).
-			Pipe(seq.Filter2(func(string, int) bool { t.Fatal("Filter2 called"); return true }))
-		got := collectPairs(seq.ToSeq2(pipeline))
-		assertEqual(t, got, []pair[string, int](nil))
-	}
-}
-
-// TestNonComparableKeys は、比較できないキーを持つ Seq2 も、Map2 と標準の iter.Seq2 への変換で扱えることを確認する。
-func TestNonComparableKeys(t *testing.T) {
-	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
-	got := collectPairs(seq.ToSeq2(seq.FromSeq2(src).Pipe(seq.Map2(func(k []int, v string) ([]int, int) { return k, len(v) }))))
-	assertEqual(t, got, []pair[[]int, int]{{Key: []int{1, 2}, Value: 5}})
-}
-
-// TestExternalOperator2AndFunc は、独自 Operator2 と関数型アダプターを接続し、遅延評価・途中終了・再評価が成立することを確認する。
-func TestExternalOperator2AndFunc(t *testing.T) {
-	op := seq.Operator2Func[string, int, string, string](func(src seq.Seq2[string, int]) seq.Seq2[string, string] {
-		return func(yield func(string, string) bool) {
-			for k, v := range src {
-				if !yield(k, strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	})
-	var _ seq.Operator2[string, int, string, string] = op
-	assertEqual(t, collectPairs(seq.ToSeq2(op.Apply(seq.FromMap(map[string]int{"1": 10})))), []pair[string, string]{{Key: "1", Value: "10"}})
-	reads := 0
-	src := func(yield func(int, int) bool) {
-		for i := 1; i <= 3; i++ {
-			reads++
-			if !yield(i, i*10) {
-				return
-			}
-		}
-	}
-	pipeline := seq.FromSeq2(src).Pipe(seq.Operator2Func(keyTextOperator{}.Apply)).Pipe(op)
-	assertEqual(t, reads, 0)
-	for k, v := range seq.ToSeq2(pipeline) {
-		assertEqual(t, k, "1")
-		assertEqual(t, v, "10")
-		break
-	}
-	assertEqual(t, reads, 1)
-	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, string]{{Key: "1", Value: "10"}, {Key: "2", Value: "20"}, {Key: "3", Value: "30"}})
-}
-
-// TestMap2Filter2Apply は、Map2 と Filter2 の Apply を直接接続し、変換後の型で選別できることを確認する。
-func TestMap2Filter2Apply(t *testing.T) {
-	src := func(yield func(int, int) bool) {
-		if !yield(1, 10) {
-			return
-		}
-		yield(2, 20)
-	}
-	mapped := seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v }).Apply(src)
-	filtered := seq.Filter2(func(k string, v int) bool { return v > 10 }).Apply(mapped)
-	assertEqual(t, collectPairs(seq.ToSeq2(filtered)), []pair[string, int]{{Key: "2", Value: 20}})
-}
-
 // TestPipelineTypeInference は、型引数を指定せずに int から string、再び int へ変換し、途中の Filter も接続できることを確認する。
 func TestPipelineTypeInference(t *testing.T) {
 	var pipeline seq.Seq[int] = seq.FromSlice([]int{1, 22, 333, 4444}).
@@ -244,19 +134,6 @@ func TestDirectTransformPipeline(t *testing.T) {
 	}
 }
 
-// TestDirectTransform2Pipeline は、独自 Operator2 の Apply と Filter2、Take2.Type を Seq2 変換関数として接続し、型推論と再評価を確認する。
-func TestDirectTransform2Pipeline(t *testing.T) {
-	var op seq.Operator2[int, int, string, int] = keyTextOperator{}
-	var transform func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
-		return v > 1
-	})
-	var limit func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Take2(1).Type
-	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe(op.Apply).Pipe(transform).Pipe(limit)
-	for round := 0; round < 2; round++ {
-		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
-	}
-}
-
 // TestOperatorFuncPipeline は、OperatorFunc を Map と Take に接続し、遅延評価・件数制限による停止・再評価を確認する。
 func TestOperatorFuncPipeline(t *testing.T) {
 	op := seq.OperatorFunc(repeatOperator{}.Apply)
@@ -267,6 +144,129 @@ func TestOperatorFuncPipeline(t *testing.T) {
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1"})
 		assertEqual(t, calls, round)
+	}
+}
+
+// TestSeq2Pipeline は、Seq2 の Map2 と Filter2 を接続し、再評価と重複キーの保持、ToMap の後勝ちを確認する。
+func TestSeq2Pipeline(t *testing.T) {
+	src := func(yield func(int, string) bool) {
+		for _, p := range []pair[int, string]{{Key: 1, Value: "a"}, {Key: 1, Value: "bbb"}, {Key: 2, Value: "cc"}} {
+			if !yield(p.Key, p.Value) {
+				return
+			}
+		}
+	}
+	var pipeline seq.Seq2[string, int] = seq.FromSeq2(src).
+		Pipe(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
+		Pipe(seq.Filter2(func(k string, v int) bool { return k == "1" && v > 0 }))
+	want := []pair[string, int]{{Key: "1", Value: 1}, {Key: "1", Value: 3}}
+	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
+	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
+	assertEqual(t, seq.ToMap(pipeline), map[string]int{"1": 3})
+}
+
+// TestSeq2LazyAndStop は、Seq2 の構築時に上流を実行せず、途中終了が上流へ伝播し、再評価でも同じ動作になることを確認する。
+func TestSeq2LazyAndStop(t *testing.T) {
+	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
+	src := func(yield func(int, int) bool) {
+		starts++
+		for i := 1; i <= 10; i++ {
+			reads++
+			if !yield(i, i*10) {
+				stops++
+				return
+			}
+		}
+	}
+	pipeline := seq.FromSeq2(src).
+		Pipe(seq.Map2(func(k, v int) (string, int) { maps++; return strconv.Itoa(k), v })).
+		Pipe(seq.Filter2(func(k string, v int) bool { filters++; return v%20 == 0 }))
+	iterator := seq.ToSeq2(pipeline)
+	assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{0, 0, 0, 0, 0})
+	for round := 1; round <= 2; round++ {
+		for k, v := range iterator {
+			assertEqual(t, k, "2")
+			assertEqual(t, v, 20)
+			break
+		}
+		assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{round, 2 * round, 2 * round, 2 * round, round})
+	}
+}
+
+// TestSeq2EmptyAndZero は、Seq2 のゼロ値・nil・空の map では Map2 と Filter2 を呼び出さず、空として評価することを確認する。
+func TestSeq2EmptyAndZero(t *testing.T) {
+	var zero seq.Seq2[string, int]
+	for _, src := range []seq.Seq2[string, int]{zero, seq.FromSeq2[string, int](nil), seq.FromMap(map[string]int{}), seq.FromMap(map[string]int(nil))} {
+		pipeline := src.Pipe(seq.Map2(func(string, int) (string, int) { t.Fatal("Map2 called"); return "", 0 })).
+			Pipe(seq.Filter2(func(string, int) bool { t.Fatal("Filter2 called"); return true }))
+		got := collectPairs(seq.ToSeq2(pipeline))
+		assertEqual(t, got, []pair[string, int](nil))
+	}
+}
+
+// TestNonComparableKeys は、比較できないキーを持つ Seq2 も、Map2 と標準の iter.Seq2 への変換で扱えることを確認する。
+func TestNonComparableKeys(t *testing.T) {
+	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
+	got := collectPairs(seq.ToSeq2(seq.FromSeq2(src).Pipe(seq.Map2(func(k []int, v string) ([]int, int) { return k, len(v) }))))
+	assertEqual(t, got, []pair[[]int, int]{{Key: []int{1, 2}, Value: 5}})
+}
+
+// TestExternalOperator2AndFunc は、独自 Operator2 と関数型アダプターを接続し、遅延評価・途中終了・再評価が成立することを確認する。
+func TestExternalOperator2AndFunc(t *testing.T) {
+	op := seq.Operator2Func[string, int, string, string](func(src seq.Seq2[string, int]) seq.Seq2[string, string] {
+		return func(yield func(string, string) bool) {
+			for k, v := range src {
+				if !yield(k, strconv.Itoa(v)) {
+					return
+				}
+			}
+		}
+	})
+	var _ seq.Operator2[string, int, string, string] = op
+	assertEqual(t, collectPairs(seq.ToSeq2(op.Apply(seq.FromMap(map[string]int{"1": 10})))), []pair[string, string]{{Key: "1", Value: "10"}})
+	reads := 0
+	src := func(yield func(int, int) bool) {
+		for i := 1; i <= 3; i++ {
+			reads++
+			if !yield(i, i*10) {
+				return
+			}
+		}
+	}
+	pipeline := seq.FromSeq2(src).Pipe(seq.Operator2Func(keyTextOperator{}.Apply)).Pipe(op)
+	assertEqual(t, reads, 0)
+	for k, v := range seq.ToSeq2(pipeline) {
+		assertEqual(t, k, "1")
+		assertEqual(t, v, "10")
+		break
+	}
+	assertEqual(t, reads, 1)
+	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, string]{{Key: "1", Value: "10"}, {Key: "2", Value: "20"}, {Key: "3", Value: "30"}})
+}
+
+// TestMap2Filter2Apply は、Map2 と Filter2 の Apply を直接接続し、変換後の型で選別できることを確認する。
+func TestMap2Filter2Apply(t *testing.T) {
+	src := func(yield func(int, int) bool) {
+		if !yield(1, 10) {
+			return
+		}
+		yield(2, 20)
+	}
+	mapped := seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v }).Apply(src)
+	filtered := seq.Filter2(func(k string, v int) bool { return v > 10 }).Apply(mapped)
+	assertEqual(t, collectPairs(seq.ToSeq2(filtered)), []pair[string, int]{{Key: "2", Value: 20}})
+}
+
+// TestDirectTransform2Pipeline は、独自 Operator2 の Apply と Filter2、Take2.Type を Seq2 変換関数として接続し、型推論と再評価を確認する。
+func TestDirectTransform2Pipeline(t *testing.T) {
+	var op seq.Operator2[int, int, string, int] = keyTextOperator{}
+	var transform func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
+		return v > 1
+	})
+	var limit func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Take2(1).Type
+	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe(op.Apply).Pipe(transform).Pipe(limit)
+	for round := 0; round < 2; round++ {
+		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
 	}
 }
 

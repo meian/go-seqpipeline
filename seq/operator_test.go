@@ -8,20 +8,6 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-type keyTextOperator struct{}
-
-func (keyTextOperator) Apply(src seq.Seq2[int, int]) seq.Seq2[string, int] {
-	return func(yield func(string, int) bool) {
-		for k, v := range src {
-			if !yield(strconv.Itoa(k), v) {
-				return
-			}
-		}
-	}
-}
-
-var _ seq.Operator2[int, int, string, int] = keyTextOperator{}
-
 // 外部パッケージはライブラリ側の変更なしに Operator を追加できる。
 type repeatOperator struct{}
 
@@ -53,13 +39,6 @@ func TestOperatorFunc(t *testing.T) {
 	assertEqual(t, seq.ToSlice(op.Apply(seq.FromSlice([]int{1, 2}))), []string{"1", "2"})
 }
 
-func TestOperator2Func(t *testing.T) {
-	op := seq.Operator2Func(keyTextOperator{}.Apply)
-	var _ seq.Operator2[int, int, string, int] = op
-	got := collectPairs(seq.ToSeq2(op.Apply(seq.FromSeq2(slices.All([]int{4, 5})))))
-	assertEqual(t, got, []pair[string, int]{{Key: "0", Value: 4}, {Key: "1", Value: 5}})
-}
-
 type takeWithOperator[T any] struct {
 	n         int
 	predicate func(T) bool
@@ -86,6 +65,27 @@ func TestComposedOperator(t *testing.T) {
 		break
 	}
 	assertEqual(t, reads, 2)
+}
+
+type keyTextOperator struct{}
+
+func (keyTextOperator) Apply(src seq.Seq2[int, int]) seq.Seq2[string, int] {
+	return func(yield func(string, int) bool) {
+		for k, v := range src {
+			if !yield(strconv.Itoa(k), v) {
+				return
+			}
+		}
+	}
+}
+
+var _ seq.Operator2[int, int, string, int] = keyTextOperator{}
+
+func TestOperator2Func(t *testing.T) {
+	op := seq.Operator2Func(keyTextOperator{}.Apply)
+	var _ seq.Operator2[int, int, string, int] = op
+	got := collectPairs(seq.ToSeq2(op.Apply(seq.FromSeq2(slices.All([]int{4, 5})))))
+	assertEqual(t, got, []pair[string, int]{{Key: "0", Value: 4}, {Key: "1", Value: 5}})
 }
 
 func TestComposedOperator2(t *testing.T) {
