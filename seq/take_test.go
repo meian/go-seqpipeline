@@ -1,7 +1,6 @@
 package seq_test
 
 import (
-	"iter"
 	"slices"
 	"testing"
 
@@ -47,7 +46,7 @@ func TestTake(t *testing.T) {
 
 func TestTakeApply(t *testing.T) {
 	op := seq.Take(2)
-	assertEqual(t, slices.Collect(op.Apply(slices.Values([]int{3, 2, 1}))), []int{3, 2})
+	assertEqual(t, seq.ToSlice(op.Apply(seq.FromSlice([]int{3, 2, 1}))), []int{3, 2})
 }
 
 func TestTakeNilInput(t *testing.T) {
@@ -100,14 +99,14 @@ func TestTake2(t *testing.T) {
 
 func TestTake2Apply(t *testing.T) {
 	op := seq.Take2(2)
-	assertEqual(t, collectPairs(op.Apply(slices.All([]int{3, 2, 1}))), []pair[int, int]{{Key: 0, Value: 3}, {Key: 1, Value: 2}})
+	assertEqual(t, collectPairs(seq.ToSeq2(op.Apply(seq.FromSeq2(slices.All([]int{3, 2, 1}))))), []pair[int, int]{{Key: 0, Value: 3}, {Key: 1, Value: 2}})
 }
 
 func TestTake2EmptyAndNilInput(t *testing.T) {
-	for _, src := range []iter.Seq2[int, string]{nil, slices.All([]string{})} {
+	for _, src := range []seq.Seq2[int, string]{nil, seq.FromSeq2(slices.All([]string{}))} {
 		iterator := seq.Take2(1).Apply(src)
 		for round := 0; round < 2; round++ {
-			assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
+			assertEqual(t, collectPairs(seq.ToSeq2(iterator)), []pair[int, string](nil))
 		}
 	}
 }

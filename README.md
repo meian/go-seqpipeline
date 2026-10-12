@@ -95,8 +95,8 @@ func main() {
 
 ## 独自オペレーター
 
-`Pipe` は、イテレーターを変換する関数を直接受け取ります。  
-`Seq` では `func(iter.Seq[I]) iter.Seq[O]`、`Seq2` では `func(iter.Seq2[K,V]) iter.Seq2[K2,V2]` です。  
+`Pipe` は、このライブラリの `Seq` / `Seq2` を変換する関数を直接受け取ります。  
+`Seq` では `func(seq.Seq[I]) seq.Seq[O]`、`Seq2` では `func(seq.Seq2[K,V]) seq.Seq2[K2,V2]` です。  
 
 生成関数が専用の関数型を返せば、`Pipe(Multiply(10))` のように接続できます。  
 オペレーターの追加に `Seq` / `Seq2` の変更は不要です。  
@@ -106,14 +106,13 @@ package main
 
 import (
 	"fmt"
-	"iter"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 // 生成関数は型が確定した専用の関数型を返します。
 func Multiply(factor int) multiplyOperator {
-	return func(src iter.Seq[int]) iter.Seq[int] {
+	return func(src seq.Seq[int]) seq.Seq[int] {
 		return func(yield func(int) bool) {
 			if src == nil {
 				return
@@ -127,9 +126,9 @@ func Multiply(factor int) multiplyOperator {
 	}
 }
 
-type multiplyOperator func(iter.Seq[int]) iter.Seq[int]
+type multiplyOperator func(seq.Seq[int]) seq.Seq[int]
 
-func (m multiplyOperator) Apply(src iter.Seq[int]) iter.Seq[int] {
+func (m multiplyOperator) Apply(src seq.Seq[int]) seq.Seq[int] {
 	return m(src)
 }
 
@@ -146,23 +145,25 @@ func main() {
 
 ### 変換関数や既存オペレーターの接続
 
-`OperatorFunc` / `Operator2Func` は、イテレーター変換関数を `Pipe` に接続できる専用の関数型へ包みます。  
+`OperatorFunc` / `Operator2Func` は、`Seq` / `Seq2` の変換関数を `Pipe` に接続できる専用の関数型へ包みます。  
 `Operator` / `Operator2` インターフェイスは、変換を行う `Apply` メソッドの契約を表します。  
 構造体で実装したオペレーターは、`Pipe(op.Apply)` で直接接続できます。  
+Operator の入出力は、このライブラリの `Seq` / `Seq2` に統一しています。  
+標準の `iter.Seq` / `iter.Seq2` は `FromSeq` / `FromSeq2` で変換して渡します。  
+Operator 内部でも、`src.Pipe(...)` によって他のオペレーターを合成できます。  
 
 ```go
 package main
 
 import (
 	"fmt"
-	"iter"
 	"strconv"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func main() {
-	text := seq.OperatorFunc[int, string](func(src iter.Seq[int]) iter.Seq[string] {
+	text := seq.OperatorFunc[int, string](func(src seq.Seq[int]) seq.Seq[string] {
 		return func(yield func(string) bool) {
 			for v := range src {
 				if !yield(strconv.Itoa(v)) {

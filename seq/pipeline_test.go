@@ -1,7 +1,6 @@
 package seq_test
 
 import (
-	"iter"
 	"slices"
 	"strconv"
 	"testing"
@@ -84,7 +83,7 @@ func TestNonComparableKeys(t *testing.T) {
 }
 
 func TestExternalOperator2AndFunc(t *testing.T) {
-	op := seq.Operator2Func[string, int, string, string](func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
+	op := seq.Operator2Func[string, int, string, string](func(src seq.Seq2[string, int]) seq.Seq2[string, string] {
 		return func(yield func(string, string) bool) {
 			for k, v := range src {
 				if !yield(k, strconv.Itoa(v)) {
@@ -94,7 +93,7 @@ func TestExternalOperator2AndFunc(t *testing.T) {
 		}
 	})
 	var _ seq.Operator2[string, int, string, string] = op
-	assertEqual(t, collectPairs(op.Apply(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))), []pair[string, string]{{Key: "1", Value: "10"}})
+	assertEqual(t, collectPairs(seq.ToSeq2(op.Apply(seq.FromMap(map[string]int{"1": 10})))), []pair[string, string]{{Key: "1", Value: "10"}})
 	reads := 0
 	src := func(yield func(int, int) bool) {
 		for i := 1; i <= 3; i++ {
@@ -124,7 +123,7 @@ func TestMap2Filter2Apply(t *testing.T) {
 	}
 	mapped := seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v }).Apply(src)
 	filtered := seq.Filter2(func(k string, v int) bool { return v > 10 }).Apply(mapped)
-	assertEqual(t, collectPairs(filtered), []pair[string, int]{{Key: "2", Value: 20}})
+	assertEqual(t, collectPairs(seq.ToSeq2(filtered)), []pair[string, int]{{Key: "2", Value: 20}})
 }
 
 func TestPipelineTypeInference(t *testing.T) {
@@ -223,8 +222,8 @@ func TestExternalOperator(t *testing.T) {
 }
 
 func TestDirectTransformPipeline(t *testing.T) {
-	var transform func(iter.Seq[int]) iter.Seq[string] = seq.Map(strconv.Itoa)
-	var limit func(iter.Seq[string]) iter.Seq[string] = seq.Take(2).Type
+	var transform func(seq.Seq[int]) seq.Seq[string] = seq.Map(strconv.Itoa)
+	var limit func(seq.Seq[string]) seq.Seq[string] = seq.Take(2).Type
 	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(transform).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1", "2"})
@@ -233,10 +232,10 @@ func TestDirectTransformPipeline(t *testing.T) {
 
 func TestDirectTransform2Pipeline(t *testing.T) {
 	var op seq.Operator2[int, int, string, int] = keyTextOperator{}
-	var transform func(iter.Seq2[string, int]) iter.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
+	var transform func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
 		return v > 1
 	})
-	var limit func(iter.Seq2[string, int]) iter.Seq2[string, int] = seq.Take2(1).Type
+	var limit func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Take2(1).Type
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe(op.Apply).Pipe(transform).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})

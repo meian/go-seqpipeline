@@ -1,10 +1,8 @@
 package seq
 
-import "iter"
-
 // Filter は predicate が true を返す要素を保持する Operator を返す。
 func Filter[T any](predicate func(T) bool) filterOperator[T] {
-	return func(src iter.Seq[T]) iter.Seq[T] {
+	return func(src Seq[T]) Seq[T] {
 		return func(yield func(T) bool) {
 			if src == nil {
 				return
@@ -18,17 +16,17 @@ func Filter[T any](predicate func(T) bool) filterOperator[T] {
 	}
 }
 
-type filterOperator[T any] func(iter.Seq[T]) iter.Seq[T]
+type filterOperator[T any] func(Seq[T]) Seq[T]
 
-// Apply は選別を遅延評価する Iterator を返す。
+// Apply は選別を遅延評価する Seq を返す。
 // nil の入力は空のシーケンスとして扱う。
-func (op filterOperator[T]) Apply(src iter.Seq[T]) iter.Seq[T] {
+func (op filterOperator[T]) Apply(src Seq[T]) Seq[T] {
 	return op(src)
 }
 
 // Filter2 は predicate が true を返すキーと値を保持する Operator を返す。
 func Filter2[K, V any](predicate func(K, V) bool) filter2Operator[K, V] {
-	return func(src iter.Seq2[K, V]) iter.Seq2[K, V] {
+	return func(src Seq2[K, V]) Seq2[K, V] {
 		return func(yield func(K, V) bool) {
 			if src == nil {
 				return
@@ -42,10 +40,10 @@ func Filter2[K, V any](predicate func(K, V) bool) filter2Operator[K, V] {
 	}
 }
 
-type filter2Operator[K, V any] func(iter.Seq2[K, V]) iter.Seq2[K, V]
+type filter2Operator[K, V any] func(Seq2[K, V]) Seq2[K, V]
 
-// Apply は選別を遅延評価する Iterator を返す。
+// Apply は選別を遅延評価する Seq2 を返す。
 // nil の入力は空のシーケンスとして扱う。
-func (op filter2Operator[K, V]) Apply(src iter.Seq2[K, V]) iter.Seq2[K, V] {
+func (op filter2Operator[K, V]) Apply(src Seq2[K, V]) Seq2[K, V] {
 	return op(src)
 }

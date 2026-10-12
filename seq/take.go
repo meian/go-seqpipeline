@@ -1,7 +1,5 @@
 package seq
 
-import "iter"
-
 // Take は先頭から最大 n 個の要素を取得するための設定値を返す。
 // n が 0 以下なら上流を実行しない。
 // Pipe に Take(n).Type を渡すと、入力から要素型を推論する。
@@ -13,9 +11,9 @@ type takeOperator struct {
 	n int
 }
 
-// Apply は各評価で先頭から指定数を取得する Iterator を返す。
+// Apply は各評価で先頭から指定数を取得する Seq を返す。
 // nil の入力は空のシーケンスとして扱う。
-func (t takeOperator) Apply[T any](src iter.Seq[T]) iter.Seq[T] {
+func (t takeOperator) Apply[T any](src Seq[T]) Seq[T] {
 	return func(yield func(T) bool) {
 		if src == nil || t.n <= 0 {
 			return
@@ -30,9 +28,9 @@ func (t takeOperator) Apply[T any](src iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
-// Type は入力に先頭件数の制限を適用した Iterator を返す。
+// Type は入力に先頭件数の制限を適用した Seq を返す。
 // Pipe には Type を呼び出さずにメソッド値として渡し、要素型を推論させる。
-func (t takeOperator) Type[T any](src iter.Seq[T]) iter.Seq[T] {
+func (t takeOperator) Type[T any](src Seq[T]) Seq[T] {
 	return t.Apply(src)
 }
 
@@ -47,9 +45,9 @@ type take2Operator struct {
 	n int
 }
 
-// Apply は各評価で先頭から指定数のキーと値の組を取得する Iterator を返す。
+// Apply は各評価で先頭から指定数のキーと値の組を取得する Seq2 を返す。
 // nil の入力は空のシーケンスとして扱う。
-func (t take2Operator) Apply[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
+func (t take2Operator) Apply[K, V any](src Seq2[K, V]) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if src == nil || t.n <= 0 {
 			return
@@ -64,8 +62,8 @@ func (t take2Operator) Apply[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
 	}
 }
 
-// Type は入力に先頭件数の制限を適用した Iterator を返す。
+// Type は入力に先頭件数の制限を適用した Seq2 を返す。
 // Pipe には Type を呼び出さずにメソッド値として渡し、キーと値の型を推論させる。
-func (t take2Operator) Type[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
+func (t take2Operator) Type[K, V any](src Seq2[K, V]) Seq2[K, V] {
 	return t.Apply(src)
 }

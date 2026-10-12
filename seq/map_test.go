@@ -10,12 +10,12 @@ import (
 
 func TestMap(t *testing.T) {
 	op := seq.Map(func(v int) string { return strconv.Itoa(v) })
-	assertEqual(t, slices.Collect(op.Apply(slices.Values([]int{2, 1}))), []string{"2", "1"})
+	assertEqual(t, seq.ToSlice(op.Apply(seq.FromSlice([]int{2, 1}))), []string{"2", "1"})
 }
 
 func TestMap2(t *testing.T) {
 	op := seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })
-	got := collectPairs(op.Apply(slices.All([]string{"a", "bbb"})))
+	got := collectPairs(seq.ToSeq2(op.Apply(seq.FromSeq2(slices.All([]string{"a", "bbb"})))))
 	assertEqual(t, got, []pair[string, int]{{Key: "0", Value: 1}, {Key: "1", Value: 3}})
 }
 
