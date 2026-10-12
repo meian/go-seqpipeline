@@ -23,15 +23,6 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	}
 }
 
-// TestPipelineTypeInference は、型引数を指定せずに int から string、再び int へ変換し、途中の Filter も接続できることを確認する。
-func TestPipelineTypeInference(t *testing.T) {
-	var pipeline seq.Seq[int] = seq.FromSlice([]int{1, 22, 333, 4444}).
-		Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
-		Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
-		Pipe(seq.Map(func(v string) int { return len(v) }))
-	assertEqual(t, seq.ToSlice(pipeline), []int{3, 4})
-}
-
 // TestLazyEvaluationAndStopPropagation は、Seq の構築時に上流を実行せず、下流の途中終了が Map と Filter を経由して上流へ伝播することを確認する。
 func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
@@ -115,13 +106,6 @@ func TestSingleUseSource(t *testing.T) {
 	assertEqual(t, seq.ToSlice(pipeline), []int{2})
 	assertEqual(t, seq.ToSlice(pipeline), []int{3})
 	assertEqual(t, seq.ToSlice(pipeline), []int(nil))
-}
-
-// TestExternalOperator は、独自の変換関数を直接接続し、一つの入力から複数の出力を生成した後に Take で制限できることを確認する。
-func TestExternalOperator(t *testing.T) {
-	op := repeat
-	got := seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(op).Pipe(seq.Take(3).Operator))
-	assertEqual(t, got, []string{"1", "1", "2"})
 }
 
 // TestDirectTransformPipeline は、Map と Take.Operator を Operator へ代入して直接接続し、型推論と再評価を確認する。
@@ -241,19 +225,6 @@ func TestExternalTransforms2(t *testing.T) {
 	}
 	assertEqual(t, reads, 1)
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, string]{{Key: "1", Value: "10"}, {Key: "2", Value: "20"}, {Key: "3", Value: "30"}})
-}
-
-// TestMap2Filter2DirectCall は、Map2 と Filter2 の変換関数を直接接続し、変換後の型で選別できることを確認する。
-func TestMap2Filter2DirectCall(t *testing.T) {
-	src := func(yield func(int, int) bool) {
-		if !yield(1, 10) {
-			return
-		}
-		yield(2, 20)
-	}
-	mapped := seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })(src)
-	filtered := seq.Filter2(func(k string, v int) bool { return v > 10 })(mapped)
-	assertEqual(t, collectPairs(seq.ToSeq2(filtered)), []pair[string, int]{{Key: "2", Value: 20}})
 }
 
 // TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Operator2 として接続し、型推論と再評価を確認する。

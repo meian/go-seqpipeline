@@ -21,6 +21,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -38,6 +39,16 @@ func main() {
 	// パイプラインを直接反復する
 	for s := range pipeline {
 		fmt.Println(s) // 333
+	}
+	// Seq2 ではキーと値を加工する
+	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
+		Pipe(seq.Map2(func(k int, v string) (string, int) {
+			return strconv.Itoa(k), len(v)
+		})).
+		Pipe(seq.Filter2(func(k string, v int) bool { return v > 1 })).
+		Pipe(seq.Take2(1).Operator)
+	for k, v := range pairs {
+		fmt.Println(k, v) // 1 3
 	}
 }
 ```
@@ -98,32 +109,33 @@ func main() {
 
 独自の変換関数も、そのまま `Pipe` に渡せます。  
 
-```go
-text := func(src seq.Seq[int]) seq.Seq[string] {
-	return src.Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) }))
-}
-pipeline := seq.FromSlice([]int{1, 2}).Pipe(text)
-fmt.Println(seq.ToSlice(pipeline)) // [1 2]
-```
-
 ### 独自オペレーターの実装
 
 `Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
 変換関数を実装し、`Pipe` に直接渡します。  
 
-次の例では、既存の `Map` を使って乗算オペレーターを作ります。  
-`Pipe(Multiply(10))` で接続できます。  
-
-```go
-func Multiply(factor int) seq.Operator[int, int] {
-	return func(src seq.Seq[int]) seq.Seq[int] {
-		return src.Pipe(seq.Map(func(v int) int { return v * factor }))
-	}
-}
-```
-
 入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
 入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を `Pipe` に渡します。  
+
+### 実行可能な利用例
+
+各オペレーターの使い方は、期待出力を持つ [Go Example](seq/example_test.go) にまとめています。  
+通常テストでは、境界値、nil、遅延評価、途中終了、再評価などを検証します。  
+
+| 利用例 | Seq | Seq2 |
+| --- | --- | --- |
+| 要素・キーと値の変換 | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
+| 条件による選別 | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
+| 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
+| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
+| 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
+| 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
+
+Example のみを実行するには、次のコマンドを使います。  
+
+```sh
+go test ./... -run '^Example' -count=1
+```
 
 ## 評価と利用上の仕様
 

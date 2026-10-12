@@ -8,32 +8,6 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-// 外部パッケージはライブラリ側の変更なしに変換関数を追加できる。
-func repeat(src seq.Seq[int]) seq.Seq[string] {
-	return func(yield func(string) bool) {
-		for v := range src {
-			for i := 0; i < 2; i++ {
-				if !yield(strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	}
-}
-
-func TestTransform(t *testing.T) {
-	op := func(src seq.Seq[int]) seq.Seq[string] {
-		return func(yield func(string) bool) {
-			for v := range src {
-				if !yield(strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	}
-	assertEqual(t, seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(op)), []string{"1", "2"})
-}
-
 func takeWith[T any](n int, predicate func(T) bool) seq.Operator[T, T] {
 	return func(src seq.Seq[T]) seq.Seq[T] {
 		return src.Pipe(seq.Filter(predicate)).Pipe(seq.Take(n).Operator)
@@ -68,22 +42,6 @@ func TestComposedOperator(t *testing.T) {
 		break
 	}
 	assertEqual(t, reads, 2)
-}
-
-func keyText(src seq.Seq2[int, int]) seq.Seq2[string, int] {
-	return func(yield func(string, int) bool) {
-		for k, v := range src {
-			if !yield(strconv.Itoa(k), v) {
-				return
-			}
-		}
-	}
-}
-
-func TestTransform2(t *testing.T) {
-	op := keyText
-	got := collectPairs(seq.ToSeq2(seq.FromSeq2(slices.All([]int{4, 5})).Pipe(op)))
-	assertEqual(t, got, []pair[string, int]{{Key: "0", Value: 4}, {Key: "1", Value: 5}})
 }
 
 func TestOperator2DirectCall(t *testing.T) {
