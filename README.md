@@ -44,13 +44,9 @@ func main() {
 
 ## Seq / Seq2
 
-Go 標準の [`iter`](https://pkg.go.dev/iter) は、要素を扱う `iter.Seq[T]` と、キーと値などの組を扱う `iter.Seq2[K, V]` を提供します。  
-このライブラリの `Seq[T]` / `Seq2[K, V]` は、`iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
-`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
-`Seq2[K, V]` の `K` と `V` に型の制限はありません。  
-ただし、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
-
-このライブラリでは、`Seq2` 用の処理は名前に `2` を付けて提供します。  
+このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
+`Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
+`Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
 `Seq` と `Seq2` をまたぐ変換は提供していません。  
 
 ## 入力と出力
@@ -72,6 +68,11 @@ Go 標準の [`iter`](https://pkg.go.dev/iter) は、要素を扱う `iter.Seq[T
 このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
 `Seq2` では、`Seq2` を別の `Seq2` に変換します。  
 `Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
+
+### ライブラリが提供するオペレーター
+
+要素の変換や選別、取得件数の制限などの機能を提供します。  
+`Seq` 用と `Seq2` 用に同じ機能のオペレーターを用意し、`Seq2` 用の名前には `2` を付けています。  
 
 ### 型推論
 
