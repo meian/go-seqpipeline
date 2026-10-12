@@ -1,3 +1,7 @@
+# Created by https://www.toptal.com/developers/gitignore/api/go
+# Edit at https://www.toptal.com/developers/gitignore?templates=go
+
+### Go ###
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
@@ -11,18 +15,24 @@
 # Test binary, built with `go test -c`
 *.test
 
-# Code coverage profiles and other test artifacts
+# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-coverage.*
-!coverage.go
-*.coverprofile
-profile.cov
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
 # Go workspace file
 go.work
+
+# End of https://www.toptal.com/developers/gitignore/api/go
+
+# Additional coverage artifacts
+coverage.*
+!coverage.go
+*.coverprofile
+profile.cov
+
+# Go workspace checksum file
 go.work.sum
 
 # env file
@@ -31,3 +41,8 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Local development artifacts
+.DS_Store
+/bin/
+/coverage.out
