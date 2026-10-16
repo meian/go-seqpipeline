@@ -265,8 +265,8 @@ func TestTake2TypeInferenceAcrossTypeChanges(t *testing.T) {
 
 // TestCrossTypePipeline は、4通りの接続、型推論、遅延評価、停止伝播、再評価を確認する。
 func TestCrossTypePipeline(t *testing.T) {
-	var toPairs seq.Operator12[string, []int, string] = withLength
-	var toValues seq.Operator21[[]int, string, string] = seq.Seq2[[]int, string].Values
+	var toPairs seq.ToSeq2Operator[string, []int, string] = withLength
+	var toValues seq.ToSeqOperator[[]int, string, string] = seq.Seq2[[]int, string].Values
 	for _, n := range []int{0, 1, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			starts, reads, stops := 0, 0, 0
