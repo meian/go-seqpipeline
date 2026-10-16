@@ -83,7 +83,7 @@ In go-seqpipeline, an operator is an operation that transforms `Seq` / `Seq2` to
 ### Built-in operators
 
 The library provides operations such as transforming elements, filtering them, and limiting the number of results.  
-When an operation is provided for both single values and key-value pairs, the pair version has a `2` suffix, as in `Filter` and `Filter2`.  
+For operations available for both single values and key-value pairs, the library provides the pair version with a `2` suffix, as in `Filter` and `Filter2`.  
 
 ### Type inference
 
