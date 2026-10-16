@@ -1,13 +1,15 @@
 package seq
 
-import "iter"
+import (
+	"fmt"
+	"iter"
+)
 
-// ZipAlign は Zip の出力件数をどちらの入力に合わせるかを表す。
+// ZipAlign は Zip の合成結果の出力件数の合わせ方を指定する。
 type ZipAlign int
 
 const (
 	// AlignShortest は短い方の入力が終了した時点で終了する。
-	// Zip の既定値である。
 	AlignShortest ZipAlign = iota
 	// AlignLeft は左の入力の件数に合わせ、不足する値を補う。
 	AlignLeft
@@ -17,18 +19,18 @@ const (
 	AlignLongest
 )
 
-// Zip は右の入力 other と組み合わせる設定値を返す。
-// 左の要素をキー、右の要素を値とし、既定では短い方の入力で終了する。
+// Zip は元の Seq をキー、values を値として組み合わせた Seq2 を生成するための設定値を返す。
+// Operator を Seq.Pipe2 に渡して使用し、既定では短い方の入力で終了する。
 // AlignBy で終了条件、WithKey と WithValue で不足分の既定値を指定する。
-// 未指定の既定値はそれぞれの型のゼロ値であり、AlignShortest では補完しない。
+// 未指定の既定値はそれぞれの型のゼロ値を使う。
 // 各設定メソッドはコピーを返す。
-// Seq.Pipe2 に Zip(other).Operator を渡すと、左の入力からキー型を推論する。
-func Zip[V any](other Seq[V]) zipOperator[V] {
-	return zipOperator[V]{other: other}
+// Operator の接続時に元の Seq からキー型を推論する。
+func Zip[V any](values Seq[V]) zipOperator[V] {
+	return zipOperator[V]{values: values}
 }
 
 type zipOperator[V any] struct {
-	other     Seq[V]
+	values    Seq[V]
 	alignment ZipAlign
 	value     V
 }
@@ -37,7 +39,7 @@ type zipOperator[V any] struct {
 // AlignShortest、AlignLeft、AlignRight、AlignLongest 以外の値は panic する。
 func (z zipOperator[V]) AlignBy(alignment ZipAlign) zipOperator[V] {
 	if alignment < AlignShortest || alignment > AlignLongest {
-		panic("seq.Zip: invalid alignment")
+		panic(fmt.Sprintf("seq.Zip: invalid alignment %d", alignment))
 	}
 	z.alignment = alignment
 	return z
@@ -63,9 +65,11 @@ func (z zipOperator[V]) WithKey[K any](key K) zipKeyOperator[K, V] {
 // 再評価できるかどうかは両方の元の Iterator に従う。
 func (z zipOperator[V]) Operator[K any](src Seq[K]) Seq2[K, V] {
 	var key K
-	return zipSequences(src, z.other, z.alignment, key, z.value)
+	return zipSequences(src, z.values, z.alignment, key, z.value)
 }
 
+// zipKeyOperator は WithKey で確定したキー型と既定値を保持する。
+// Zip の時点ではキー型が未確定なため、zipOperator とは分けている。
 type zipKeyOperator[K, V any] struct {
 	config zipOperator[V]
 	key    K
@@ -97,7 +101,7 @@ func (z zipKeyOperator[K, V]) WithKey(key K) zipKeyOperator[K, V] {
 // 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
 // 再評価できるかどうかは両方の元の Iterator に従う。
 func (z zipKeyOperator[K, V]) Operator(src Seq[K]) Seq2[K, V] {
-	return zipSequences(src, z.config.other, z.config.alignment, z.key, z.config.value)
+	return zipSequences(src, z.config.values, z.config.alignment, z.key, z.config.value)
 }
 
 func zipSequences[K, V any](left Seq[K], right Seq[V], alignment ZipAlign, key K, value V) Seq2[K, V] {
