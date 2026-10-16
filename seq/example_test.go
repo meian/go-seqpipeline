@@ -141,19 +141,19 @@ func ExampleOperator2() {
 	// "1": 5
 }
 
-func ExampleSeq2_Keys() {
+func ExampleKeys() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
-		Keys().
+		Pipe(seq.Keys).
 		Pipe(seq.Take(2).Operator)
 	fmt.Printf("%q\n", seq.ToSlice(pipeline))
 	// Output: ["0" "1"]
 }
 
-func ExampleSeq2_Values() {
+func ExampleValues() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(seq.Filter2(func(k int, v string) bool { return len(v) > 1 })).
-		Values().
+		Pipe(seq.Values).
 		Pipe(seq.Take(1).Operator)
 	fmt.Printf("%q\n", seq.ToSlice(pipeline))
 	// Output: ["bbb"]
@@ -190,7 +190,7 @@ func ExampleSeq_Pipe2() {
 
 func ExampleSeq2_Pipe() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Seq2[int, string].Values).
+		Pipe(seq.Values).
 		Pipe(seq.Take(2).Operator)
 	fmt.Println(seq.ToSlice(pipeline))
 	// Output: [a bbb]
@@ -220,7 +220,7 @@ func ExampleToSeq2Operator() {
 }
 
 func ExampleToSeqOperator() {
-	var op seq.ToSeqOperator[int, string, string] = seq.Seq2[int, string].Values
+	var op seq.ToSeqOperator[int, string, string] = seq.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
 	fmt.Println(seq.ToSlice(op(src)))
 	// Output: [a bbb]

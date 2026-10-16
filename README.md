@@ -94,6 +94,9 @@ Operations whose factory arguments carry no type information return a configurat
 Pass `.Operator` as a method value to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
 The input determines the types when connected, so explicit type arguments are unnecessary.  
 
+`Keys` / `Values` transform key-value pairs into a sequence of keys / values; pass the function directly as `pairs.Pipe(seq.Keys)` / `pairs.Pipe(seq.Values)`.  
+Their signatures match `ToSeqOperator`, and type arguments are inferred from the input when connected or called directly.  
+
 ### Connecting operators
 
 Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
@@ -130,6 +133,7 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Skip leading elements or pairs | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
+| Extract keys / values from Seq2 | — | [ExampleKeys](seq/example_test.go#L144), [ExampleValues](seq/example_test.go#L153) |
 | Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](seq/example_test.go#L211) | [ExampleToSeqOperator](seq/example_test.go#L222) |
 | Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |

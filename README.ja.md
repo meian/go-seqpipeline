@@ -94,6 +94,9 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 単一値を扱う場合は `.Operator` を `Pipe` に、キーと値の組を扱う場合は `.Operator2` を `Pipe2` にメソッド値として渡します。  
 接続時に入力の型が決まるため、型引数を明示する必要はありません。  
 
+`Keys` / `Values` はキー・値の組からキー / 値のシーケンスへ変換し、`pairs.Pipe(seq.Keys)` / `pairs.Pipe(seq.Values)` のように関数を直接渡します。  
+シグネチャは `ToSeqOperator` に対応し、接続時や直接呼び出す際に入力から型引数を推論します。  
+
 ### 接続
 
 `Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  
@@ -130,6 +133,7 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 | 先頭の要素・組の読み飛ばし | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
+| Seq2 からキー・値を取り出す | — | [ExampleKeys](seq/example_test.go#L144)、[ExampleValues](seq/example_test.go#L153) |
 | Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](seq/example_test.go#L211) | [ExampleToSeqOperator](seq/example_test.go#L222) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |

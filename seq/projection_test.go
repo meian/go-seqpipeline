@@ -2,14 +2,12 @@ package seq_test
 
 import (
 	"iter"
-	"slices"
-	"strconv"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func TestSeq2Keys(t *testing.T) {
+func TestKeys(t *testing.T) {
 	want := []int{3, 1, 3, 2}
 	started, visited, stopped := 0, 0, 0
 	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
@@ -22,7 +20,8 @@ func TestSeq2Keys(t *testing.T) {
 			}
 		}
 	})
-	projected := src.Keys()
+	var op seq.ToSeqOperator[int, int, int] = seq.Keys[int, int]
+	projected := op(src)
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(projected), want)
@@ -60,19 +59,12 @@ func TestSeq2Keys(t *testing.T) {
 	assertEqual(t, visited, 0)
 	assertEqual(t, stopped, 0)
 
-	pipeline := projected.
-		Pipe(seq.Filter(func(v int) bool { return v >= want[0] })).
-		Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
-		Pipe(seq.Take(2).Operator)
-	pipelineWant := []string{strconv.Itoa(want[0]), strconv.Itoa(want[2])}
-	assertEqual(t, slices.Collect(seq.ToSeq(pipeline)), pipelineWant)
-
 	for _, input := range []seq.Seq2[int, int]{
 		nil,
 		seq.FromSeq2(iter.Seq2[int, int](nil)),
 		func(func(int, int) bool) {},
 	} {
-		output := input.Keys()
+		output := seq.Keys(input)
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
 		}
@@ -80,7 +72,7 @@ func TestSeq2Keys(t *testing.T) {
 	}
 }
 
-func TestSeq2Values(t *testing.T) {
+func TestValues(t *testing.T) {
 	want := []int{20, 10, 30, 20}
 	started, visited, stopped := 0, 0, 0
 	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
@@ -93,7 +85,8 @@ func TestSeq2Values(t *testing.T) {
 			}
 		}
 	})
-	projected := src.Values()
+	var op seq.ToSeqOperator[int, int, int] = seq.Values[int, int]
+	projected := op(src)
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(projected), want)
@@ -131,19 +124,12 @@ func TestSeq2Values(t *testing.T) {
 	assertEqual(t, visited, 0)
 	assertEqual(t, stopped, 0)
 
-	pipeline := projected.
-		Pipe(seq.Filter(func(v int) bool { return v >= want[0] })).
-		Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
-		Pipe(seq.Take(2).Operator)
-	pipelineWant := []string{strconv.Itoa(want[0]), strconv.Itoa(want[2])}
-	assertEqual(t, slices.Collect(seq.ToSeq(pipeline)), pipelineWant)
-
 	for _, input := range []seq.Seq2[int, int]{
 		nil,
 		seq.FromSeq2(iter.Seq2[int, int](nil)),
 		func(func(int, int) bool) {},
 	} {
-		output := input.Values()
+		output := seq.Values(input)
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
 		}
@@ -151,7 +137,7 @@ func TestSeq2Values(t *testing.T) {
 	}
 }
 
-func TestSeq2KeysNonComparable(t *testing.T) {
+func TestKeysNonComparable(t *testing.T) {
 	keys := [][]int{{2}, {1}, {2}}
 	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
 	src := seq.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
@@ -161,10 +147,10 @@ func TestSeq2KeysNonComparable(t *testing.T) {
 			}
 		}
 	})
-	assertEqual(t, seq.ToSlice(src.Keys()), keys)
+	assertEqual(t, seq.ToSlice(src.Pipe(seq.Keys)), keys)
 }
 
-func TestSeq2ValuesNonComparable(t *testing.T) {
+func TestValuesNonComparable(t *testing.T) {
 	keys := [][]int{{2}, {1}, {2}}
 	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
 	src := seq.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
@@ -174,5 +160,5 @@ func TestSeq2ValuesNonComparable(t *testing.T) {
 			}
 		}
 	})
-	assertEqual(t, seq.ToSlice(src.Values()), values)
+	assertEqual(t, seq.ToSlice(src.Pipe(seq.Values)), values)
 }
