@@ -67,10 +67,8 @@ func main() {
 
 このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
 `Seq` 用の関数型 `Operator[I, O]` は、`func(Seq[I]) Seq[O]` と定義されています。  
-`Map` / `Filter` は、この `Operator` を返します。  
 `Seq2` では、`Seq2` を別の `Seq2` に変換します。  
 `Seq2` 用の関数型 `Operator2[K, V, K2, V2]` は、`func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
-`Map2` / `Filter2` は、この `Operator2` を返します。  
 `Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
 
 ### ライブラリが提供するオペレーター
