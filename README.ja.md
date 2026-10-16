@@ -60,7 +60,7 @@ func main() {
 このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
 `Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
 `Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
-`Seq` と `Seq2` をまたぐ変換は提供していません。  
+`Seq2` から単一値の `Seq` へ変換し、そのままパイプラインを続けることもできます。  
 
 ## 入力と出力
 
@@ -166,7 +166,7 @@ go test ./... -run '^Example' -count=1
 ### nil と空の入力
 
 `Seq` / `Seq2` のゼロ値と、nil の標準イテレーターから変換した値は nil です。  
-組み込みの `Map` / `Filter` / `Take` とその `Seq2` 用 API は、nil の入力イテレーターを空として扱います。  
+組み込みの加工処理は、nil の入力イテレーターを空として扱います。  
 独自オペレーターの nil の扱いは、渡した変換関数の実装に従います。  
 
 `ToSeq` / `ToSeq2` は nil をそのまま返します。  

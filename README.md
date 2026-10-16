@@ -60,7 +60,7 @@ func main() {
 This library's `Seq[T]` / `Seq2[K, V]` are function types compatible with `iter.Seq[T]` / `iter.Seq2[K, V]` from Go's standard [`iter`](https://pkg.go.dev/iter) package, with `Pipe` methods for transforming elements.  
 Pipelines built by transforming `Seq` / `Seq2` through `Pipe` can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
 `Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
-Conversions between `Seq` and `Seq2` are not provided.  
+A `Seq2` can also be converted into a single-value `Seq` to continue the pipeline.  
 
 ## Input and output
 
@@ -166,7 +166,7 @@ Callers are responsible for managing the reuse of stateful callbacks and concurr
 ### Nil and empty input
 
 The zero values of `Seq` / `Seq2` and values converted from nil standard iterators are nil.  
-The built-in `Map` / `Filter` / `Take` operators and their `Seq2` counterparts treat nil input iterators as empty.  
+Built-in pipeline transformations treat nil input iterators as empty.  
 How a custom operator handles nil depends on its transformation function's implementation.  
 
 `ToSeq` / `ToSeq2` return nil unchanged.  
