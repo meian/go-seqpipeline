@@ -60,7 +60,9 @@ func main() {
 This library's `Seq[T]` / `Seq2[K, V]` are function types compatible with `iter.Seq[T]` / `iter.Seq2[K, V]` from Go's standard [`iter`](https://pkg.go.dev/iter) package, with `Pipe` methods for transforming elements.  
 Pipelines built by transforming `Seq` / `Seq2` through `Pipe` can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
 `Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
-Conversions between `Seq` and `Seq2` are not provided.  
+`Seq2.Keys()` / `Seq2.Values()` extract keys or values as a `Seq`, preserving input iteration order and duplicates.  
+The returned `Seq` can be connected to `Map`, `Filter`, or `Take` through `Pipe`.  
+These methods evaluate input lazily and propagate downstream stops upstream; re-evaluation follows the original iterator.  
 
 ## Input and output
 
@@ -132,6 +134,7 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
 | Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
+| Extract keys or values as a Seq | — | [ExampleSeq2_Keys](seq/example_test.go#L144), [ExampleSeq2_Values](seq/example_test.go#L152) |
 
 To run only the Examples, use the following command.  
 
@@ -166,7 +169,7 @@ Callers are responsible for managing the reuse of stateful callbacks and concurr
 ### Nil and empty input
 
 The zero values of `Seq` / `Seq2` and values converted from nil standard iterators are nil.  
-The built-in `Map` / `Filter` / `Take` operators and their `Seq2` counterparts treat nil input iterators as empty.  
+The built-in `Map` / `Filter` / `Take` operators, their `Seq2` counterparts, and `Keys` / `Values` treat nil input iterators as empty.  
 How a custom operator handles nil depends on its transformation function's implementation.  
 
 `ToSeq` / `ToSeq2` return nil unchanged.  

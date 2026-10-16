@@ -60,7 +60,10 @@ func main() {
 このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
 `Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
 `Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
-`Seq` と `Seq2` をまたぐ変換は提供していません。  
+`Seq2.Keys()` / `Seq2.Values()` は、入力の反復順序と重複を保ち、キーまたは値を `Seq` として取り出します。  
+戻り値の `Seq` には、`Pipe` で `Map`、`Filter`、`Take` などを接続できます。  
+入力は遅延評価し、下流の途中終了を上流へ伝播します。  
+再評価できるかどうかは元のイテレーターに従います。  
 
 ## 入力と出力
 
@@ -132,6 +135,7 @@ func main() {
 | 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
+| キーまたは値を Seq として取り出す | — | [ExampleSeq2_Keys](seq/example_test.go#L144), [ExampleSeq2_Values](seq/example_test.go#L152) |
 
 Example のみを実行するには、次のコマンドを使います。  
 
@@ -166,7 +170,7 @@ go test ./... -run '^Example' -count=1
 ### nil と空の入力
 
 `Seq` / `Seq2` のゼロ値と、nil の標準イテレーターから変換した値は nil です。  
-組み込みの `Map` / `Filter` / `Take` とその `Seq2` 用 API は、nil の入力イテレーターを空として扱います。  
+組み込みの `Map` / `Filter` / `Take` とその `Seq2` 用 API、および `Keys` / `Values` は、nil の入力イテレーターを空として扱います。  
 独自オペレーターの nil の扱いは、渡した変換関数の実装に従います。  
 
 `ToSeq` / `ToSeq2` は nil をそのまま返します。  

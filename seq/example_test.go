@@ -140,3 +140,19 @@ func ExampleOperator2() {
 	// "0": 4
 	// "1": 5
 }
+
+func ExampleSeq2_Keys() {
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).Keys().
+		Pipe(seq.Map(func(k int) string { return strconv.Itoa(k) })).
+		Pipe(seq.Take(2).Operator)
+	fmt.Printf("%q\n", seq.ToSlice(pipeline))
+	// Output: ["0" "1"]
+}
+
+func ExampleSeq2_Values() {
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).Values().
+		Pipe(seq.Filter(func(v string) bool { return len(v) > 1 })).
+		Pipe(seq.Take(1).Operator)
+	fmt.Printf("%q\n", seq.ToSlice(pipeline))
+	// Output: ["bbb"]
+}
