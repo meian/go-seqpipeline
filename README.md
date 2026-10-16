@@ -76,6 +76,25 @@ Functions starting with `To` collect results into collections or convert them to
 
 Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the standard `iter.Seq` / `iter.Seq2` types.  
 
+### Combining two sequences
+
+`left.Zip(right)` returns a `Seq2` with elements from `left` as keys and elements from `right` as values, stopping when either input ends.  
+`left.ZipAll(right)` continues until both inputs end and fills missing elements with their type's zero value.  
+Use `ZipDefaults.WithKey` / `WithValue` to configure either or both defaults; each method returns a copy and preserves the other setting.  
+If multiple settings are passed, the last one is used.  
+Both methods treat nil inputs as empty and return a `Seq2` that connects to `Pipe`, `ToMap`, or `ToSeq2`.  
+Construction does not evaluate inputs; each evaluation pulls the key first, then the value, and stops both inputs on downstream termination.  
+`Zip` may pull one extra key when detecting the end of the values.  
+Whether the result can be evaluated again depends on both inputs.  
+
+```go
+left := seq.FromSlice([]int{1, 2})
+right := seq.FromSlice([]string{"a"})
+defaults := seq.ZipDefaults[int, string]{}.WithKey(-1).WithValue("missing")
+pairs := left.ZipAll(right, defaults).Pipe(seq.Take2(2).Operator)
+// seq.ToMap(pairs): map[1:a 2:missing]
+```
+
 ## Operators
 
 In this library, an operator is an operation that transforms a `Seq` into another `Seq`.  

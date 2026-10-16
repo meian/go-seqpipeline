@@ -158,3 +158,25 @@ func ExampleSeq2_Values() {
 	fmt.Printf("%q\n", seq.ToSlice(pipeline))
 	// Output: ["bbb"]
 }
+
+func ExampleSeq_Zip() {
+	left := seq.FromSlice([]int{1, 2, 3})
+	right := seq.FromSlice([]string{"a", "b"})
+	for k, v := range left.Zip(right).Pipe(seq.Take2(1).Operator) {
+		fmt.Println(k, v)
+	}
+	// Output: 1 a
+}
+
+func ExampleSeq_ZipAll() {
+	left := seq.FromSlice([]int{1, 2})
+	right := seq.FromSlice([]string{"a"})
+	fmt.Println(seq.ToMap(left.ZipAll(right)))
+	defaults := seq.ZipDefaults[int, string]{}.WithKey(-1).WithValue("missing")
+	fmt.Println(seq.ToMap(left.ZipAll(right, defaults)))
+	fmt.Println(seq.ToMap(seq.FromSlice([]int{}).ZipAll(right, defaults)))
+	// Output:
+	// map[1:a 2:]
+	// map[1:a 2:missing]
+	// map[-1:a]
+}

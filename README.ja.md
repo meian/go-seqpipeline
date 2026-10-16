@@ -76,6 +76,25 @@ func main() {
 
 標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
 
+### 2つのシーケンスを組み合わせる
+
+`left.Zip(right)` は左の要素をキー、右の要素を値とする `Seq2` を返し、短い入力の終了時に停止します。  
+`left.ZipAll(right)` は両入力が終了するまで反復し、不足分をそれぞれの型のゼロ値で補います。  
+`ZipDefaults.WithKey` / `WithValue` で片側または両側の既定値を指定でき、各メソッドはもう片側の設定を保ったコピーを返します。  
+設定を複数渡した場合は最後の設定値を使います。  
+どちらも nil 入力を空として扱い、戻り値の `Seq2` は `Pipe`、`ToMap`、`ToSeq2` に接続できます。  
+構築時には入力を評価せず、評価ごとにキー、値の順に取得し、下流の途中終了時には両方の入力を停止します。  
+`Zip` は値側の終了を検出する際にキー側を1要素余分に取得することがあります。  
+再評価できるかどうかは両入力に従います。  
+
+```go
+left := seq.FromSlice([]int{1, 2})
+right := seq.FromSlice([]string{"a"})
+defaults := seq.ZipDefaults[int, string]{}.WithKey(-1).WithValue("missing")
+pairs := left.ZipAll(right, defaults).Pipe(seq.Take2(2).Operator)
+// seq.ToMap(pairs): map[1:a 2:missing]
+```
+
 ## オペレーター
 
 このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
