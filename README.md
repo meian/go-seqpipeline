@@ -90,9 +90,9 @@ For operations with separate functions for single values and key-value pairs, th
 When types can be inferred from the arguments to an operator factory, pass its return value directly to `Pipe` / `Pipe2` according to the output type.  
 Arguments such as callbacks carry the input and output type information, so explicit type arguments are unnecessary.  
 
-When types cannot be inferred from the factory arguments, pass the returned configuration's method value to infer types from the input when connected.  
-`Take(n)` and `Skip(n)` each share one configuration value: pass `.Operator` to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
-The count carries no element type information, so explicit type arguments are unnecessary when these methods are connected.  
+Operations whose factory arguments carry no type information return a configuration value whose methods infer types from the input.  
+Pass `.Operator` as a method value to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
+The input determines the types when connected, so explicit type arguments are unnecessary.  
 
 ### Connecting operators
 
@@ -115,7 +115,7 @@ Because all four operator types are function types, they can also be called dire
 Implement a transformation function using this library's `Seq` / `Seq2` types for input and output, and pass it directly to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
 You can also compose existing operators by calling `src.Pipe(...)` / `src.Pipe2(...)` inside the function.  
-For configuration values whose input types are not yet known, provide an `Operator` method with type parameters, as `Take` does, and pass `.Operator` to `Pipe` / `Pipe2` according to the output type.  
+For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 
 ### Executable examples
 
