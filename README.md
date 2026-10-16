@@ -48,7 +48,7 @@ func main() {
 			return strconv.Itoa(k), len(v)
 		})).
 		Pipe2(seq.Filter2(func(k string, v int) bool { return v > 1 })).
-		Pipe2(seq.Take2(1).Operator)
+		Pipe2(seq.Take(1).Operator2)
 	for k, v := range pairs {
 		fmt.Println(k, v) // 1 3
 	}
@@ -90,9 +90,9 @@ For operations with separate functions for single values and key-value pairs, th
 When types can be inferred from the arguments to an operator factory, pass its return value directly to `Pipe` / `Pipe2` according to the output type.  
 Arguments such as callbacks carry the input and output type information, so explicit type arguments are unnecessary.  
 
-When types cannot be inferred from the factory arguments, pass the returned value's `.Operator` method value to `Pipe` for `Take`, or `Pipe2` for `Take2`.  
-The count arguments to `Take` / `Take2` carry no element type information, so these operators infer the element type, or key and value types, when connected.  
-`Skip(n)` shares one configuration value: pass `.Operator` to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
+Operations whose factory arguments carry no type information return a configuration value whose methods infer types from the input.  
+Pass `.Operator` as a method value to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
+The input determines the types when connected, so explicit type arguments are unnecessary.  
 
 ### Connecting operators
 
@@ -115,7 +115,7 @@ Because all four operator types are function types, they can also be called dire
 Implement a transformation function using this library's `Seq` / `Seq2` types for input and output, and pass it directly to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
 You can also compose existing operators by calling `src.Pipe(...)` / `src.Pipe2(...)` inside the function.  
-For configuration values whose input types are not yet known, provide an `Operator` method with type parameters, as `Take` does, and pass `.Operator` to `Pipe` / `Pipe2` according to the output type.  
+For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 
 ### Executable examples
 
@@ -126,7 +126,7 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | --- | --- | --- |
 | Transform elements or keys and values | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | Filter by a condition | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
-| Limit results and infer types (.Operator) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
+| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake_pairs](seq/example_test.go#L47) |
 | Skip leading elements or pairs | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
@@ -148,8 +148,8 @@ Building a pipeline with built-in operators and calling `ToSeq` / `ToSeq2` do no
 Input is processed in iteration order when `ToSlice` / `ToMap` is called or the iterator is executed.  
 
 When a downstream `yield` returns `false` or a `range` loop is stopped with `break`, upstream iteration also stops.  
-For example, `Take` / `Take2` do not execute the upstream iterator when `n <= 0`.  
-Once the limit is reached, they exit the `range` loop with `return`, propagating the stop upstream so subsequent upstream processing also stops.  
+For example, `Take` does not execute the upstream iterator when `n <= 0`.  
+Once the limit is reached, its operators exit the `range` loop with `return`, propagating the stop upstream so subsequent upstream processing also stops.  
 
 `Skip(n)` skips up to the first `n` elements or pairs during iteration, preserving the order and duplicates of the rest.  
 It skips nothing when `n <= 0` and returns an empty sequence when `n` is at least the input count.  
@@ -159,7 +159,7 @@ Custom operators must likewise process input when their returned iterator is exe
 ### Re-evaluation and input references
 
 Whether a pipeline can be evaluated again depends on the original iterator.  
-`Take` / `Take2` and `Skip` initialize their remaining counts for each evaluation.  
+`Take` and `Skip` initialize their remaining counts for each evaluation.  
 `FromSlice` / `FromMap` do not copy the input; they reference its elements at evaluation time.  
 Slices are iterated in their original order, while map iteration order is not guaranteed.  
 For duplicate keys, `ToMap` keeps the last value in iteration order.  

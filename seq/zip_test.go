@@ -277,9 +277,9 @@ func testZipEvaluation(t *testing.T, zip func(seq.Seq[int], seq.Seq[string]) seq
 						break
 					}
 				case "Take":
-					assertEqual(t, seq.ToMap(zipped.Pipe2(seq.Take2(1).Operator)), map[int]string{1: "a"})
+					assertEqual(t, seq.ToMap(zipped.Pipe2(seq.Take(1).Operator2)), map[int]string{1: "a"})
 				case "TakeZero":
-					assertEqual(t, seq.ToMap(zipped.Pipe2(seq.Take2(0).Operator)), map[int]string{})
+					assertEqual(t, seq.ToMap(zipped.Pipe2(seq.Take(0).Operator2)), map[int]string{})
 				case "panic":
 					func() {
 						defer func() {
@@ -305,14 +305,14 @@ func testZipEvaluation(t *testing.T, zip func(seq.Seq[int], seq.Seq[string]) seq
 	}
 }
 
-// TestZipTakeStopsInputs は Take2 の指定件数を超えて取得せず、両入力を停止することを検証する。
+// TestZipTakeStopsInputs は Take の指定件数を超えて取得せず、両入力を停止することを検証する。
 func TestZipTakeStopsInputs(t *testing.T) {
 	for _, alignment := range []seq.ZipAlign{seq.AlignShortest, seq.AlignLeft, seq.AlignRight, seq.AlignLongest} {
 		var started, visited, stopped [2]int
 		values := []int{0, 1, 2, 3, 4}
 		left := trackedZipInput(values, &started[0], &visited[0], &stopped[0])
 		right := trackedZipInput(values, &started[1], &visited[1], &stopped[1])
-		output := left.Pipe2(seq.Zip(right).AlignBy(alignment).Operator).Pipe2(seq.Take2(3).Operator)
+		output := left.Pipe2(seq.Zip(right).AlignBy(alignment).Operator).Pipe2(seq.Take(3).Operator2)
 		assertEqual(t, collectPairs(seq.ToSeq2(output)), []pair[int, int]{{0, 0}, {1, 1}, {2, 2}})
 		assertEqual(t, visited, [2]int{3, 3})
 		assertEqual(t, stopped, [2]int{1, 1})
@@ -427,7 +427,7 @@ func TestZipInputTermination(t *testing.T) {
 	}
 }
 
-// TestZipStopAfterPadding は不足分の補完を含む反復を Take2 で制限し、余分な取得なく入力を解放できることを検証する。
+// TestZipStopAfterPadding は不足分の補完を含む反復を Take で制限し、余分な取得なく入力を解放できることを検証する。
 func TestZipStopAfterPadding(t *testing.T) {
 	for _, alignment := range []seq.ZipAlign{seq.AlignLeft, seq.AlignRight, seq.AlignLongest} {
 		for _, lengths := range [][2]int{{0, 3}, {3, 0}, {1, 3}, {3, 1}} {
@@ -438,7 +438,7 @@ func TestZipStopAfterPadding(t *testing.T) {
 				AlignBy(alignment).
 				WithDefaultValue("missing").
 				WithDefaultKey(-1)
-			output := left.Pipe2(config.Operator).Pipe2(seq.Take2(2).Operator)
+			output := left.Pipe2(config.Operator).Pipe2(seq.Take(2).Operator2)
 			count := min(2, max(lengths[0], lengths[1]))
 			if alignment == seq.AlignLeft {
 				count = min(2, lengths[0])
