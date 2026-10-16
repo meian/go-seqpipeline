@@ -88,10 +88,10 @@ The default alignment is `AlignShortest`; use `AlignBy` to select the output len
 | `AlignRight` | Right input | Missing keys |
 | `AlignLongest` | Longer input | Missing keys or values |
 
-`WithKey` / `WithValue` set padding values, defaulting to the respective type's zero value.  
+`WithDefaultKey` / `WithDefaultValue` set padding values, defaulting to the respective type's zero value.  
 Each configuration method returns a copy, preserving the other settings; repeated calls replace that setting.  
-`WithKey` fixes the key type from its argument, so the left input must have the same element type.  
-Without `WithKey`, the key type is inferred from the left input when connecting `.Operator`.  
+`WithDefaultKey` fixes the key type from its argument, so the left input must have the same element type.  
+Without `WithDefaultKey`, the key type is inferred from the left input when connecting `.Operator`.  
 `AlignShortest` does not use padding values, and `AlignBy` panics for an invalid alignment.  
 Construction and connection do not evaluate inputs, and nil inputs are treated as empty.  
 `AlignRight` pulls the right input first; all other alignments pull the left input first.  
@@ -102,7 +102,7 @@ Whether the result can be evaluated again depends on both inputs.
 ```go
 left := seq.FromSlice([]int{1, 2})
 right := seq.FromSlice([]string{"a"})
-pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithValue("missing").Operator)
+pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing").Operator)
 // seq.ToMap(pairs): map[1:a 2:missing]
 ```
 

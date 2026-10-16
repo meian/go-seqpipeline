@@ -88,10 +88,10 @@ func main() {
 | `AlignRight` | 右の入力の件数 | 不足するキー |
 | `AlignLongest` | 長い入力の件数 | 不足するキー・値 |
 
-`WithKey` / `WithValue` で不足分の既定値を設定でき、未指定側はその型のゼロ値を使います。  
+`WithDefaultKey` / `WithDefaultValue` で不足分の既定値を設定でき、未指定側はその型のゼロ値を使います。  
 各設定メソッドは他の設定を保ったコピーを返し、同じ設定を繰り返すと最後の値に置き換わります。  
-`WithKey` は引数からキー型を確定するため、左の入力も同じ要素型である必要があります。  
-`WithKey` を省略した場合は、`.Operator` の接続時に左の入力からキー型を推論します。  
+`WithDefaultKey` は引数からキー型を確定するため、左の入力も同じ要素型である必要があります。  
+`WithDefaultKey` を省略した場合は、`.Operator` の接続時に左の入力からキー型を推論します。  
 `AlignShortest` では既定値を使わず、`AlignBy` に不正な終了条件を渡すと panic します。  
 設定の構築・接続時には入力を評価せず、nil 入力は空として扱います。  
 `AlignRight` では右から、それ以外では左から要素を取得します。  
@@ -102,7 +102,7 @@ func main() {
 ```go
 left := seq.FromSlice([]int{1, 2})
 right := seq.FromSlice([]string{"a"})
-pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithValue("missing").Operator)
+pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing").Operator)
 // seq.ToMap(pairs): map[1:a 2:missing]
 ```
 

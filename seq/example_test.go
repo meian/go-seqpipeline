@@ -239,8 +239,8 @@ func ExampleZip() {
 func ExampleZip_alignBy() {
 	left := seq.FromSlice([]int{1, 2})
 	right := seq.FromSlice([]string{"a"})
-	fmt.Println(seq.ToMap(left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithValue("missing").Operator)))
-	fmt.Println(seq.ToMap(seq.Seq[int](nil).Pipe2(seq.Zip(right).WithKey(-1).AlignBy(seq.AlignRight).Operator)))
+	fmt.Println(seq.ToMap(left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing").Operator)))
+	fmt.Println(seq.ToMap(seq.Seq[int](nil).Pipe2(seq.Zip(right).WithDefaultKey(-1).AlignBy(seq.AlignRight).Operator)))
 	fmt.Println(seq.ToMap(left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLongest).Operator)))
 	// Output:
 	// map[1:a 2:missing]
