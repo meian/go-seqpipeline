@@ -279,30 +279,30 @@ func TestExternalTransforms2(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 }
 
-// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Operator2 として接続し、型推論と再評価を確認する。
+// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take.Operator2 を Operator2 として接続し、型推論と再評価を確認する。
 func TestDirectTransform2Pipeline(t *testing.T) {
 	op := keyText
 	var transform seq.Operator2[string, int, string, int] = seq.Filter2(func(k string, v int) bool {
 		return v > 1
 	})
-	var limit seq.Operator2[string, int, string, int] = seq.Take2(1).Operator
+	var limit seq.Operator2[string, int, string, int] = seq.Take(1).Operator2
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe2(op).Pipe2(transform).Pipe2(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
 	}
 }
 
-// TestTake2TypeInferenceAcrossTypeChanges は、複数の型変換の前後で Take2 の型を推論でき、遅延評価・件数制限・再評価・途中終了が成立することを確認する。
-func TestTake2TypeInferenceAcrossTypeChanges(t *testing.T) {
+// TestTakeOperator2TypeInferenceAcrossTypeChanges は、複数の型変換の前後で Take の型を推論でき、遅延評価・件数制限・再評価・途中終了が成立することを確認する。
+func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0
 	var pipeline seq.Seq2[string, int] = seq.FromSeq2(slices.All([]int{1, 22, 333, 4444})).
-		Pipe2(seq.Take2(10).Operator).
+		Pipe2(seq.Take(10).Operator2).
 		Pipe2(seq.Map2(func(k, v int) ([]int, string) {
 			reads++
 			return []int{k}, strconv.Itoa(v)
 		})).
 		Pipe2(seq.Filter2(func(k []int, v string) bool { return len(v) > 1 })).
-		Pipe2(seq.Take2(2).Operator).
+		Pipe2(seq.Take(2).Operator2).
 		Pipe2(seq.Map2(func(k []int, v string) (string, int) { return strconv.Itoa(k[0]), len(v) }))
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
@@ -336,7 +336,7 @@ func TestCrossTypePipeline(t *testing.T) {
 				Pipe(seq.Map(strconv.Itoa)).
 				Pipe2(toPairs).
 				Pipe2(seq.Filter2(func(k []int, v string) bool { return k[0] > 1 })).
-				Pipe2(seq.Take2(2).Operator).
+				Pipe2(seq.Take(2).Operator2).
 				Pipe(toValues).
 				Pipe(seq.Take(n).Operator)
 			assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
@@ -385,7 +385,7 @@ func TestSkipAfterFilter(t *testing.T) {
 	}
 }
 
-// TestSkip2AfterFilter は、選別後の組を読み飛ばし、型変換と Take2 に接続できることを確認する。
+// TestSkip2AfterFilter は、選別後の組を読み飛ばし、型変換と Take に接続できることを確認する。
 func TestSkip2AfterFilter(t *testing.T) {
 	reads := 0
 	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
@@ -400,11 +400,33 @@ func TestSkip2AfterFilter(t *testing.T) {
 		Pipe2(seq.Filter2(func(k, v int) bool { return k%2 == 0 })).
 		Pipe2(seq.Skip(1).Operator2).
 		Pipe2(seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })).
-		Pipe2(seq.Take2(2).Operator)
+		Pipe2(seq.Take(2).Operator2)
 	assertEqual(t, reads, 0)
 	want := []pair[string, int]{{Key: "4", Value: 40}, {Key: "6", Value: 60}}
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 		assertEqual(t, reads, round*6)
+	}
+}
+
+// TestTakeSharedConfigurationPipeline は、共通設定を型変換の前後と Seq・Seq2 間で接続し、再評価時も独立して制限することを確認する。
+func TestTakeSharedConfigurationPipeline(t *testing.T) {
+	take := seq.Take(2)
+	values := seq.FromSlice([]int{1, 22, 333}).
+		Pipe(take.Operator).
+		Pipe(seq.Map(strconv.Itoa)).
+		Pipe(take.Operator)
+	pairs := seq.FromSeq2(slices.All([]int{1, 22, 333})).
+		Pipe2(take.Operator2).
+		Pipe2(seq.Map2(func(k, v int) (string, string) {
+			return strconv.Itoa(k), strconv.Itoa(v)
+		})).
+		Pipe2(take.Operator2)
+	other := seq.FromSlice([]int{4, 5, 6}).Pipe(take.Operator)
+	for round := 0; round < 2; round++ {
+		assertEqual(t, seq.ToSlice(values), []string{"1", "22"})
+		want := []pair[string, string]{{Key: "0", Value: "1"}, {Key: "1", Value: "22"}}
+		assertEqual(t, collectPairs(seq.ToSeq2(pairs)), want)
+		assertEqual(t, seq.ToSlice(other), []int{4, 5})
 	}
 }

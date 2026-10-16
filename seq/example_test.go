@@ -44,8 +44,8 @@ func ExampleTake() {
 	// Output: [3 2]
 }
 
-func ExampleTake2() {
-	pipeline := seq.FromSeq2(slices.All([]int{3, 2, 1})).Pipe2(seq.Take2(2).Operator)
+func ExampleTake_pairs() {
+	pipeline := seq.FromSeq2(slices.All([]int{3, 2, 1})).Pipe2(seq.Take(2).Operator2)
 	for k, v := range pipeline {
 		fmt.Printf("%d: %d\n", k, v)
 	}
@@ -179,7 +179,7 @@ func withLength[T ~string](src seq.Seq[T]) seq.Seq2[[]int, T] {
 func ExampleSeq_Pipe2() {
 	pairs := seq.FromSlice([]string{"a", "bbb", "cc"}).
 		Pipe2(withLength).
-		Pipe2(seq.Take2(2).Operator)
+		Pipe2(seq.Take(2).Operator2)
 	for k, v := range pairs {
 		fmt.Println(k, v)
 	}
@@ -199,7 +199,7 @@ func ExampleSeq2_Pipe() {
 func ExampleSeq2_Pipe2() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
-		Pipe2(seq.Take2(2).Operator)
+		Pipe2(seq.Take(2).Operator2)
 	for k, v := range pipeline {
 		fmt.Println(k, v)
 	}

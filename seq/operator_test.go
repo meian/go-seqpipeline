@@ -53,7 +53,7 @@ func TestOperator2DirectCall(t *testing.T) {
 	var filterFactory func(func(string, string) bool) seq.Operator2[string, string, string, string] = seq.Filter2[string, string]
 	mapped := mapFactory(func(k, v int) (string, string) { return strconv.Itoa(k), strconv.Itoa(v) })
 	filtered := filterFactory(func(k, v string) bool { return len(v) > 1 })
-	var limit seq.Operator2[string, string, string, string] = seq.Take2(1).Operator
+	var limit seq.Operator2[string, string, string, string] = seq.Take(1).Operator2
 	var custom seq.Operator2[int, int, string, int] = keyText
 	src := seq.FromSeq2(slices.All([]int{1, 22, 333}))
 	want := []pair[string, string]{{Key: "1", Value: "22"}}
@@ -69,7 +69,7 @@ func TestComposedOperator2(t *testing.T) {
 	reads := 0
 	var op seq.Operator2[int, int, int, int] = func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
 		return src.Pipe2(seq.Filter2(func(k, v int) bool { return v%2 == 0 })).
-			Pipe2(seq.Take2(2).Operator)
+			Pipe2(seq.Take(2).Operator2)
 	}
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
 		Pipe2(seq.Map2(func(k, v int) (int, int) {
