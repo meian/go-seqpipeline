@@ -28,7 +28,11 @@ func TestToSlice(t *testing.T) {
 }
 
 func TestToSliceEmpty(t *testing.T) {
-	for _, src := range []seq.Seq[int]{seq.FromSlice([]int{}), seq.FromSlice([]int(nil)), seq.FromSeq(func(func(int) bool) {})} {
+	for _, src := range []seq.Seq[int]{
+		seq.FromSlice([]int{}),
+		seq.FromSlice([]int(nil)),
+		seq.FromSeq(func(func(int) bool) {}),
+	} {
 		assertEqual(t, seq.ToSlice(src), []int(nil))
 	}
 }
@@ -117,7 +121,11 @@ func TestFromMap(t *testing.T) {
 func TestToMap(t *testing.T) {
 	reads := 0
 	src := func(yield func(string, int) bool) {
-		for _, p := range []pair[string, int]{{Key: "a", Value: 1}, {Key: "b", Value: 2}, {Key: "a", Value: 3}} {
+		for _, p := range []pair[string, int]{
+			{Key: "a", Value: 1},
+			{Key: "b", Value: 2},
+			{Key: "a", Value: 3},
+		} {
 			reads++
 			if !yield(p.Key, p.Value) {
 				return
@@ -135,7 +143,11 @@ func TestToMap(t *testing.T) {
 }
 
 func TestToMapEmpty(t *testing.T) {
-	for _, src := range []seq.Seq2[string, int]{seq.FromMap(map[string]int{}), seq.FromMap(map[string]int(nil)), seq.FromSeq2(func(func(string, int) bool) {})} {
+	for _, src := range []seq.Seq2[string, int]{
+		seq.FromMap(map[string]int{}),
+		seq.FromMap(map[string]int(nil)),
+		seq.FromSeq2(func(func(string, int) bool) {}),
+	} {
 		got := seq.ToMap(src)
 		if got == nil {
 			t.Fatal("ToMap returned nil")

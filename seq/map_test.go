@@ -1,13 +1,17 @@
 package seq_test
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func TestMapNilInput(t *testing.T) {
-	iterator := seq.Map(func(int) int { t.Fatal("Map callback called"); return 0 })(nil)
+	iterator := seq.Map(func(int) int {
+		t.Fatal("Map callback called")
+		return 0
+	})(nil)
 	for round := 0; round < 2; round++ {
 		for range iterator {
 			t.Fatal("nil input yielded a value")
@@ -16,10 +20,70 @@ func TestMapNilInput(t *testing.T) {
 }
 
 func TestMap2NilInput(t *testing.T) {
-	iterator := seq.Map2(func(int, string) (int, string) { t.Fatal("Map2 callback called"); return 0, "" })(nil)
+	iterator := seq.Map2(func(int, string) (int, string) {
+		t.Fatal("Map2 callback called")
+		return 0, ""
+	})(nil)
 	for round := 0; round < 2; round++ {
 		for range iterator {
 			t.Fatal("nil input yielded a value")
 		}
 	}
+}
+
+// TestMap は型変換・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
+func TestMap(t *testing.T) {
+	reads, calls := 0, 0
+	src := seq.Seq[int](func(yield func(int) bool) {
+		for _, v := range []int{3, 1, 3} {
+			reads++
+			if !yield(v) {
+				return
+			}
+		}
+	})
+	mapped := seq.Map(func(v int) string {
+		calls++
+		return strconv.Itoa(v)
+	})(src)
+	assertEqual(t, []int{reads, calls}, []int{0, 0})
+	for round := 1; round <= 2; round++ {
+		assertEqual(t, seq.ToSlice(mapped), []string{"3", "1", "3"})
+		assertEqual(t, []int{reads, calls}, []int{3 * round, 3 * round})
+	}
+	reads, calls = 0, 0
+	mapped(func(v string) bool {
+		assertEqual(t, v, "3")
+		return false
+	})
+	assertEqual(t, []int{reads, calls}, []int{1, 1})
+}
+
+// TestMap2 はキーと値の型変換・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
+func TestMap2(t *testing.T) {
+	reads, calls := 0, 0
+	src := seq.Seq2[int, string](func(yield func(int, string) bool) {
+		for _, p := range []pair[int, string]{{3, "aaa"}, {1, "b"}, {3, "cc"}} {
+			reads++
+			if !yield(p.Key, p.Value) {
+				return
+			}
+		}
+	})
+	mapped := seq.Map2(func(k int, v string) (string, int) {
+		calls++
+		return strconv.Itoa(k), len(v)
+	})(src)
+	assertEqual(t, []int{reads, calls}, []int{0, 0})
+	want := []pair[string, int]{{"3", 3}, {"1", 1}, {"3", 2}}
+	for round := 1; round <= 2; round++ {
+		assertEqual(t, collectPairs(seq.ToSeq2(mapped)), want)
+		assertEqual(t, []int{reads, calls}, []int{3 * round, 3 * round})
+	}
+	reads, calls = 0, 0
+	mapped(func(k string, v int) bool {
+		assertEqual(t, pair[string, int]{k, v}, want[0])
+		return false
+	})
+	assertEqual(t, []int{reads, calls}, []int{1, 1})
 }

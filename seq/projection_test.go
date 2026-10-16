@@ -37,7 +37,10 @@ func TestSeq2Keys(t *testing.T) {
 			var got []int
 			switch mode {
 			case "yield":
-				projected(func(v int) bool { got = append(got, v); return false })
+				projected(func(v int) bool {
+					got = append(got, v)
+					return false
+				})
 			case "break":
 				for v := range projected {
 					got = append(got, v)
@@ -64,7 +67,11 @@ func TestSeq2Keys(t *testing.T) {
 	pipelineWant := []string{strconv.Itoa(want[0]), strconv.Itoa(want[2])}
 	assertEqual(t, slices.Collect(seq.ToSeq(pipeline)), pipelineWant)
 
-	for _, input := range []seq.Seq2[int, int]{nil, seq.FromSeq2(iter.Seq2[int, int](nil)), func(func(int, int) bool) {}} {
+	for _, input := range []seq.Seq2[int, int]{
+		nil,
+		seq.FromSeq2(iter.Seq2[int, int](nil)),
+		func(func(int, int) bool) {},
+	} {
 		output := input.Keys()
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
@@ -101,7 +108,10 @@ func TestSeq2Values(t *testing.T) {
 			var got []int
 			switch mode {
 			case "yield":
-				projected(func(v int) bool { got = append(got, v); return false })
+				projected(func(v int) bool {
+					got = append(got, v)
+					return false
+				})
 			case "break":
 				for v := range projected {
 					got = append(got, v)
@@ -128,7 +138,11 @@ func TestSeq2Values(t *testing.T) {
 	pipelineWant := []string{strconv.Itoa(want[0]), strconv.Itoa(want[2])}
 	assertEqual(t, slices.Collect(seq.ToSeq(pipeline)), pipelineWant)
 
-	for _, input := range []seq.Seq2[int, int]{nil, seq.FromSeq2(iter.Seq2[int, int](nil)), func(func(int, int) bool) {}} {
+	for _, input := range []seq.Seq2[int, int]{
+		nil,
+		seq.FromSeq2(iter.Seq2[int, int](nil)),
+		func(func(int, int) bool) {},
+	} {
 		output := input.Values()
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")

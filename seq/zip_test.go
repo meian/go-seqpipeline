@@ -16,7 +16,8 @@ func TestZip(t *testing.T) {
 	var op seq.ToSeq2Operator[int, int, string] = config.Operator
 	assertEqual(t, collectPairs(seq.ToSeq2(op(left))), []pair[int, string]{{3, "a"}, {1, "b"}})
 	// 同じ設定から異なるキー型を推論できる。
-	assertEqual(t, seq.ToMap(seq.FromSlice([]string{"x"}).Pipe2(config.Operator)), map[string]string{"x": "a"})
+	stringKeys := seq.FromSlice([]string{"x"}).Pipe2(config.Operator)
+	assertEqual(t, seq.ToMap(stringKeys), map[string]string{"x": "a"})
 }
 
 // TestZipAlignBy は入力の長さ・空・nil と4つの終了条件を組み合わせ、出力の順序と補完を検証する。
@@ -33,24 +34,82 @@ func TestZipAlignBy(t *testing.T) {
 		values seq.Seq[string]
 		want   [4][]pair[int, string]
 	}{
-		{"equal", seq.FromSlice([]int{3, 1, 3}), seq.FromSlice([]string{"a", "b", "c"}), [4][]pair[int, string]{both, both, both, both}},
-		{"keys longer", seq.FromSlice([]int{3, 1, 3}), seq.FromSlice([]string{"a"}), [4][]pair[int, string]{first, paddedValues, first, paddedValues}},
-		{"values longer", seq.FromSlice([]int{3}), seq.FromSlice([]string{"a", "b", "c"}), [4][]pair[int, string]{first, first, paddedKeys, paddedKeys}},
-		{"empty keys", seq.FromSlice([]int{}), seq.FromSlice([]string{"a"}), [4][]pair[int, string]{nil, nil, onlyValues, onlyValues}},
-		{"empty values", seq.FromSlice([]int{3}), seq.FromSlice([]string{}), [4][]pair[int, string]{nil, onlyKeys, nil, onlyKeys}},
-		{"both empty", seq.FromSlice([]int{}), seq.FromSlice([]string{}), [4][]pair[int, string]{}},
-		{"nil keys", nil, seq.FromSlice([]string{"a"}), [4][]pair[int, string]{nil, nil, onlyValues, onlyValues}},
-		{"nil values", seq.FromSlice([]int{3}), nil, [4][]pair[int, string]{nil, onlyKeys, nil, onlyKeys}},
-		{"both nil", nil, nil, [4][]pair[int, string]{}},
-		{"nil and empty", nil, seq.FromSlice([]string{}), [4][]pair[int, string]{}},
-		{"empty and nil", seq.FromSlice([]int{}), nil, [4][]pair[int, string]{}},
+		{
+			name:   "equal",
+			keys:   seq.FromSlice([]int{3, 1, 3}),
+			values: seq.FromSlice([]string{"a", "b", "c"}),
+			want:   [4][]pair[int, string]{both, both, both, both},
+		},
+		{
+			name:   "keys longer",
+			keys:   seq.FromSlice([]int{3, 1, 3}),
+			values: seq.FromSlice([]string{"a"}),
+			want:   [4][]pair[int, string]{first, paddedValues, first, paddedValues},
+		},
+		{
+			name:   "values longer",
+			keys:   seq.FromSlice([]int{3}),
+			values: seq.FromSlice([]string{"a", "b", "c"}),
+			want:   [4][]pair[int, string]{first, first, paddedKeys, paddedKeys},
+		},
+		{
+			name:   "empty keys",
+			keys:   seq.FromSlice([]int{}),
+			values: seq.FromSlice([]string{"a"}),
+			want:   [4][]pair[int, string]{nil, nil, onlyValues, onlyValues},
+		},
+		{
+			name:   "empty values",
+			keys:   seq.FromSlice([]int{3}),
+			values: seq.FromSlice([]string{}),
+			want:   [4][]pair[int, string]{nil, onlyKeys, nil, onlyKeys},
+		},
+		{
+			name:   "both empty",
+			keys:   seq.FromSlice([]int{}),
+			values: seq.FromSlice([]string{}),
+			want:   [4][]pair[int, string]{},
+		},
+		{
+			name:   "nil keys",
+			keys:   nil,
+			values: seq.FromSlice([]string{"a"}),
+			want:   [4][]pair[int, string]{nil, nil, onlyValues, onlyValues},
+		},
+		{
+			name:   "nil values",
+			keys:   seq.FromSlice([]int{3}),
+			values: nil,
+			want:   [4][]pair[int, string]{nil, onlyKeys, nil, onlyKeys},
+		},
+		{
+			name:   "both nil",
+			keys:   nil,
+			values: nil,
+			want:   [4][]pair[int, string]{},
+		},
+		{
+			name:   "nil and empty",
+			keys:   nil,
+			values: seq.FromSlice([]string{}),
+			want:   [4][]pair[int, string]{},
+		},
+		{
+			name:   "empty and nil",
+			keys:   seq.FromSlice([]int{}),
+			values: nil,
+			want:   [4][]pair[int, string]{},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for i, align := range []struct {
 				name  string
 				value seq.ZipAlign
 			}{
-				{"shortest", seq.AlignShortest}, {"left", seq.AlignLeft}, {"right", seq.AlignRight}, {"longest", seq.AlignLongest},
+				{"shortest", seq.AlignShortest},
+				{"left", seq.AlignLeft},
+				{"right", seq.AlignRight},
+				{"longest", seq.AlignLongest},
 			} {
 				t.Run(align.name, func(t *testing.T) {
 					base := seq.Zip(tc.values).AlignBy(align.value)
@@ -108,8 +167,18 @@ func TestZipDefaults(t *testing.T) {
 				values []string
 				want   []pair[int, string]
 			}{
-				{"missing keys", []int{0}, []string{"", "b", "c"}, []pair[int, string]{{0, ""}, {tc.key, "b"}, {tc.key, "c"}}},
-				{"missing values", []int{0, 2, 3}, []string{""}, []pair[int, string]{{0, ""}, {2, tc.value}, {3, tc.value}}},
+				{
+					name:   "missing keys",
+					keys:   []int{0},
+					values: []string{"", "b", "c"},
+					want:   []pair[int, string]{{0, ""}, {tc.key, "b"}, {tc.key, "c"}},
+				},
+				{
+					name:   "missing values",
+					keys:   []int{0, 2, 3},
+					values: []string{""},
+					want:   []pair[int, string]{{0, ""}, {2, tc.value}, {3, tc.value}},
+				},
 			} {
 				t.Run(input.name, func(t *testing.T) {
 					output := tc.configure(seq.FromSlice(input.values))(seq.FromSlice(input.keys))
@@ -149,7 +218,10 @@ func TestZipAlignByInvalid(t *testing.T) {
 			func() { seq.Zip(seq.Seq[string](nil)).WithDefaultKey(0).AlignBy(alignment) },
 		} {
 			func() {
-				defer func() { assertEqual(t, recover(), any(fmt.Sprintf("seq.Zip: invalid alignment: %d", alignment))) }()
+				defer func() {
+					want := fmt.Sprintf("seq.Zip: invalid alignment: %d", alignment)
+					assertEqual(t, recover(), any(want))
+				}()
 				configure()
 			}()
 		}
@@ -196,7 +268,8 @@ func testZipEvaluation(t *testing.T, zip func(seq.Seq[int], seq.Seq[string]) seq
 			for i := 1; i <= 2; i++ {
 				switch mode {
 				case "full":
-					assertEqual(t, collectPairs(seq.ToSeq2(zipped)), []pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}})
+					want := []pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+					assertEqual(t, collectPairs(seq.ToSeq2(zipped)), want)
 				case "yield":
 					zipped(func(int, string) bool { return false })
 				case "break":
@@ -361,7 +434,11 @@ func TestZipStopAfterPadding(t *testing.T) {
 			var started, visited, stopped [2]int
 			left := trackedZipInput(make([]int, lengths[0]), &started[0], &visited[0], &stopped[0])
 			right := trackedZipInput(make([]string, lengths[1]), &started[1], &visited[1], &stopped[1])
-			output := left.Pipe2(seq.Zip(right).AlignBy(alignment).WithDefaultValue("missing").WithDefaultKey(-1).Operator).Pipe2(seq.Take2(2).Operator)
+			config := seq.Zip(right).
+				AlignBy(alignment).
+				WithDefaultValue("missing").
+				WithDefaultKey(-1)
+			output := left.Pipe2(config.Operator).Pipe2(seq.Take2(2).Operator)
 			count := min(2, max(lengths[0], lengths[1]))
 			if alignment == seq.AlignLeft {
 				count = min(2, lengths[0])
@@ -397,7 +474,9 @@ func TestZipFiniteAndInfinite(t *testing.T) {
 		if alignment == seq.AlignRight {
 			left, right = infinite, finite
 		}
-		assertEqual(t, len(collectPairs(seq.ToSeq2(left.Pipe2(seq.Zip(right).AlignBy(alignment).Operator)))), 2)
+		output := left.Pipe2(seq.Zip(right).AlignBy(alignment).Operator)
+		got := collectPairs(seq.ToSeq2(output))
+		assertEqual(t, len(got), 2)
 		assertEqual(t, reads, 2)
 		assertEqual(t, stops, 1)
 	}
@@ -407,20 +486,33 @@ func TestZipFiniteAndInfinite(t *testing.T) {
 func TestZipNonComparableDefaults(t *testing.T) {
 	left := seq.FromSlice([][]int{{1}})
 	right := seq.FromSlice([]map[string]int{{"a": 1}, {"b": 2}})
-	config := seq.Zip(right).WithDefaultKey([]int{-1}).WithDefaultValue(map[string]int{"missing": -1}).AlignBy(seq.AlignLongest)
+	config := seq.Zip(right).
+		WithDefaultKey([]int{-1}).
+		WithDefaultValue(map[string]int{"missing": -1}).
+		AlignBy(seq.AlignLongest)
 	assertEqual(t, collectPairs(seq.ToSeq2(left.Pipe2(config.Operator))), []pair[[]int, map[string]int]{
 		{[]int{1}, map[string]int{"a": 1}}, {[]int{-1}, map[string]int{"b": 2}},
 	})
-	assertEqual(t, collectPairs(seq.ToSeq2(seq.Zip(seq.Seq[map[string]int](nil)).WithDefaultKey([]int{-1}).WithDefaultValue(map[string]int{"missing": -1}).AlignBy(seq.AlignLeft).Operator(left))), []pair[[]int, map[string]int]{{[]int{1}, map[string]int{"missing": -1}}})
+	emptyRight := seq.Zip(seq.Seq[map[string]int](nil)).
+		WithDefaultKey([]int{-1}).
+		WithDefaultValue(map[string]int{"missing": -1}).
+		AlignBy(seq.AlignLeft)
+	output := emptyRight.Operator(left)
+	want := []pair[[]int, map[string]int]{
+		{[]int{1}, map[string]int{"missing": -1}},
+	}
+	assertEqual(t, collectPairs(seq.ToSeq2(output)), want)
 }
 
-// TestZipNilDoesNotEvaluateOther はnil 入力によって出力が空と決まる場合、もう片方の入力を実行しないことを検証する。
+// TestZipNilDoesNotEvaluateOther は nil 入力によって出力が空と決まる場合、もう片方の入力を実行しないことを検証する。
 func TestZipNilDoesNotEvaluateOther(t *testing.T) {
 	unexpected := seq.Seq[int](func(func(int) bool) { t.Fatal("unexpected input evaluation") })
 	empty := seq.Seq[int](nil)
 	for _, output := range []seq.Seq2[int, int]{
-		seq.Zip(unexpected).Operator(empty), seq.Zip(empty).Operator(unexpected),
-		seq.Zip(unexpected).AlignBy(seq.AlignLeft).Operator(empty), seq.Zip(empty).AlignBy(seq.AlignRight).Operator(unexpected),
+		seq.Zip(unexpected).Operator(empty),
+		seq.Zip(empty).Operator(unexpected),
+		seq.Zip(unexpected).AlignBy(seq.AlignLeft).Operator(empty),
+		seq.Zip(empty).AlignBy(seq.AlignRight).Operator(unexpected),
 	} {
 		assertEqual(t, collectPairs(seq.ToSeq2(output)), []pair[int, int](nil))
 	}
