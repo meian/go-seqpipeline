@@ -361,3 +361,50 @@ func TestCrossTypePipeline(t *testing.T) {
 		})
 	}
 }
+
+// TestSkipAfterFilter は、選別後の要素を読み飛ばし、Take の停止が上流まで伝播することを確認する。
+func TestSkipAfterFilter(t *testing.T) {
+	reads := 0
+	src := seq.Seq[int](func(yield func(int) bool) {
+		for i := 1; i <= 10; i++ {
+			reads++
+			if !yield(i) {
+				return
+			}
+		}
+	})
+	var pipeline seq.Seq[string] = src.
+		Pipe(seq.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(seq.Skip(1).Operator).
+		Pipe(seq.Map(strconv.Itoa)).
+		Pipe(seq.Take(2).Operator)
+	assertEqual(t, reads, 0)
+	for round := 1; round <= 2; round++ {
+		assertEqual(t, seq.ToSlice(pipeline), []string{"4", "6"})
+		assertEqual(t, reads, round*6)
+	}
+}
+
+// TestSkip2AfterFilter は、選別後の組を読み飛ばし、型変換と Take2 に接続できることを確認する。
+func TestSkip2AfterFilter(t *testing.T) {
+	reads := 0
+	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+		for i := 1; i <= 10; i++ {
+			reads++
+			if !yield(i, i*10) {
+				return
+			}
+		}
+	})
+	var pipeline seq.Seq2[string, int] = src.
+		Pipe2(seq.Filter2(func(k, v int) bool { return k%2 == 0 })).
+		Pipe2(seq.Skip(1).Operator2).
+		Pipe2(seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })).
+		Pipe2(seq.Take2(2).Operator)
+	assertEqual(t, reads, 0)
+	want := []pair[string, int]{{Key: "4", Value: 40}, {Key: "6", Value: 60}}
+	for round := 1; round <= 2; round++ {
+		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
+		assertEqual(t, reads, round*6)
+	}
+}

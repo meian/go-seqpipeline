@@ -251,3 +251,18 @@ func ExampleZip_alignBy() {
 	// map[-1:a]
 	// map[1:a 2:]
 }
+
+func ExampleSkip() {
+	skip := seq.Skip(1)
+	values := seq.FromSlice([]int{10, 20, 30}).Pipe(skip.Operator)
+	fmt.Println(seq.ToSlice(values))
+
+	pairs := seq.FromSeq2(slices.All([]string{"a", "b", "c"})).Pipe2(skip.Operator2)
+	for k, v := range pairs {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// [20 30]
+	// 1 b
+	// 2 c
+}
