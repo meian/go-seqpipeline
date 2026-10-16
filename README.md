@@ -83,7 +83,7 @@ In go-seqpipeline, an operator is an operation that transforms `Seq` / `Seq2` to
 ### Built-in operators
 
 The library provides operations such as transforming elements, filtering them, and limiting the number of results.  
-For operations available for both single values and key-value pairs, the library provides the pair version with a `2` suffix, as in `Filter` and `Filter2`.  
+For operations with separate functions for single values and key-value pairs, the library provides the pair version with a `2` suffix, as in `Filter` and `Filter2`.  
 
 ### Type inference
 
@@ -92,6 +92,7 @@ Arguments such as callbacks carry the input and output type information, so expl
 
 When types cannot be inferred from the factory arguments, pass the returned value's `.Operator` method value to `Pipe` for `Take`, or `Pipe2` for `Take2`.  
 The count arguments to `Take` / `Take2` carry no element type information, so these operators infer the element type, or key and value types, when connected.  
+`Skip(n)` shares one configuration value: pass `.Operator` to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
 
 ### Connecting operators
 
@@ -126,6 +127,7 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Transform elements or keys and values | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | Filter by a condition | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | Limit results and infer types (.Operator) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
+| Skip leading elements or pairs | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
 | Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](seq/example_test.go#L211) | [ExampleToSeqOperator](seq/example_test.go#L222) |
@@ -149,12 +151,15 @@ When a downstream `yield` returns `false` or a `range` loop is stopped with `bre
 For example, `Take` / `Take2` do not execute the upstream iterator when `n <= 0`.  
 Once the limit is reached, they exit the `range` loop with `return`, propagating the stop upstream so subsequent upstream processing also stops.  
 
+`Skip(n)` skips up to the first `n` elements or pairs during iteration, preserving the order and duplicates of the rest.  
+It skips nothing when `n <= 0` and returns an empty sequence when `n` is at least the input count.  
+
 Custom operators must likewise process input when their returned iterator is executed and propagate downstream stops upstream.  
 
 ### Re-evaluation and input references
 
 Whether a pipeline can be evaluated again depends on the original iterator.  
-`Take` / `Take2` initialize their remaining counts for each evaluation.  
+`Take` / `Take2` and `Skip` initialize their remaining counts for each evaluation.  
 `FromSlice` / `FromMap` do not copy the input; they reference its elements at evaluation time.  
 Slices are iterated in their original order, while map iteration order is not guaranteed.  
 For duplicate keys, `ToMap` keeps the last value in iteration order.  

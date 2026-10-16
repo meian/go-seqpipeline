@@ -83,7 +83,7 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 ### ライブラリが提供するオペレーター
 
 要素の変換や選別、取得件数の制限などの機能を提供しています。  
-単一値とキー・値の組に同じ操作を提供する場合は、`Filter` と `Filter2` のように、キー・値の組を扱う名前に `2` を付けて提供しています。  
+単一値とキー・値の組に別々の関数で同じ操作を提供する場合は、`Filter` と `Filter2` のように、キー・値の組を扱う名前に `2` を付けて提供しています。  
 
 ### 型推論
 
@@ -92,6 +92,7 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 
 生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として、`Take` なら `Pipe`、`Take2` なら `Pipe2` に渡す必要があります。  
 `Take` / `Take2` の件数指定は要素型の情報を持たないため、接続時に入力の要素型、またはキーと値の型を推論します。  
+`Skip(n)` は共通の設定値を使い、単一値には `.Operator` を `Pipe` へ、キー・値の組には `.Operator2` を `Pipe2` へ渡します。  
 
 ### 接続
 
@@ -126,6 +127,7 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 | 要素・キーと値の変換 | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | 条件による選別 | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
+| 先頭の要素・組の読み飛ばし | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
 | Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](seq/example_test.go#L211) | [ExampleToSeqOperator](seq/example_test.go#L222) |
@@ -149,12 +151,15 @@ go test ./... -run '^Example' -count=1
 例えば `Take` / `Take2` は、`n <= 0` なら上流を実行しません。  
 上限に達すると `return` で `range` を抜けて上流へ停止を伝えるため、それ以降の上流の処理も停止します。  
 
+`Skip(n)` は反復時に先頭の最大 `n` 個の要素または組を読み飛ばし、残りの順序と重複を保持します。  
+`n <= 0` なら読み飛ばさず、`n` が入力件数以上なら空のシーケンスを返します。  
+
 独自オペレーターも、返すイテレーターの実行時に処理し、下流からの停止を上流へ伝える必要があります。  
 
 ### 再評価と入力の参照
 
 再評価できるかどうかは元のイテレーターに従います。  
-`Take` / `Take2` の残り件数は評価ごとに初期化します。  
+`Take` / `Take2` と `Skip` の残り件数は評価ごとに初期化します。  
 `FromSlice` / `FromMap` は入力をコピーせず、評価時点の要素を参照します。  
 スライスは元の順序で反復し、map の反復順序は保証しません。  
 `ToMap` は同じキーでは反復順で後の値を採用します。  
