@@ -232,23 +232,15 @@ func testZipEvaluation(t *testing.T, zip func(seq.Seq[int], seq.Seq[string]) seq
 	}
 }
 
-// TestZipInfiniteInputs は両入力が無限でも Take2 で必要数だけ取得し、両方を停止できることを検証する。
-func TestZipInfiniteInputs(t *testing.T) {
+// TestZipTakeStopsInputs は Take2 の指定件数を超えて取得せず、両入力を停止することを検証する。
+func TestZipTakeStopsInputs(t *testing.T) {
 	for _, alignment := range []seq.ZipAlign{seq.AlignShortest, seq.AlignLeft, seq.AlignRight, seq.AlignLongest} {
-		var visited, stopped [2]int
-		source := func(index int) seq.Seq[int] {
-			return func(yield func(int) bool) {
-				defer func() { stopped[index]++ }()
-				for i := 0; ; i++ {
-					visited[index]++
-					if !yield(i) {
-						return
-					}
-				}
-			}
-		}
-		output := source(0).Pipe2(seq.Zip(source(1)).AlignBy(alignment).Operator)
-		assertEqual(t, len(collectPairs(seq.ToSeq2(output.Pipe2(seq.Take2(3).Operator)))), 3)
+		var started, visited, stopped [2]int
+		values := []int{0, 1, 2, 3, 4}
+		left := trackedZipInput(values, &started[0], &visited[0], &stopped[0])
+		right := trackedZipInput(values, &started[1], &visited[1], &stopped[1])
+		output := left.Pipe2(seq.Zip(right).AlignBy(alignment).Operator).Pipe2(seq.Take2(3).Operator)
+		assertEqual(t, collectPairs(seq.ToSeq2(output)), []pair[int, int]{{0, 0}, {1, 1}, {2, 2}})
 		assertEqual(t, visited, [2]int{3, 3})
 		assertEqual(t, stopped, [2]int{1, 1})
 	}
