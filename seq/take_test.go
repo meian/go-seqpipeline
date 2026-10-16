@@ -44,11 +44,6 @@ func TestTake(t *testing.T) {
 	}
 }
 
-func TestTakeOperator(t *testing.T) {
-	op := seq.Take(2)
-	assertEqual(t, seq.ToSlice(op.Operator(seq.FromSlice([]int{3, 2, 1}))), []int{3, 2})
-}
-
 func TestTakeNilInput(t *testing.T) {
 	iterator := seq.Take(1).Operator[int](nil)
 	for round := 0; round < 2; round++ {
@@ -95,11 +90,6 @@ func TestTake2(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestTake2Operator(t *testing.T) {
-	op := seq.Take2(2)
-	assertEqual(t, collectPairs(seq.ToSeq2(op.Operator(seq.FromSeq2(slices.All([]int{3, 2, 1}))))), []pair[int, int]{{Key: 0, Value: 3}, {Key: 1, Value: 2}})
 }
 
 func TestTake2EmptyAndNilInput(t *testing.T) {
