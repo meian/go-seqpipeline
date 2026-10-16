@@ -79,11 +79,8 @@ Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the st
 ## Operators
 
 Operators transform `Seq` / `Seq2` into new sequences.  
-The function type `Operator[I, O]` is defined as `func(Seq[I]) Seq[O]`.  
-The function type `Operator2[K, V, K2, V2]` is defined as `func(Seq2[K, V]) Seq2[K2, V2]`.  
-Both `Seq` and `Seq2` provide `Pipe` / `Pipe2`; the method name indicates the output type, regardless of the input type.  
-`Pipe` returns `Seq`, and `Pipe2` returns `Seq2`.  
-Calls that previously used `Seq2.Pipe` to return `Seq2` must use `Seq2.Pipe2`.  
+The function types `Operator`, `Operator12`, `Operator21`, and `Operator2` represent the four combinations of input and output types.  
+Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
 
 ### Built-in operators
 
@@ -105,14 +102,13 @@ The four connections accept the following transformation functions.
 | Input | Method | Transformation function | Output |
 | --- | --- | --- | --- |
 | `Seq[I]` | `Pipe` | `Operator[I, O]` (`func(Seq[I]) Seq[O]`) | `Seq[O]` |
-| `Seq[I]` | `Pipe2` | `func(Seq[I]) Seq2[K, V]` | `Seq2[K, V]` |
-| `Seq2[K, V]` | `Pipe` | `func(Seq2[K, V]) Seq[O]` | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `Operator12[I, K, V]` (`func(Seq[I]) Seq2[K, V]`) | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `Operator21[K, V, O]` (`func(Seq2[K, V]) Seq[O]`) | `Seq[O]` |
 | `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` (`func(Seq2[K, V]) Seq2[K2, V2]`) | `Seq2[K2, V2]` |
 
-`Operator` / `Operator2` retain their existing definitions; connections between `Seq` and `Seq2` accept transformation functions directly.  
 `Pipe` / `Pipe2` call the supplied transformation function immediately and return its result unchanged, including nil.  
 Input evaluation and stop propagation depend on the transformation function.  
-Because `Operator` / `Operator2` are function types, they can also be called directly as `op(src)`.  
+Because all four operator types are function types, they can also be called directly as `op(src)`.  
 Custom transformation functions should return an iterator that processes input when executed, without evaluating input during this call.  
 You can also compose existing operators by calling `src.Pipe(...)` / `src.Pipe2(...)` inside the function.  
 
@@ -138,6 +134,7 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Limit results and infer types (.Operator) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
 | Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L196) |
 | Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L176) | [ExampleSeq2_Pipe](seq/example_test.go#L188) |
+| Directly call operators between Seq and Seq2 | [ExampleOperator12](seq/example_test.go#L208) | [ExampleOperator21](seq/example_test.go#L219) |
 | Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 

@@ -204,3 +204,21 @@ func ExampleSeq2_Pipe2() {
 	// 0 1
 	// 1 3
 }
+
+func ExampleOperator12() {
+	var op seq.Operator12[string, []int, string] = withLength
+	src := seq.FromSlice([]string{"a", "bbb"})
+	for k, v := range op(src) {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// [1] a
+	// [3] bbb
+}
+
+func ExampleOperator21() {
+	var op seq.Operator21[int, string, string] = seq.Seq2[int, string].Values
+	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
+	fmt.Println(seq.ToSlice(op(src)))
+	// Output: [a bbb]
+}

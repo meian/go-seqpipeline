@@ -9,16 +9,14 @@ import "iter"
 type Seq[T any] iter.Seq[T]
 
 // Pipe は、この Seq に Operator op を適用した新しい Seq を返す。
-// メソッド名は出力型を表す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq[T]) Pipe[U any](op Operator[T, U]) Seq[U] {
 	return op(s)
 }
 
-// Pipe2 は、この Seq に変換関数 op を適用した新しい Seq2 を返す。
-// メソッド名は出力型を表す。
+// Pipe2 は、この Seq に Operator12 op を適用した新しい Seq2 を返す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
-func (s Seq[T]) Pipe2[K, V any](op func(Seq[T]) Seq2[K, V]) Seq2[K, V] {
+func (s Seq[T]) Pipe2[K, V any](op Operator12[T, K, V]) Seq2[K, V] {
 	return op(s)
 }
 
@@ -28,15 +26,13 @@ func (s Seq[T]) Pipe2[K, V any](op func(Seq[T]) Seq2[K, V]) Seq2[K, V] {
 // nil を直接呼び出したり、range で反復したり、収集関数に渡したりすると panic する。
 type Seq2[K, V any] iter.Seq2[K, V]
 
-// Pipe は、この Seq2 に変換関数 op を適用した新しい Seq を返す。
-// メソッド名は出力型を表す。
+// Pipe は、この Seq2 に Operator21 op を適用した新しい Seq を返す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
-func (s Seq2[K, V]) Pipe[U any](op func(Seq2[K, V]) Seq[U]) Seq[U] {
+func (s Seq2[K, V]) Pipe[U any](op Operator21[K, V, U]) Seq[U] {
 	return op(s)
 }
 
 // Pipe2 は、この Seq2 に Operator2 op を適用した新しい Seq2 を返す。
-// メソッド名は出力型を表す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq2[K, V]) Pipe2[K2, V2 any](op Operator2[K, V, K2, V2]) Seq2[K2, V2] {
 	return op(s)

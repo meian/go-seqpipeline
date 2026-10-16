@@ -80,3 +80,22 @@ func TestComposedOperator2(t *testing.T) {
 	}
 	assertEqual(t, reads, 2)
 }
+
+// TestOperator12DirectCall は、名前付き関数型への代入、直接呼び出し、Pipe2 接続を確認する。
+func TestOperator12DirectCall(t *testing.T) {
+	var op seq.Operator12[string, []int, string] = withLength
+	src := seq.FromSlice([]string{"a", "bbb"})
+	want := []pair[[]int, string]{{Key: []int{1}, Value: "a"}, {Key: []int{3}, Value: "bbb"}}
+	assertEqual(t, collectPairs(seq.ToSeq2(op(src))), want)
+	assertEqual(t, collectPairs(seq.ToSeq2(src.Pipe2(op))), want)
+	assertEqual(t, collectPairs(seq.ToSeq2(op(nil))), []pair[[]int, string](nil))
+}
+
+// TestOperator21DirectCall は、メソッド式の代入、直接呼び出し、Pipe 接続を確認する。
+func TestOperator21DirectCall(t *testing.T) {
+	var op seq.Operator21[int, string, string] = seq.Seq2[int, string].Values
+	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
+	assertEqual(t, seq.ToSlice(op(src)), []string{"a", "bbb"})
+	assertEqual(t, seq.ToSlice(src.Pipe(op)), []string{"a", "bbb"})
+	assertEqual(t, seq.ToSlice(op(nil)), []string(nil))
+}

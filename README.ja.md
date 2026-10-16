@@ -79,11 +79,8 @@ func main() {
 ## オペレーター
 
 オペレーターは、`Seq` / `Seq2` を新しいシーケンスへ変換する処理です。  
-関数型 `Operator[I, O]` は `func(Seq[I]) Seq[O]` と定義されています。  
-関数型 `Operator2[K, V, K2, V2]` は `func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
-`Seq` と `Seq2` の両方に `Pipe` / `Pipe2` があり、メソッド名は入力型によらず出力型を表します。  
-`Pipe` は `Seq`、`Pipe2` は `Seq2` を返します。  
-従来の `Seq2.Pipe` で `Seq2` を返す呼び出しは、`Seq2.Pipe2` へ変更してください。  
+関数型 `Operator`、`Operator12`、`Operator21`、`Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
+`Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  
 
 ### ライブラリが提供するオペレーター
 
@@ -105,14 +102,13 @@ func main() {
 | 入力 | メソッド | 変換関数 | 出力 |
 | --- | --- | --- | --- |
 | `Seq[I]` | `Pipe` | `Operator[I, O]`（`func(Seq[I]) Seq[O]`） | `Seq[O]` |
-| `Seq[I]` | `Pipe2` | `func(Seq[I]) Seq2[K, V]` | `Seq2[K, V]` |
-| `Seq2[K, V]` | `Pipe` | `func(Seq2[K, V]) Seq[O]` | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `Operator12[I, K, V]`（`func(Seq[I]) Seq2[K, V]`） | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `Operator21[K, V, O]`（`func(Seq2[K, V]) Seq[O]`） | `Seq[O]` |
 | `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]`（`func(Seq2[K, V]) Seq2[K2, V2]`） | `Seq2[K2, V2]` |
 
-`Operator` / `Operator2` の定義は維持し、`Seq` と `Seq2` をまたぐ接続には変換関数を直接渡します。  
 `Pipe` / `Pipe2` は変換関数をその場で呼び出し、nil を含めて戻り値をそのまま返します。  
 入力の評価と停止伝播は、変換関数の実装に従います。  
-`Operator` / `Operator2` は関数型なので、`op(src)` の形でも直接呼び出せます。  
+4 種類のオペレーターは関数型なので、`op(src)` の形でも直接呼び出せます。  
 独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
 関数内で `src.Pipe(...)` / `src.Pipe2(...)` を使い、既存のオペレーターを合成することもできます。  
 
@@ -138,6 +134,7 @@ func main() {
 | 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
 | 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L196) |
 | Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L176) | [ExampleSeq2_Pipe](seq/example_test.go#L188) |
+| Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleOperator12](seq/example_test.go#L208) | [ExampleOperator21](seq/example_test.go#L219) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 
