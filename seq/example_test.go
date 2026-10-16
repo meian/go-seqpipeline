@@ -45,7 +45,7 @@ func ExampleTake() {
 }
 
 func ExampleTake2() {
-	pipeline := seq.FromSeq2(slices.All([]int{3, 2, 1})).Pipe(seq.Take2(2).Operator)
+	pipeline := seq.FromSeq2(slices.All([]int{3, 2, 1})).Pipe2(seq.Take2(2).Operator)
 	for k, v := range pipeline {
 		fmt.Printf("%d: %d\n", k, v)
 	}
@@ -128,7 +128,7 @@ func keyText(src seq.Seq2[int, int]) seq.Seq2[string, int] {
 func ExampleOperator2() {
 	var op seq.Operator2[int, int, string, int] = keyText
 	src := seq.FromSeq2(slices.All([]int{4, 5}))
-	for k, v := range src.Pipe(op) {
+	for k, v := range src.Pipe2(op) {
 		fmt.Printf("%q: %d\n", k, v)
 	}
 	for k, v := range op(src) {
@@ -143,7 +143,7 @@ func ExampleOperator2() {
 
 func ExampleSeq2_Keys() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
+		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
 		Keys().
 		Pipe(seq.Take(2).Operator)
 	fmt.Printf("%q\n", seq.ToSlice(pipeline))
@@ -152,9 +152,75 @@ func ExampleSeq2_Keys() {
 
 func ExampleSeq2_Values() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Filter2(func(k int, v string) bool { return len(v) > 1 })).
+		Pipe2(seq.Filter2(func(k int, v string) bool { return len(v) > 1 })).
 		Values().
 		Pipe(seq.Take(1).Operator)
 	fmt.Printf("%q\n", seq.ToSlice(pipeline))
 	// Output: ["bbb"]
+}
+
+// withLength は入力順序を保ち、非 comparable なキーを持つ Seq2 に遅延変換する。
+// Seq から Seq2 に変換する組み込みオペレーターがないため、Example ではこの関数を使用している。
+// TODO: 対応する組み込みオペレーターの追加時に、Example をそのオペレーターを使う例に差し替える。
+func withLength[T ~string](src seq.Seq[T]) seq.Seq2[[]int, T] {
+	return func(yield func([]int, T) bool) {
+		if src == nil {
+			return
+		}
+		for v := range src {
+			if !yield([]int{len(v)}, v) {
+				return
+			}
+		}
+	}
+}
+
+func ExampleSeq_Pipe2() {
+	pairs := seq.FromSlice([]string{"a", "bbb", "cc"}).
+		Pipe2(withLength).
+		Pipe2(seq.Take2(2).Operator)
+	for k, v := range pairs {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// [1] a
+	// [3] bbb
+}
+
+func ExampleSeq2_Pipe() {
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
+		Pipe(seq.Seq2[int, string].Values).
+		Pipe(seq.Take(2).Operator)
+	fmt.Println(seq.ToSlice(pipeline))
+	// Output: [a bbb]
+}
+
+func ExampleSeq2_Pipe2() {
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
+		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
+		Pipe2(seq.Take2(2).Operator)
+	for k, v := range pipeline {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// 0 1
+	// 1 3
+}
+
+func ExampleToSeq2Operator() {
+	var op seq.ToSeq2Operator[string, []int, string] = withLength
+	src := seq.FromSlice([]string{"a", "bbb"})
+	for k, v := range op(src) {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// [1] a
+	// [3] bbb
+}
+
+func ExampleToSeqOperator() {
+	var op seq.ToSeqOperator[int, string, string] = seq.Seq2[int, string].Values
+	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
+	fmt.Println(seq.ToSlice(op(src)))
+	// Output: [a bbb]
 }
