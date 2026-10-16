@@ -55,20 +55,20 @@ func TestOperator2DirectCall(t *testing.T) {
 	src := seq.FromSeq2(slices.All([]int{1, 22, 333}))
 	want := []pair[string, string]{{Key: "1", Value: "22"}}
 	assertEqual(t, collectPairs(seq.ToSeq2(limit(filtered(mapped(src))))), want)
-	pipeline := src.Pipe(custom).
-		Pipe(seq.Map2(func(k string, v int) (string, string) { return k, strconv.Itoa(v) })).
-		Pipe(filtered).Pipe(limit)
+	pipeline := src.Pipe2(custom).
+		Pipe2(seq.Map2(func(k string, v int) (string, string) { return k, strconv.Itoa(v) })).
+		Pipe2(filtered).Pipe2(limit)
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 }
 
 func TestComposedOperator2(t *testing.T) {
 	reads := 0
 	var op seq.Operator2[int, int, int, int] = func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
-		return src.Pipe(seq.Filter2(func(k, v int) bool { return v%2 == 0 })).
-			Pipe(seq.Take2(2).Operator)
+		return src.Pipe2(seq.Filter2(func(k, v int) bool { return v%2 == 0 })).
+			Pipe2(seq.Take2(2).Operator)
 	}
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
-		Pipe(seq.Map2(func(k, v int) (int, int) { reads++; return k, v })).Pipe(op)
+		Pipe2(seq.Map2(func(k, v int) (int, int) { reads++; return k, v })).Pipe2(op)
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[int, int]{{Key: 1, Value: 2}, {Key: 3, Value: 4}})

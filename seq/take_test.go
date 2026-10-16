@@ -81,7 +81,7 @@ func TestTake2(t *testing.T) {
 					}
 				}
 			}
-			pipeline := seq.FromSeq2(src).Pipe(seq.Take2(tc.n).Operator)
+			pipeline := seq.FromSeq2(src).Pipe2(seq.Take2(tc.n).Operator)
 			iterator := seq.ToSeq2(pipeline)
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
@@ -112,7 +112,7 @@ func TestTake2DownstreamStop(t *testing.T) {
 			}
 		}
 	}
-	pipeline := seq.FromSeq2(src).Pipe(seq.Take2(3).Operator)
+	pipeline := seq.FromSeq2(src).Pipe2(seq.Take2(3).Operator)
 	for k, v := range seq.ToSeq2(pipeline) {
 		assertEqual(t, k, 1)
 		assertEqual(t, v, 10)

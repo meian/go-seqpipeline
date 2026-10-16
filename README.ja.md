@@ -14,7 +14,7 @@ go get github.com/meian/go-seqpipeline
 
 ## 使い方
 
-`From` で始まる関数で入力を取り込み、`Pipe` でオペレーターを接続します。  
+`From` で始まる関数で入力を取り込み、`Pipe` / `Pipe2` でオペレーターを接続します。  
 接続する処理の入出力から型が推論され、型が一致しない処理は指定できません。  
 結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  
 
@@ -44,11 +44,11 @@ func main() {
 	}
 	// Seq2 ではキーと値を加工する
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Map2(func(k int, v string) (string, int) {
+		Pipe2(seq.Map2(func(k int, v string) (string, int) {
 			return strconv.Itoa(k), len(v)
 		})).
-		Pipe(seq.Filter2(func(k string, v int) bool { return v > 1 })).
-		Pipe(seq.Take2(1).Operator)
+		Pipe2(seq.Filter2(func(k string, v int) bool { return v > 1 })).
+		Pipe2(seq.Take2(1).Operator)
 	for k, v := range pairs {
 		fmt.Println(k, v) // 1 3
 	}
@@ -57,8 +57,8 @@ func main() {
 
 ## Seq / Seq2
 
-このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
-`Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
+このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` / `Pipe2` を通じて要素を加工する機能を持つ関数型です。  
+`Seq` / `Seq2` を `Pipe` / `Pipe2` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
 `Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
 `Seq2` から単一値の `Seq` へ変換し、そのままパイプラインを続けることもできます。  
 
@@ -78,11 +78,12 @@ func main() {
 
 ## オペレーター
 
-このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
-`Seq` 用の関数型 `Operator[I, O]` は、`func(Seq[I]) Seq[O]` と定義されています。  
-`Seq2` では、`Seq2` を別の `Seq2` に変換します。  
-`Seq2` 用の関数型 `Operator2[K, V, K2, V2]` は、`func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
-`Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
+オペレーターは、`Seq` / `Seq2` を新しいシーケンスへ変換する処理です。  
+関数型 `Operator[I, O]` は `func(Seq[I]) Seq[O]` と定義されています。  
+関数型 `Operator2[K, V, K2, V2]` は `func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
+`Seq` と `Seq2` の両方に `Pipe` / `Pipe2` があり、メソッド名は入力型によらず出力型を表します。  
+`Pipe` は `Seq`、`Pipe2` は `Seq2` を返します。  
+従来の `Seq2.Pipe` で `Seq2` を返す呼び出しは、`Seq2.Pipe2` へ変更してください。  
 
 ### ライブラリが提供するオペレーター
 
@@ -91,33 +92,39 @@ func main() {
 
 ### 型推論
 
-生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡すことができます。  
+生成関数の引数から型を推論できる場合は、戻り値の出力型に応じて、そのまま `Pipe` / `Pipe2` に渡すことができます。  
 コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
 
-生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として `Pipe` に渡す必要があります。  
+生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として、`Take` なら `Pipe`、`Take2` なら `Pipe2` に渡す必要があります。  
 要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
 
 ### 接続
 
-`Pipe` は、次の型の変換関数を直接受け取ります。  
+4 通りの接続で、次の変換関数を受け取ります。  
 
-- `Seq`: `seq.Operator[I, O]`（`func(seq.Seq[I]) seq.Seq[O]`）
-- `Seq2`: `seq.Operator2[K, V, K2, V2]`（`func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`）
+| 入力 | メソッド | 変換関数 | 出力 |
+| --- | --- | --- | --- |
+| `Seq[I]` | `Pipe` | `Operator[I, O]`（`func(Seq[I]) Seq[O]`） | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `func(Seq[I]) Seq2[K, V]` | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `func(Seq2[K, V]) Seq[O]` | `Seq[O]` |
+| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]`（`func(Seq2[K, V]) Seq2[K2, V2]`） | `Seq2[K2, V2]` |
 
-`Pipe` は渡された変換関数をその場で呼び出します。  
+`Operator` / `Operator2` の定義は維持し、`Seq` と `Seq2` をまたぐ接続には変換関数を直接渡します。  
+`Pipe` / `Pipe2` は変換関数をその場で呼び出し、nil を含めて戻り値をそのまま返します。  
+入力の評価と停止伝播は、変換関数の実装に従います。  
 `Operator` / `Operator2` は関数型なので、`op(src)` の形でも直接呼び出せます。  
 独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
-関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
+関数内で `src.Pipe(...)` / `src.Pipe2(...)` を使い、既存のオペレーターを合成することもできます。  
 
-独自の変換関数も、そのまま `Pipe` に渡せます。  
+独自の変換関数も、そのまま `Pipe` / `Pipe2` に渡せます。  
 
 ### 独自オペレーターの実装
 
 `Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
-変換関数を実装し、`Pipe` に直接渡します。  
+変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に直接渡します。  
 
 入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
-入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を `Pipe` に渡します。  
+入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を出力型に応じて `Pipe` / `Pipe2` に渡します。  
 
 ### 実行可能な利用例
 
@@ -129,7 +136,8 @@ func main() {
 | 要素・キーと値の変換 | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | 条件による選別 | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
-| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
+| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L196) |
+| Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L176) | [ExampleSeq2_Pipe](seq/example_test.go#L188) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 
