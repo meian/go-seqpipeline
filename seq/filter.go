@@ -1,6 +1,6 @@
 package seq
 
-// Filter は predicate が true を返す要素を保持する Operator を返す。
+// Filter は条件に一致する要素だけを取り出す Operator を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
 func Filter[T any](predicate func(T) bool) Operator[T, T] {
@@ -18,7 +18,7 @@ func Filter[T any](predicate func(T) bool) Operator[T, T] {
 	}
 }
 
-// Filter2 は predicate が true を返すキーと値を保持する Operator2 を返す。
+// Filter2 は条件に一致するキーと値の組だけを取り出す Operator2 を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
 func Filter2[K, V any](predicate func(K, V) bool) Operator2[K, V, K, V] {

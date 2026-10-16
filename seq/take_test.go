@@ -38,7 +38,9 @@ func TestTake(t *testing.T) {
 			pipeline := seq.FromSeq(src).Pipe(seq.Take(tc.n).Operator)
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, seq.ToSlice(pipeline), tc.want)
-				assertEqual(t, []int{reads, starts, stops}, []int{tc.reads * round, tc.starts * round, tc.stops * round})
+				gotCounts := []int{reads, starts, stops}
+				wantCounts := []int{tc.reads * round, tc.starts * round, tc.stops * round}
+				assertEqual(t, gotCounts, wantCounts)
 			}
 		})
 	}
@@ -54,6 +56,11 @@ func TestTakeNilInput(t *testing.T) {
 }
 
 func TestTake2(t *testing.T) {
+	pairs := []pair[int, int]{
+		{Key: 1, Value: 10},
+		{Key: 0, Value: 20},
+		{Key: 1, Value: 30},
+	}
 	for _, tc := range []struct {
 		name   string
 		n      int
@@ -64,10 +71,10 @@ func TestTake2(t *testing.T) {
 	}{
 		{name: "negative", n: -1},
 		{name: "zero", n: 0},
-		{name: "one", n: 1, want: []pair[int, int]{{Key: 1, Value: 10}}, reads: 1, starts: 1, stops: 1},
-		{name: "prefix", n: 2, want: []pair[int, int]{{Key: 1, Value: 10}, {Key: 0, Value: 20}}, reads: 2, starts: 1, stops: 1},
-		{name: "all", n: 3, want: []pair[int, int]{{Key: 1, Value: 10}, {Key: 0, Value: 20}, {Key: 1, Value: 30}}, reads: 3, starts: 1, stops: 1},
-		{name: "larger", n: 4, want: []pair[int, int]{{Key: 1, Value: 10}, {Key: 0, Value: 20}, {Key: 1, Value: 30}}, reads: 3, starts: 1},
+		{name: "one", n: 1, want: pairs[:1], reads: 1, starts: 1, stops: 1},
+		{name: "prefix", n: 2, want: pairs[:2], reads: 2, starts: 1, stops: 1},
+		{name: "all", n: 3, want: pairs[:3], reads: 3, starts: 1, stops: 1},
+		{name: "larger", n: 4, want: pairs[:3], reads: 3, starts: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reads, starts, stops := 0, 0, 0
@@ -86,7 +93,9 @@ func TestTake2(t *testing.T) {
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, collectPairs(iterator), tc.want)
-				assertEqual(t, []int{reads, starts, stops}, []int{tc.reads * round, tc.starts * round, tc.stops * round})
+				gotCounts := []int{reads, starts, stops}
+				wantCounts := []int{tc.reads * round, tc.starts * round, tc.stops * round}
+				assertEqual(t, gotCounts, wantCounts)
 			}
 		})
 	}

@@ -13,7 +13,10 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0
 	var pipeline seq.Seq[string] = seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(seq.Take(10).Operator).
-		Pipe(seq.Map(func(v int) string { reads++; return strconv.Itoa(v) })).
+		Pipe(seq.Map(func(v int) string {
+			reads++
+			return strconv.Itoa(v)
+		})).
 		Pipe(seq.Filter(func(v string) bool { return len(v) > 1 })).
 		Pipe(seq.Take(2).Operator)
 	assertEqual(t, reads, 0)
@@ -37,8 +40,14 @@ func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 		}
 	}
 	pipeline := seq.FromSeq(src).
-		Pipe(seq.Map(func(v int) int { maps++; return v * 2 })).
-		Pipe(seq.Filter(func(v int) bool { filters++; return v%4 == 0 }))
+		Pipe(seq.Map(func(v int) int {
+			maps++
+			return v * 2
+		})).
+		Pipe(seq.Filter(func(v int) bool {
+			filters++
+			return v%4 == 0
+		}))
 	iterator := seq.ToSeq(pipeline)
 	assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{0, 0, 0, 0, 0})
 	var got []int
@@ -54,7 +63,10 @@ func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 func TestTakeAfterFilterAndDownstreamStop(t *testing.T) {
 	reads := 0
 	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 5, 6}).
-		Pipe(seq.Map(func(v int) int { reads++; return v })).
+		Pipe(seq.Map(func(v int) int {
+			reads++
+			return v
+		})).
 		Pipe(seq.Filter(func(v int) bool { return v%2 == 0 })).
 		Pipe(seq.Take(2).Operator)
 	assertEqual(t, seq.ToSlice(pipeline), []int{2, 4})
@@ -69,9 +81,20 @@ func TestTakeAfterFilterAndDownstreamStop(t *testing.T) {
 // TestEmptyAndZeroValues は、Seq のゼロ値・nil・空のスライスでは Map と Filter を呼び出さず、空として評価することを確認する。
 func TestEmptyAndZeroValues(t *testing.T) {
 	var zero seq.Seq[int]
-	for _, src := range []seq.Seq[int]{zero, seq.FromSlice([]int{}), seq.FromSlice([]int(nil)), seq.FromSeq[int](nil)} {
-		pipeline := src.Pipe(seq.Map(func(int) int { t.Fatal("Map called"); return 0 })).
-			Pipe(seq.Filter(func(int) bool { t.Fatal("Filter called"); return true })).
+	for _, src := range []seq.Seq[int]{
+		zero,
+		seq.FromSlice([]int{}),
+		seq.FromSlice([]int(nil)),
+		seq.FromSeq[int](nil),
+	} {
+		pipeline := src.Pipe(seq.Map(func(int) int {
+			t.Fatal("Map called")
+			return 0
+		})).
+			Pipe(seq.Filter(func(int) bool {
+				t.Fatal("Filter called")
+				return true
+			})).
 			Pipe(seq.Take(1).Operator)
 		got := seq.ToSlice(pipeline)
 		assertEqual(t, got, []int(nil))
@@ -123,7 +146,10 @@ func TestTransformPipeline(t *testing.T) {
 	op := repeat
 	calls := 0
 	pipeline := seq.FromSlice([]int{1, 2, 3}).
-		Pipe(seq.Map(func(v int) int { calls++; return v })).Pipe(op).Pipe(seq.Take(1).Operator)
+		Pipe(seq.Map(func(v int) int {
+			calls++
+			return v
+		})).Pipe(op).Pipe(seq.Take(1).Operator)
 	assertEqual(t, calls, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1"})
@@ -163,8 +189,14 @@ func TestSeq2LazyAndStop(t *testing.T) {
 		}
 	}
 	pipeline := seq.FromSeq2(src).
-		Pipe2(seq.Map2(func(k, v int) (string, int) { maps++; return strconv.Itoa(k), v })).
-		Pipe2(seq.Filter2(func(k string, v int) bool { filters++; return v%20 == 0 }))
+		Pipe2(seq.Map2(func(k, v int) (string, int) {
+			maps++
+			return strconv.Itoa(k), v
+		})).
+		Pipe2(seq.Filter2(func(k string, v int) bool {
+			filters++
+			return v%20 == 0
+		}))
 	iterator := seq.ToSeq2(pipeline)
 	assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{0, 0, 0, 0, 0})
 	for round := 1; round <= 2; round++ {
@@ -180,9 +212,20 @@ func TestSeq2LazyAndStop(t *testing.T) {
 // TestSeq2EmptyAndZero は、Seq2 のゼロ値・nil・空の map では Map2 と Filter2 を呼び出さず、空として評価することを確認する。
 func TestSeq2EmptyAndZero(t *testing.T) {
 	var zero seq.Seq2[string, int]
-	for _, src := range []seq.Seq2[string, int]{zero, seq.FromSeq2[string, int](nil), seq.FromMap(map[string]int{}), seq.FromMap(map[string]int(nil))} {
-		pipeline := src.Pipe2(seq.Map2(func(string, int) (string, int) { t.Fatal("Map2 called"); return "", 0 })).
-			Pipe2(seq.Filter2(func(string, int) bool { t.Fatal("Filter2 called"); return true }))
+	for _, src := range []seq.Seq2[string, int]{
+		zero,
+		seq.FromSeq2[string, int](nil),
+		seq.FromMap(map[string]int{}),
+		seq.FromMap(map[string]int(nil)),
+	} {
+		pipeline := src.Pipe2(seq.Map2(func(string, int) (string, int) {
+			t.Fatal("Map2 called")
+			return "", 0
+		})).
+			Pipe2(seq.Filter2(func(string, int) bool {
+				t.Fatal("Filter2 called")
+				return true
+			}))
 		got := collectPairs(seq.ToSeq2(pipeline))
 		assertEqual(t, got, []pair[string, int](nil))
 	}
@@ -191,7 +234,10 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 // TestNonComparableKeys は、比較できないキーを持つ Seq2 も、Map2 と標準の iter.Seq2 への変換で扱えることを確認する。
 func TestNonComparableKeys(t *testing.T) {
 	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
-	got := collectPairs(seq.ToSeq2(seq.FromSeq2(src).Pipe2(seq.Map2(func(k []int, v string) ([]int, int) { return k, len(v) }))))
+	pipeline := seq.FromSeq2(src).Pipe2(seq.Map2(func(k []int, v string) ([]int, int) {
+		return k, len(v)
+	}))
+	got := collectPairs(seq.ToSeq2(pipeline))
 	assertEqual(t, got, []pair[[]int, int]{{Key: []int{1, 2}, Value: 5}})
 }
 
@@ -206,7 +252,8 @@ func TestExternalTransforms2(t *testing.T) {
 			}
 		}
 	}
-	assertEqual(t, collectPairs(seq.ToSeq2(op(seq.FromMap(map[string]int{"1": 10})))), []pair[string, string]{{Key: "1", Value: "10"}})
+	direct := op(seq.FromMap(map[string]int{"1": 10}))
+	assertEqual(t, collectPairs(seq.ToSeq2(direct)), []pair[string, string]{{Key: "1", Value: "10"}})
 	reads := 0
 	src := func(yield func(int, int) bool) {
 		for i := 1; i <= 3; i++ {
@@ -224,7 +271,12 @@ func TestExternalTransforms2(t *testing.T) {
 		break
 	}
 	assertEqual(t, reads, 1)
-	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, string]{{Key: "1", Value: "10"}, {Key: "2", Value: "20"}, {Key: "3", Value: "30"}})
+	want := []pair[string, string]{
+		{Key: "1", Value: "10"},
+		{Key: "2", Value: "20"},
+		{Key: "3", Value: "30"},
+	}
+	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 }
 
 // TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Operator2 として接続し、型推論と再評価を確認する。

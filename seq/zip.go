@@ -19,7 +19,8 @@ const (
 	AlignLongest
 )
 
-// Zip は元の Seq をキー、values を値として組み合わせた Seq2 を生成するための設定値を返す。
+// Zip は2つのシーケンスの要素を反復順にキーと値の組にする設定値を返す。
+// 接続先のシーケンスをキー、指定したシーケンスを値として使う。
 // Operator を Seq.Pipe2 に渡して使用し、既定では短い方の入力で終了する。
 // AlignBy で終了条件、WithDefaultKey と WithDefaultValue で不足分の既定値を指定する。
 // 未指定の既定値はそれぞれの型のゼロ値を使う。
@@ -58,7 +59,7 @@ func (z zipOperator[V]) WithDefaultKey[K any](defaultKey K) zipKeyOperator[K, V]
 	return zipKeyOperator[K, V]{zip: z, defaultKey: defaultKey}
 }
 
-// Operator は左の入力 src と設定済みの右の入力を組み合わせる Seq2 を返す。
+// Operator は左の入力をキー、設定済みの右の入力を値として、反復順に組み合わせる。
 // この時点では入力を評価せず、nil の入力は空として扱う。
 // 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
 // 再評価できるかどうかは両方の元の Iterator に従う。
@@ -93,7 +94,8 @@ func (z zipKeyOperator[K, V]) WithDefaultKey(defaultKey K) zipKeyOperator[K, V] 
 	return z
 }
 
-// Operator は設定済みのキーと値の既定値を使って Seq2 を返す。
+// Operator は左の入力をキー、設定済みの右の入力を値として、反復順に組み合わせる。
+// 不足するキーや値には設定済みの既定値を使う。
 // この時点では入力を評価せず、nil の入力は空として扱う。
 // 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
 // 再評価できるかどうかは両方の元の Iterator に従う。
@@ -125,6 +127,7 @@ func zipSequences[K, V any](left Seq[K], right Seq[V], alignment ZipAlign, defau
 			var k K
 			var v V
 			var hasKey, hasValue bool
+			// AlignRight では右を先に読み、右の終了後に左を余分に取得しない。
 			if alignment == AlignRight {
 				v, hasValue = nextValue()
 				if !hasValue {

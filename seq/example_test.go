@@ -159,7 +159,8 @@ func ExampleSeq2_Values() {
 	// Output: ["bbb"]
 }
 
-// withLength は入力順序を保ち、非 comparable なキーを持つ Seq2 に遅延変換する。
+// withLength は各文字列に長さを添え、入力順にキーと値の組を返す。
+// 比較不能なキーを扱う例として、長さはスライスで保持する。
 // Seq から Seq2 に変換する組み込みオペレーターがないため、Example ではこの関数を使用している。
 // TODO: 対応する組み込みオペレーターの追加時に、Example をそのオペレーターを使う例に差し替える。
 func withLength[T ~string](src seq.Seq[T]) seq.Seq2[[]int, T] {
@@ -239,9 +240,12 @@ func ExampleZip() {
 func ExampleZip_alignBy() {
 	left := seq.FromSlice([]int{1, 2})
 	right := seq.FromSlice([]string{"a"})
-	fmt.Println(seq.ToMap(left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing").Operator)))
-	fmt.Println(seq.ToMap(seq.Seq[int](nil).Pipe2(seq.Zip(right).WithDefaultKey(-1).AlignBy(seq.AlignRight).Operator)))
-	fmt.Println(seq.ToMap(left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLongest).Operator)))
+	alignLeft := seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing")
+	alignRight := seq.Zip(right).WithDefaultKey(-1).AlignBy(seq.AlignRight)
+	alignLongest := seq.Zip(right).AlignBy(seq.AlignLongest)
+	fmt.Println(seq.ToMap(left.Pipe2(alignLeft.Operator)))
+	fmt.Println(seq.ToMap(seq.Seq[int](nil).Pipe2(alignRight.Operator)))
+	fmt.Println(seq.ToMap(left.Pipe2(alignLongest.Operator)))
 	// Output:
 	// map[1:a 2:missing]
 	// map[-1:a]

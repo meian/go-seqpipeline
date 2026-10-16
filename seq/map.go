@@ -1,6 +1,6 @@
 package seq
 
-// Map は各要素に fn を適用する Operator を返す。
+// Map は各要素を指定した関数で変換する Operator を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
 func Map[I, O any](fn func(I) O) Operator[I, O] {
@@ -18,7 +18,7 @@ func Map[I, O any](fn func(I) O) Operator[I, O] {
 	}
 }
 
-// Map2 は各キーと値に fn を適用する Operator2 を返す。
+// Map2 は各キーと値の組を指定した関数で変換する Operator2 を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
 func Map2[K, V, K2, V2 any](fn func(K, V) (K2, V2)) Operator2[K, V, K2, V2] {
