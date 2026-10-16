@@ -14,7 +14,7 @@ go get github.com/meian/go-seqpipeline
 
 ## Usage
 
-Use functions starting with `From` to wrap input, then connect operators with `Pipe`.  
+Use functions starting with `From` to wrap input, then connect operators with `Pipe` / `Pipe2`.  
 Types are inferred from the inputs and outputs of the connected operations, and operations with incompatible types cannot be connected.  
 Iterate over the result directly with `for range`, or collect it into a collection with `ToSlice` / `ToMap`.  
 
@@ -44,11 +44,11 @@ func main() {
 	}
 	// Transform keys and values with Seq2
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Map2(func(k int, v string) (string, int) {
+		Pipe2(seq.Map2(func(k int, v string) (string, int) {
 			return strconv.Itoa(k), len(v)
 		})).
-		Pipe(seq.Filter2(func(k string, v int) bool { return v > 1 })).
-		Pipe(seq.Take2(1).Operator)
+		Pipe2(seq.Filter2(func(k string, v int) bool { return v > 1 })).
+		Pipe2(seq.Take2(1).Operator)
 	for k, v := range pairs {
 		fmt.Println(k, v) // 1 3
 	}
@@ -57,8 +57,8 @@ func main() {
 
 ## Seq / Seq2
 
-This library's `Seq[T]` / `Seq2[K, V]` are function types compatible with `iter.Seq[T]` / `iter.Seq2[K, V]` from Go's standard [`iter`](https://pkg.go.dev/iter) package, with `Pipe` methods for transforming elements.  
-Pipelines built by transforming `Seq` / `Seq2` through `Pipe` can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
+This library's `Seq[T]` / `Seq2[K, V]` are function types compatible with `iter.Seq[T]` / `iter.Seq2[K, V]` from Go's standard [`iter`](https://pkg.go.dev/iter) package, with `Pipe` / `Pipe2` methods for transforming elements.  
+Pipelines built by transforming `Seq` / `Seq2` through `Pipe` / `Pipe2` can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
 `Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
 A `Seq2` can also be converted into a single-value `Seq` to continue the pipeline.  
 
@@ -78,30 +78,37 @@ Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the st
 
 ### Combining two sequences
 
-`left.Zip(right)` returns a `Seq2` with elements from `left` as keys and elements from `right` as values, stopping when either input ends.  
-`left.ZipAll(right)` continues until both inputs end and fills missing elements with their type's zero value.  
-Use `ZipDefaults.WithKey` / `WithValue` to configure either or both defaults; each method returns a copy and preserves the other setting.  
-If multiple settings are passed, the last one is used.  
-Both methods treat nil inputs as empty and return a `Seq2` that connects to `Pipe`, `ToMap`, or `ToSeq2`.  
-Construction does not evaluate inputs; each evaluation pulls the key first, then the value, and stops both inputs on downstream termination.  
-`Zip` may pull one extra key when detecting the end of the values.  
+Pass `Zip(right).Operator` to `left.Pipe2` to produce a `Seq2` with left elements as keys and right elements as values.  
+The default alignment is `AlignShortest`; use `AlignBy` to select the output length.  
+
+| Alignment | Output length | Padding |
+| --- | --- | --- |
+| `AlignShortest` (default) | Shorter input | None |
+| `AlignLeft` | Left input | Missing values |
+| `AlignRight` | Right input | Missing keys |
+| `AlignLongest` | Longer input | Missing keys or values |
+
+`WithKey` / `WithValue` set padding values, defaulting to the respective type's zero value.  
+Each configuration method returns a copy, preserving the other settings; repeated calls replace that setting.  
+`WithKey` fixes the key type from its argument, so the left input must have the same element type.  
+Without `WithKey`, the key type is inferred from the left input when connecting `.Operator`.  
+`AlignShortest` does not use padding values, and `AlignBy` panics for an invalid alignment.  
+Construction and connection do not evaluate inputs, and nil inputs are treated as empty.  
+`AlignRight` pulls the right input first; all other alignments pull the left input first.  
+`AlignShortest` may pull one extra key when detecting the end of the right input.  
+Both input iterations are stopped when evaluation ends, including downstream termination or panic.  
 Whether the result can be evaluated again depends on both inputs.  
 
 ```go
 left := seq.FromSlice([]int{1, 2})
 right := seq.FromSlice([]string{"a"})
-defaults := seq.ZipDefaults[int, string]{}.WithKey(-1).WithValue("missing")
-pairs := left.ZipAll(right, defaults).Pipe(seq.Take2(2).Operator)
+pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithValue("missing").Operator)
 // seq.ToMap(pairs): map[1:a 2:missing]
 ```
 
 ## Operators
 
-In this library, an operator is an operation that transforms a `Seq` into another `Seq`.  
-The function type `Operator[I, O]` for `Seq` is defined as `func(Seq[I]) Seq[O]`.  
-For `Seq2`, an operator transforms a `Seq2` into another `Seq2`.  
-The function type `Operator2[K, V, K2, V2]` for `Seq2` is defined as `func(Seq2[K, V]) Seq2[K2, V2]`.  
-`Seq` / `Seq2` accept an operator through `Pipe` and return a new `Seq` / `Seq2` with that operation applied.  
+In go-seqpipeline, an operator is an operation that transforms `Seq` / `Seq2` to produce a new sequence.  
 
 ### Built-in operators
 
@@ -110,33 +117,39 @@ Equivalent operators are provided for `Seq` and `Seq2`, such as `Filter` and `Fi
 
 ### Type inference
 
-When types can be inferred from the arguments to an operator factory, pass its return value directly to `Pipe`.  
+When types can be inferred from the arguments to an operator factory, pass its return value directly to `Pipe` / `Pipe2` according to the output type.  
 Arguments such as callbacks carry the input and output type information, so explicit type arguments are unnecessary.  
 
-When types cannot be inferred from the factory arguments, pass the returned value's `.Operator` method value to `Pipe`.  
+When types cannot be inferred from the factory arguments, pass the returned value's `.Operator` method value to `Pipe` for `Take`, or `Pipe2` for `Take2`.  
 Operators that accept only configuration values without element type information use this approach to infer the input element type, or the key and value types.  
 
 ### Connecting operators
 
-`Pipe` directly accepts transformation functions of the following types.  
+Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
+The function types `Operator`, `ToSeq2Operator`, `ToSeqOperator`, and `Operator2` represent the four combinations of input and output types.  
 
-- `Seq`: `seq.Operator[I, O]` (`func(seq.Seq[I]) seq.Seq[O]`)
-- `Seq2`: `seq.Operator2[K, V, K2, V2]` (`func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`)
+| Input | Method | Transformation function | Output |
+| --- | --- | --- | --- |
+| `Seq[I]` | `Pipe` | `Operator[I, O]` (`func(Seq[I]) Seq[O]`) | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]` (`func(Seq[I]) Seq2[K, V]`) | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]` (`func(Seq2[K, V]) Seq[O]`) | `Seq[O]` |
+| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` (`func(Seq2[K, V]) Seq2[K2, V2]`) | `Seq2[K2, V2]` |
 
-`Pipe` calls the supplied transformation function immediately.  
-Because `Operator` / `Operator2` are function types, they can also be called directly as `op(src)`.  
+`Pipe` / `Pipe2` call the supplied transformation function immediately and return its result unchanged, including nil.  
+Input evaluation and stop propagation depend on the transformation function.  
+Because all four operator types are function types, they can also be called directly as `op(src)`.  
 Custom transformation functions should return an iterator that processes input when executed, without evaluating input during this call.  
-You can also compose existing operators by calling `src.Pipe(...)` inside the function.  
+You can also compose existing operators by calling `src.Pipe(...)` / `src.Pipe2(...)` inside the function.  
 
-Custom transformation functions can be passed directly to `Pipe` as well.  
+Custom transformation functions can be passed directly to `Pipe` / `Pipe2` as well.  
 
 ### Implementing custom operators
 
 You can create custom operators that transform `Seq` / `Seq2`.  
-Implement a transformation function and pass it directly to `Pipe`.  
+Implement a transformation function and pass it directly to `Pipe` / `Pipe2` according to the output type.  
 
 Use this library's `Seq` / `Seq2` types for the input and output.  
-For configuration values whose input types are not yet known, provide an `Operator` method with type parameters, as `Take` does, and pass `.Operator` to `Pipe`.  
+For configuration values whose input types are not yet known, provide an `Operator` method with type parameters, as `Take` does, and pass `.Operator` to `Pipe` / `Pipe2` according to the output type.  
 
 ### Executable examples
 
@@ -148,7 +161,9 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Transform elements or keys and values | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | Filter by a condition | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | Limit results and infer types (.Operator) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
-| Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
+| Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L198) |
+| Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L178) | [ExampleSeq2_Pipe](seq/example_test.go#L190) |
+| Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](seq/example_test.go#L210) | [ExampleToSeqOperator](seq/example_test.go#L221) |
 | Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 

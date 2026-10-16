@@ -14,7 +14,7 @@ go get github.com/meian/go-seqpipeline
 
 ## 使い方
 
-`From` で始まる関数で入力を取り込み、`Pipe` でオペレーターを接続します。  
+`From` で始まる関数で入力を取り込み、`Pipe` / `Pipe2` でオペレーターを接続します。  
 接続する処理の入出力から型が推論され、型が一致しない処理は指定できません。  
 結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  
 
@@ -44,11 +44,11 @@ func main() {
 	}
 	// Seq2 ではキーと値を加工する
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Map2(func(k int, v string) (string, int) {
+		Pipe2(seq.Map2(func(k int, v string) (string, int) {
 			return strconv.Itoa(k), len(v)
 		})).
-		Pipe(seq.Filter2(func(k string, v int) bool { return v > 1 })).
-		Pipe(seq.Take2(1).Operator)
+		Pipe2(seq.Filter2(func(k string, v int) bool { return v > 1 })).
+		Pipe2(seq.Take2(1).Operator)
 	for k, v := range pairs {
 		fmt.Println(k, v) // 1 3
 	}
@@ -57,8 +57,8 @@ func main() {
 
 ## Seq / Seq2
 
-このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
-`Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
+このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` / `Pipe2` を通じて要素を加工する機能を持つ関数型です。  
+`Seq` / `Seq2` を `Pipe` / `Pipe2` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
 `Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
 `Seq2` から単一値の `Seq` へ変換し、そのままパイプラインを続けることもできます。  
 
@@ -78,30 +78,37 @@ func main() {
 
 ### 2つのシーケンスを組み合わせる
 
-`left.Zip(right)` は左の要素をキー、右の要素を値とする `Seq2` を返し、短い入力の終了時に停止します。  
-`left.ZipAll(right)` は両入力が終了するまで反復し、不足分をそれぞれの型のゼロ値で補います。  
-`ZipDefaults.WithKey` / `WithValue` で片側または両側の既定値を指定でき、各メソッドはもう片側の設定を保ったコピーを返します。  
-設定を複数渡した場合は最後の設定値を使います。  
-どちらも nil 入力を空として扱い、戻り値の `Seq2` は `Pipe`、`ToMap`、`ToSeq2` に接続できます。  
-構築時には入力を評価せず、評価ごとにキー、値の順に取得し、下流の途中終了時には両方の入力を停止します。  
-`Zip` は値側の終了を検出する際にキー側を1要素余分に取得することがあります。  
+`left.Pipe2` に `Zip(right).Operator` を渡すと、左の要素をキー、右の要素を値とする `Seq2` を作れます。  
+終了条件の既定は `AlignShortest` で、`AlignBy` により出力件数の基準を選べます。  
+
+| 終了条件 | 出力件数 | 補完対象 |
+| --- | --- | --- |
+| `AlignShortest`（既定） | 短い入力の件数 | なし |
+| `AlignLeft` | 左の入力の件数 | 不足する値 |
+| `AlignRight` | 右の入力の件数 | 不足するキー |
+| `AlignLongest` | 長い入力の件数 | 不足するキー・値 |
+
+`WithKey` / `WithValue` で不足分の既定値を設定でき、未指定側はその型のゼロ値を使います。  
+各設定メソッドは他の設定を保ったコピーを返し、同じ設定を繰り返すと最後の値に置き換わります。  
+`WithKey` は引数からキー型を確定するため、左の入力も同じ要素型である必要があります。  
+`WithKey` を省略した場合は、`.Operator` の接続時に左の入力からキー型を推論します。  
+`AlignShortest` では既定値を使わず、`AlignBy` に不正な終了条件を渡すと panic します。  
+設定の構築・接続時には入力を評価せず、nil 入力は空として扱います。  
+`AlignRight` では右から、それ以外では左から要素を取得します。  
+`AlignShortest` では右の終了検出時にキーを1要素余分に取得することがあります。  
+下流の途中終了や panic を含め、評価終了時には両入力の反復を停止します。  
 再評価できるかどうかは両入力に従います。  
 
 ```go
 left := seq.FromSlice([]int{1, 2})
 right := seq.FromSlice([]string{"a"})
-defaults := seq.ZipDefaults[int, string]{}.WithKey(-1).WithValue("missing")
-pairs := left.ZipAll(right, defaults).Pipe(seq.Take2(2).Operator)
+pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithValue("missing").Operator)
 // seq.ToMap(pairs): map[1:a 2:missing]
 ```
 
 ## オペレーター
 
-このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
-`Seq` 用の関数型 `Operator[I, O]` は、`func(Seq[I]) Seq[O]` と定義されています。  
-`Seq2` では、`Seq2` を別の `Seq2` に変換します。  
-`Seq2` 用の関数型 `Operator2[K, V, K2, V2]` は、`func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
-`Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
+go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  
 
 ### ライブラリが提供するオペレーター
 
@@ -110,33 +117,39 @@ pairs := left.ZipAll(right, defaults).Pipe(seq.Take2(2).Operator)
 
 ### 型推論
 
-生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡すことができます。  
+生成関数の引数から型を推論できる場合は、戻り値の出力型に応じて、そのまま `Pipe` / `Pipe2` に渡すことができます。  
 コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
 
-生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として `Pipe` に渡す必要があります。  
+生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として、`Take` なら `Pipe`、`Take2` なら `Pipe2` に渡す必要があります。  
 要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
 
 ### 接続
 
-`Pipe` は、次の型の変換関数を直接受け取ります。  
+`Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  
+関数型 `Operator`、`ToSeq2Operator`、`ToSeqOperator`、`Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
 
-- `Seq`: `seq.Operator[I, O]`（`func(seq.Seq[I]) seq.Seq[O]`）
-- `Seq2`: `seq.Operator2[K, V, K2, V2]`（`func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`）
+| 入力 | メソッド | 変換関数 | 出力 |
+| --- | --- | --- | --- |
+| `Seq[I]` | `Pipe` | `Operator[I, O]`（`func(Seq[I]) Seq[O]`） | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]`（`func(Seq[I]) Seq2[K, V]`） | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]`（`func(Seq2[K, V]) Seq[O]`） | `Seq[O]` |
+| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]`（`func(Seq2[K, V]) Seq2[K2, V2]`） | `Seq2[K2, V2]` |
 
-`Pipe` は渡された変換関数をその場で呼び出します。  
-`Operator` / `Operator2` は関数型なので、`op(src)` の形でも直接呼び出せます。  
+`Pipe` / `Pipe2` は変換関数をその場で呼び出し、nil を含めて戻り値をそのまま返します。  
+入力の評価と停止伝播は、変換関数の実装に従います。  
+4 種類のオペレーターは関数型なので、`op(src)` の形でも直接呼び出せます。  
 独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
-関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
+関数内で `src.Pipe(...)` / `src.Pipe2(...)` を使い、既存のオペレーターを合成することもできます。  
 
-独自の変換関数も、そのまま `Pipe` に渡せます。  
+独自の変換関数も、そのまま `Pipe` / `Pipe2` に渡せます。  
 
 ### 独自オペレーターの実装
 
 `Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
-変換関数を実装し、`Pipe` に直接渡します。  
+変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に直接渡します。  
 
 入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
-入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を `Pipe` に渡します。  
+入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を出力型に応じて `Pipe` / `Pipe2` に渡します。  
 
 ### 実行可能な利用例
 
@@ -148,7 +161,9 @@ pairs := left.ZipAll(right, defaults).Pipe(seq.Take2(2).Operator)
 | 要素・キーと値の変換 | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | 条件による選別 | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
-| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
+| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L198) |
+| Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L178) | [ExampleSeq2_Pipe](seq/example_test.go#L190) |
+| Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](seq/example_test.go#L210) | [ExampleToSeqOperator](seq/example_test.go#L221) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 

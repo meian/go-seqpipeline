@@ -46,3 +46,125 @@ func TestSeq2DefinedFunctionType(t *testing.T) {
 	assertEqual(t, pairs, []pair[string, int]{{Key: "0", Value: 1}})
 	assertEqual(t, collectPairs(seq.ToSeq2(seq.FromSeq2(iter.Seq2[string, int](pipeline2)))), collectPairs(seq.ToSeq2(pipeline2)))
 }
+
+// TestSeqPipe は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+func TestSeqPipe(t *testing.T) {
+	reads, calls := 0, 0
+	var src seq.Seq[int] = func(yield func(int) bool) { reads++; yield(7) }
+	var result seq.Seq[string] = src.Pipe(func(got seq.Seq[int]) seq.Seq[string] {
+		calls++
+		assertEqual(t, reads, 0)
+		for v := range got {
+			assertEqual(t, v, 7)
+		}
+		return func(yield func(string) bool) { yield("ok") }
+	})
+	assertEqual(t, calls, 1)
+	assertEqual(t, reads, 1)
+	assertEqual(t, seq.ToSlice(result), []string{"ok"})
+	var zero seq.Seq[int]
+	var nilCalls int
+	nilResult := zero.Pipe(func(got seq.Seq[int]) seq.Seq[string] {
+		nilCalls++
+		if got != nil {
+			t.Fatal("nil input changed")
+		}
+		return nil
+	})
+	assertEqual(t, nilCalls, 1)
+	if nilResult != nil {
+		t.Fatal("nil result changed")
+	}
+}
+
+// TestSeqPipe2 は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+func TestSeqPipe2(t *testing.T) {
+	reads, calls := 0, 0
+	var src seq.Seq[int] = func(yield func(int) bool) { reads++; yield(7) }
+	var result seq.Seq2[[]int, string] = src.Pipe2(func(got seq.Seq[int]) seq.Seq2[[]int, string] {
+		calls++
+		assertEqual(t, reads, 0)
+		for v := range got {
+			assertEqual(t, v, 7)
+		}
+		return func(yield func([]int, string) bool) { yield([]int{1}, "ok") }
+	})
+	assertEqual(t, calls, 1)
+	assertEqual(t, reads, 1)
+	assertEqual(t, collectPairs(seq.ToSeq2(result)), []pair[[]int, string]{{Key: []int{1}, Value: "ok"}})
+	var zero seq.Seq[int]
+	var nilCalls int
+	nilResult := zero.Pipe2(func(got seq.Seq[int]) seq.Seq2[[]int, string] {
+		nilCalls++
+		if got != nil {
+			t.Fatal("nil input changed")
+		}
+		return nil
+	})
+	assertEqual(t, nilCalls, 1)
+	if nilResult != nil {
+		t.Fatal("nil result changed")
+	}
+}
+
+// TestSeq2Pipe は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+func TestSeq2Pipe(t *testing.T) {
+	reads, calls := 0, 0
+	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) { reads++; yield(7, true) }
+	var result seq.Seq[string] = src.Pipe(func(got seq.Seq2[int, bool]) seq.Seq[string] {
+		calls++
+		assertEqual(t, reads, 0)
+		for k, v := range got {
+			assertEqual(t, k, 7)
+			assertEqual(t, v, true)
+		}
+		return func(yield func(string) bool) { yield("ok") }
+	})
+	assertEqual(t, calls, 1)
+	assertEqual(t, reads, 1)
+	assertEqual(t, seq.ToSlice(result), []string{"ok"})
+	var zero seq.Seq2[int, bool]
+	var nilCalls int
+	nilResult := zero.Pipe(func(got seq.Seq2[int, bool]) seq.Seq[string] {
+		nilCalls++
+		if got != nil {
+			t.Fatal("nil input changed")
+		}
+		return nil
+	})
+	assertEqual(t, nilCalls, 1)
+	if nilResult != nil {
+		t.Fatal("nil result changed")
+	}
+}
+
+// TestSeq2Pipe2 は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+func TestSeq2Pipe2(t *testing.T) {
+	reads, calls := 0, 0
+	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) { reads++; yield(7, true) }
+	var result seq.Seq2[[]int, string] = src.Pipe2(func(got seq.Seq2[int, bool]) seq.Seq2[[]int, string] {
+		calls++
+		assertEqual(t, reads, 0)
+		for k, v := range got {
+			assertEqual(t, k, 7)
+			assertEqual(t, v, true)
+		}
+		return func(yield func([]int, string) bool) { yield([]int{1}, "ok") }
+	})
+	assertEqual(t, calls, 1)
+	assertEqual(t, reads, 1)
+	assertEqual(t, collectPairs(seq.ToSeq2(result)), []pair[[]int, string]{{Key: []int{1}, Value: "ok"}})
+	var zero seq.Seq2[int, bool]
+	var nilCalls int
+	nilResult := zero.Pipe2(func(got seq.Seq2[int, bool]) seq.Seq2[[]int, string] {
+		nilCalls++
+		if got != nil {
+			t.Fatal("nil input changed")
+		}
+		return nil
+	})
+	assertEqual(t, nilCalls, 1)
+	if nilResult != nil {
+		t.Fatal("nil result changed")
+	}
+}

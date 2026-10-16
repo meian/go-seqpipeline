@@ -2,73 +2,114 @@ package seq
 
 import "iter"
 
-// ZipDefaults は ZipAll で不足するキーと値を補う設定値である。
-// ゼロ値はキーと値それぞれの型のゼロ値を使う。
-type ZipDefaults[K, V any] struct {
-	key   K
-	value V
+// ZipAlign は Zip の出力件数をどちらの入力に合わせるかを表す。
+type ZipAlign int
+
+const (
+	// AlignShortest は短い方の入力が終了した時点で終了する。
+	// Zip の既定値である。
+	AlignShortest ZipAlign = iota
+	// AlignLeft は左の入力の件数に合わせ、不足する値を補う。
+	AlignLeft
+	// AlignRight は右の入力の件数に合わせ、不足するキーを補う。
+	AlignRight
+	// AlignLongest は長い方の入力の件数に合わせ、不足するキーや値を補う。
+	AlignLongest
+)
+
+// Zip は右の入力 other と組み合わせる設定値を返す。
+// 左の要素をキー、右の要素を値とし、既定では短い方の入力で終了する。
+// AlignBy で終了条件、WithKey と WithValue で不足分の既定値を指定する。
+// 未指定の既定値はそれぞれの型のゼロ値であり、AlignShortest では補完しない。
+// 各設定メソッドはコピーを返す。
+// Seq.Pipe2 に Zip(other).Operator を渡すと、左の入力からキー型を推論する。
+func Zip[V any](other Seq[V]) zipOperator[V] {
+	return zipOperator[V]{other: other}
 }
 
-// WithKey は不足するキーの既定値を設定したコピーを返す。
-// 値側の設定は保持する。
-func (d ZipDefaults[K, V]) WithKey(key K) ZipDefaults[K, V] {
-	d.key = key
-	return d
+type zipOperator[V any] struct {
+	other     Seq[V]
+	alignment ZipAlign
+	value     V
+}
+
+// AlignBy は出力件数の基準を設定したコピーを返す。
+// AlignShortest、AlignLeft、AlignRight、AlignLongest 以外の値は panic する。
+func (z zipOperator[V]) AlignBy(alignment ZipAlign) zipOperator[V] {
+	if alignment < AlignShortest || alignment > AlignLongest {
+		panic("seq.Zip: invalid alignment")
+	}
+	z.alignment = alignment
+	return z
 }
 
 // WithValue は不足する値の既定値を設定したコピーを返す。
-// キー側の設定は保持する。
-func (d ZipDefaults[K, V]) WithValue(value V) ZipDefaults[K, V] {
-	d.value = value
-	return d
+func (z zipOperator[V]) WithValue(value V) zipOperator[V] {
+	z.value = value
+	return z
 }
 
-// Zip は入力の反復順序に沿って、この Seq の要素をキー、other の要素を値とする Seq2 を返す。
-// 短い方の入力が終了した時点で終了し、nil の入力は空として扱う。
-// この時点では入力を評価しない。
-// 下流の途中終了や入力の終了時には両方の反復を停止し、入力の defer を実行する。
-// キー側を先に取得するため、値側の終了を検出する際にキー側を1要素余分に取得することがある。
-// 再評価できるかどうかは元の Iterator に従う。
-func (s Seq[K]) Zip[V any](other Seq[V]) Seq2[K, V] {
+// WithKey は不足するキーの既定値を設定したコピーを返す。
+// キー型は key から確定し、Operator に渡す左の入力も同じ型でなければならない。
+func (z zipOperator[V]) WithKey[K any](key K) zipKeyOperator[K, V] {
+	return zipKeyOperator[K, V]{config: z, key: key}
+}
+
+// Operator は左の入力 src と設定済みの右の入力を組み合わせる Seq2 を返す。
+// この時点では入力を評価せず、nil の入力は空として扱う。
+// AlignRight では右から、それ以外では左から要素を取得する。
+// AlignShortest では右の終了検出時に左を1要素余分に取得することがある。
+// 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
+// 再評価できるかどうかは両方の元の Iterator に従う。
+func (z zipOperator[V]) Operator[K any](src Seq[K]) Seq2[K, V] {
+	var key K
+	return zipSequences(src, z.other, z.alignment, key, z.value)
+}
+
+type zipKeyOperator[K, V any] struct {
+	config zipOperator[V]
+	key    K
+}
+
+// AlignBy はキーの既定値を保ち、出力件数の基準を設定したコピーを返す。
+// AlignShortest、AlignLeft、AlignRight、AlignLongest 以外の値は panic する。
+func (z zipKeyOperator[K, V]) AlignBy(alignment ZipAlign) zipKeyOperator[K, V] {
+	z.config = z.config.AlignBy(alignment)
+	return z
+}
+
+// WithValue はキーの既定値を保ち、値の既定値を設定したコピーを返す。
+func (z zipKeyOperator[K, V]) WithValue(value V) zipKeyOperator[K, V] {
+	z.config = z.config.WithValue(value)
+	return z
+}
+
+// WithKey はキーの既定値を置き換えたコピーを返す。
+func (z zipKeyOperator[K, V]) WithKey(key K) zipKeyOperator[K, V] {
+	z.key = key
+	return z
+}
+
+// Operator は設定済みのキーと値の既定値を使って Seq2 を返す。
+// この時点では入力を評価せず、nil の入力は空として扱う。
+// AlignRight では右から、それ以外では左から要素を取得する。
+// AlignShortest では右の終了検出時に左を1要素余分に取得することがある。
+// 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
+// 再評価できるかどうかは両方の元の Iterator に従う。
+func (z zipKeyOperator[K, V]) Operator(src Seq[K]) Seq2[K, V] {
+	return zipSequences(src, z.config.other, z.config.alignment, z.key, z.config.value)
+}
+
+func zipSequences[K, V any](left Seq[K], right Seq[V], alignment ZipAlign, key K, value V) Seq2[K, V] {
 	return func(yield func(K, V) bool) {
-		if s == nil || other == nil {
+		if alignment == AlignShortest && (left == nil || right == nil) || alignment == AlignLeft && left == nil || alignment == AlignRight && right == nil {
 			return
 		}
-		nextKey, stopKey := iter.Pull(iter.Seq[K](s))
-		defer stopKey()
-		nextValue, stopValue := iter.Pull(iter.Seq[V](other))
-		defer stopValue()
-		for {
-			k, ok := nextKey()
-			if !ok {
-				return
-			}
-			v, ok := nextValue()
-			if !ok || !yield(k, v) {
-				return
-			}
-		}
-	}
-}
-
-// ZipAll は入力の反復順序に沿って、この Seq の要素をキー、other の要素を値とする Seq2 を返す。
-// 長い方の入力が終了するまで反復し、nil の入力は空として扱う。
-// 不足分は defaults で補い、省略時はそれぞれの型のゼロ値を使う。
-// defaults を複数渡した場合は最後の設定値を使う。
-// この時点では入力を評価せず、キー側、値側の順に取得する。
-// 下流の途中終了や入力の終了時には両方の反復を停止し、入力の defer を実行する。
-// 再評価できるかどうかは元の Iterator に従う。
-func (s Seq[K]) ZipAll[V any](other Seq[V], defaults ...ZipDefaults[K, V]) Seq2[K, V] {
-	var d ZipDefaults[K, V]
-	if len(defaults) > 0 {
-		d = defaults[len(defaults)-1]
-	}
-	return func(yield func(K, V) bool) {
-		keys := iter.Seq[K](s)
+		keys := iter.Seq[K](left)
 		if keys == nil {
 			keys = func(func(K) bool) {}
 		}
-		values := iter.Seq[V](other)
+		values := iter.Seq[V](right)
 		if values == nil {
 			values = func(func(V) bool) {}
 		}
@@ -77,16 +118,30 @@ func (s Seq[K]) ZipAll[V any](other Seq[V], defaults ...ZipDefaults[K, V]) Seq2[
 		nextValue, stopValue := iter.Pull(values)
 		defer stopValue()
 		for {
-			k, hasKey := nextKey()
-			v, hasValue := nextValue()
-			if !hasKey && !hasValue {
-				return
+			var k K
+			var v V
+			var hasKey, hasValue bool
+			if alignment == AlignRight {
+				v, hasValue = nextValue()
+				if !hasValue {
+					return
+				}
+				k, hasKey = nextKey()
+			} else {
+				k, hasKey = nextKey()
+				if !hasKey && (alignment == AlignShortest || alignment == AlignLeft) {
+					return
+				}
+				v, hasValue = nextValue()
+				if !hasValue && (alignment == AlignShortest || !hasKey) {
+					return
+				}
 			}
 			if !hasKey {
-				k = d.key
+				k = key
 			}
 			if !hasValue {
-				v = d.value
+				v = value
 			}
 			if !yield(k, v) {
 				return
