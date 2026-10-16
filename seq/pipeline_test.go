@@ -456,3 +456,51 @@ func TestValuesPipeline(t *testing.T) {
 		assertEqual(t, seq.ToSlice(pipeline), []int{3})
 	}
 }
+
+// TestProjectionWithSkip は、Seq2 と Seq の両側の Skip、射影、Take を接続して評価と停止を確認する。
+func TestProjectionWithSkip(t *testing.T) {
+	for _, projection := range []struct {
+		name string
+		op   seq.ToSeqOperator[int, int, int]
+		want []int
+	}{
+		{name: "keys", op: seq.Keys[int, int], want: []int{3, 4}},
+		{name: "values", op: seq.Values[int, int], want: []int{30, 40}},
+	} {
+		t.Run(projection.name, func(t *testing.T) {
+			for _, n := range []int{0, 1, 2} {
+				t.Run(strconv.Itoa(n), func(t *testing.T) {
+					starts, reads, stops := 0, 0, 0
+					src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+						starts++
+						defer func() { stops++ }()
+						for i := 1; i <= 5; i++ {
+							reads++
+							if !yield(i, i*10) {
+								return
+							}
+						}
+					})
+					skip := seq.Skip(1)
+					pipeline := src.Pipe2(skip.Operator2).
+						Pipe(projection.op).
+						Pipe(skip.Operator).
+						Pipe(seq.Take(n).Operator)
+					assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
+					want := projection.want[:n]
+					if n == 0 {
+						want = nil
+					}
+					for round := 1; round <= 2; round++ {
+						assertEqual(t, seq.ToSlice(pipeline), want)
+						if n == 0 {
+							assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
+						} else {
+							assertEqual(t, []int{starts, reads, stops}, []int{round, (n + 2) * round, round})
+						}
+					}
+				})
+			}
+		})
+	}
+}
