@@ -76,36 +76,6 @@ func main() {
 
 標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
 
-### 2つのシーケンスを組み合わせる
-
-`left.Pipe2` に `Zip(right).Operator` を渡すと、左の要素をキー、右の要素を値とする `Seq2` を作れます。  
-終了条件の既定は `AlignShortest` で、`AlignBy` により出力件数の基準を選べます。  
-
-| 終了条件 | 出力件数 | 補完対象 |
-| --- | --- | --- |
-| `AlignShortest`（既定） | 短い入力の件数 | なし |
-| `AlignLeft` | 左の入力の件数 | 不足する値 |
-| `AlignRight` | 右の入力の件数 | 不足するキー |
-| `AlignLongest` | 長い入力の件数 | 不足するキー・値 |
-
-`WithDefaultKey` / `WithDefaultValue` で不足分の既定値を設定でき、未指定側はその型のゼロ値を使います。  
-各設定メソッドは他の設定を保ったコピーを返し、同じ設定を繰り返すと最後の値に置き換わります。  
-`WithDefaultKey` は引数からキー型を確定するため、左の入力も同じ要素型である必要があります。  
-`WithDefaultKey` を省略した場合は、`.Operator` の接続時に左の入力からキー型を推論します。  
-`AlignShortest` では既定値を使わず、`AlignBy` に不正な終了条件を渡すと panic します。  
-設定の構築・接続時には入力を評価せず、nil 入力は空として扱います。  
-`AlignRight` では右から、それ以外では左から要素を取得します。  
-`AlignShortest` では右の終了検出時にキーを1要素余分に取得することがあります。  
-下流の途中終了や panic を含め、評価終了時には両入力の反復を停止します。  
-再評価できるかどうかは両入力に従います。  
-
-```go
-left := seq.FromSlice([]int{1, 2})
-right := seq.FromSlice([]string{"a"})
-pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing").Operator)
-// seq.ToMap(pairs): map[1:a 2:missing]
-```
-
 ## オペレーター
 
 go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  

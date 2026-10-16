@@ -76,36 +76,6 @@ Functions starting with `To` collect results into collections or convert them to
 
 Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the standard `iter.Seq` / `iter.Seq2` types.  
 
-### Combining two sequences
-
-Pass `Zip(right).Operator` to `left.Pipe2` to produce a `Seq2` with left elements as keys and right elements as values.  
-The default alignment is `AlignShortest`; use `AlignBy` to select the output length.  
-
-| Alignment | Output length | Padding |
-| --- | --- | --- |
-| `AlignShortest` (default) | Shorter input | None |
-| `AlignLeft` | Left input | Missing values |
-| `AlignRight` | Right input | Missing keys |
-| `AlignLongest` | Longer input | Missing keys or values |
-
-`WithDefaultKey` / `WithDefaultValue` set padding values, defaulting to the respective type's zero value.  
-Each configuration method returns a copy, preserving the other settings; repeated calls replace that setting.  
-`WithDefaultKey` fixes the key type from its argument, so the left input must have the same element type.  
-Without `WithDefaultKey`, the key type is inferred from the left input when connecting `.Operator`.  
-`AlignShortest` does not use padding values, and `AlignBy` panics for an invalid alignment.  
-Construction and connection do not evaluate inputs, and nil inputs are treated as empty.  
-`AlignRight` pulls the right input first; all other alignments pull the left input first.  
-`AlignShortest` may pull one extra key when detecting the end of the right input.  
-Both input iterations are stopped when evaluation ends, including downstream termination or panic.  
-Whether the result can be evaluated again depends on both inputs.  
-
-```go
-left := seq.FromSlice([]int{1, 2})
-right := seq.FromSlice([]string{"a"})
-pairs := left.Pipe2(seq.Zip(right).AlignBy(seq.AlignLeft).WithDefaultValue("missing").Operator)
-// seq.ToMap(pairs): map[1:a 2:missing]
-```
-
 ## Operators
 
 In go-seqpipeline, an operator is an operation that transforms `Seq` / `Seq2` to produce a new sequence.  
