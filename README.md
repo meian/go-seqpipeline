@@ -1,20 +1,22 @@
 # go-seqpipeline
 
-`iter.Seq` / `iter.Seq2` を使い、型安全なパイプラインをメソッドチェーンで構築するライブラリです。  
+English | [日本語](README.ja.md)  
 
-## 環境要件とインストール
+A library for building type-safe pipelines through method chaining with `iter.Seq` / `iter.Seq2`.  
 
-Go 1.27.1 以降が必要です。  
+## Requirements and installation
+
+Go 1.27.1 or later is required.  
 
 ```sh
 go get github.com/meian/go-seqpipeline
 ```
 
-## 使い方
+## Usage
 
-`From` で始まる関数で入力を取り込み、`Pipe` でオペレーターを接続します。  
-接続する処理の入出力から型が推論され、型が一致しない処理は指定できません。  
-結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  
+Use functions starting with `From` to wrap input, then connect operators with `Pipe`.  
+Types are inferred from the inputs and outputs of the connected operations, and operations with incompatible types cannot be connected.  
+Iterate over the result directly with `for range`, or collect it into a collection with `ToSlice` / `ToMap`.  
 
 ```go
 package main
@@ -33,14 +35,14 @@ func main() {
 		Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
 		Pipe(seq.Take(1).Operator)
 
-	// パイプラインの結果をスライスとして受け取る
+	// Collect the pipeline results into a slice
 	fmt.Println(seq.ToSlice(pipeline)) // [333]
 
-	// パイプラインを直接反復する
+	// Iterate over the pipeline directly
 	for s := range pipeline {
 		fmt.Println(s) // 333
 	}
-	// Seq2 ではキーと値を加工する
+	// Transform keys and values with Seq2
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe(seq.Map2(func(k int, v string) (string, int) {
 			return strconv.Itoa(k), len(v)
@@ -55,122 +57,122 @@ func main() {
 
 ## Seq / Seq2
 
-このライブラリの `Seq[T]` / `Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) が提供する `iter.Seq[T]` / `iter.Seq2[K, V]` と互換性があり、`Pipe` を通じて要素を加工する機能を持つ関数型です。  
-`Seq` / `Seq2` を `Pipe` を通じて加工したパイプラインは、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
-`Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
-`Seq` と `Seq2` をまたぐ変換は提供していません。  
+This library's `Seq[T]` / `Seq2[K, V]` are function types compatible with `iter.Seq[T]` / `iter.Seq2[K, V]` from Go's standard [`iter`](https://pkg.go.dev/iter) package, with `Pipe` methods for transforming elements.  
+Pipelines built by transforming `Seq` / `Seq2` through `Pipe` can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
+`Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
+Conversions between `Seq` and `Seq2` are not provided.  
 
-## 入力と出力
+## Input and output
 
-`From` で始まる関数は、コレクションや標準イテレーターをパイプラインの入力へ変換します。  
-`To` で始まる関数は、結果をコレクションへ収集するか、標準イテレーターへ変換します。  
+Functions starting with `From` convert collections or standard iterators into pipeline inputs.  
+Functions starting with `To` collect results into collections or convert them to standard iterators.  
 
-| 操作 | Seq | Seq2 |
+| Operation | Seq | Seq2 |
 | --- | --- | --- |
-| コレクションから入力 | `FromSlice` | `FromMap` |
-| 標準イテレーターから入力 | `FromSeq` | `FromSeq2` |
-| コレクションへ収集 | `ToSlice` | `ToMap`（キーは `comparable`） |
-| 標準イテレーターへ変換 | `ToSeq` | `ToSeq2` |
+| Input from a collection | `FromSlice` | `FromMap` |
+| Input from a standard iterator | `FromSeq` | `FromSeq2` |
+| Collect into a collection | `ToSlice` | `ToMap` (keys must be `comparable`) |
+| Convert to a standard iterator | `ToSeq` | `ToSeq2` |
 
-標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
+Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the standard `iter.Seq` / `iter.Seq2` types.  
 
-## オペレーター
+## Operators
 
-このライブラリでは、`Seq` を別の `Seq` に変換する処理をオペレーターと呼びます。  
-`Seq` 用の関数型 `Operator[I, O]` は、`func(Seq[I]) Seq[O]` と定義されています。  
-`Seq2` では、`Seq2` を別の `Seq2` に変換します。  
-`Seq2` 用の関数型 `Operator2[K, V, K2, V2]` は、`func(Seq2[K, V]) Seq2[K2, V2]` と定義されています。  
-`Seq` / `Seq2` は `Pipe` でオペレーターを受け取り、その処理を適用した新しい `Seq` / `Seq2` を返します。  
+In this library, an operator is an operation that transforms a `Seq` into another `Seq`.  
+The function type `Operator[I, O]` for `Seq` is defined as `func(Seq[I]) Seq[O]`.  
+For `Seq2`, an operator transforms a `Seq2` into another `Seq2`.  
+The function type `Operator2[K, V, K2, V2]` for `Seq2` is defined as `func(Seq2[K, V]) Seq2[K2, V2]`.  
+`Seq` / `Seq2` accept an operator through `Pipe` and return a new `Seq` / `Seq2` with that operation applied.  
 
-### ライブラリが提供するオペレーター
+### Built-in operators
 
-要素の変換や選別、取得件数の制限などの機能を提供しています。  
-`Seq` 用の `Filter` と `Seq2` 用の `Filter2` など同じ機能のオペレーターを用意し、`Seq2` 用のオペレーター名には `2` を付けて提供しています。  
+The library provides operations such as transforming elements, filtering them, and limiting the number of results.  
+Equivalent operators are provided for `Seq` and `Seq2`, such as `Filter` and `Filter2`; operator names for `Seq2` have a `2` suffix.  
 
-### 型推論
+### Type inference
 
-生成関数の引数から型を推論できる場合は、戻り値をそのまま `Pipe` に渡すことができます。  
-コールバックなどの引数が入出力の型情報を持つため、型引数を指定する必要はありません。  
+When types can be inferred from the arguments to an operator factory, pass its return value directly to `Pipe`.  
+Arguments such as callbacks carry the input and output type information, so explicit type arguments are unnecessary.  
 
-生成関数の引数から型を推論できない場合は、戻り値の `.Operator` をメソッド値として `Pipe` に渡す必要があります。  
-要素型を含まない設定値だけを受け取るオペレーターは、この方法で入力の要素型、またはキーと値の型を推論します。  
+When types cannot be inferred from the factory arguments, pass the returned value's `.Operator` method value to `Pipe`.  
+Operators that accept only configuration values without element type information use this approach to infer the input element type, or the key and value types.  
 
-### 接続
+### Connecting operators
 
-`Pipe` は、次の型の変換関数を直接受け取ります。  
+`Pipe` directly accepts transformation functions of the following types.  
 
-- `Seq`: `seq.Operator[I, O]`（`func(seq.Seq[I]) seq.Seq[O]`）
-- `Seq2`: `seq.Operator2[K, V, K2, V2]`（`func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`）
+- `Seq`: `seq.Operator[I, O]` (`func(seq.Seq[I]) seq.Seq[O]`)
+- `Seq2`: `seq.Operator2[K, V, K2, V2]` (`func(seq.Seq2[K, V]) seq.Seq2[K2, V2]`)
 
-`Pipe` は渡された変換関数をその場で呼び出します。  
-`Operator` / `Operator2` は関数型なので、`op(src)` の形でも直接呼び出せます。  
-独自の変換関数では、この呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
-関数内で `src.Pipe(...)` を使い、既存のオペレーターを合成することもできます。  
+`Pipe` calls the supplied transformation function immediately.  
+Because `Operator` / `Operator2` are function types, they can also be called directly as `op(src)`.  
+Custom transformation functions should return an iterator that processes input when executed, without evaluating input during this call.  
+You can also compose existing operators by calling `src.Pipe(...)` inside the function.  
 
-独自の変換関数も、そのまま `Pipe` に渡せます。  
+Custom transformation functions can be passed directly to `Pipe` as well.  
 
-### 独自オペレーターの実装
+### Implementing custom operators
 
-`Seq` / `Seq2` を加工する独自のオペレーターを作成できます。  
-変換関数を実装し、`Pipe` に直接渡します。  
+You can create custom operators that transform `Seq` / `Seq2`.  
+Implement a transformation function and pass it directly to `Pipe`.  
 
-入出力にはこのライブラリの `Seq` / `Seq2` を使います。  
-入力型が未確定の設定値には、`Take` と同様に型パラメーターを持つ `Operator` メソッドを用意し、`.Operator` を `Pipe` に渡します。  
+Use this library's `Seq` / `Seq2` types for the input and output.  
+For configuration values whose input types are not yet known, provide an `Operator` method with type parameters, as `Take` does, and pass `.Operator` to `Pipe`.  
 
-### 実行可能な利用例
+### Executable examples
 
-各オペレーターの使い方は、期待出力を持つ [Go Example](seq/example_test.go) にまとめています。  
-通常テストでは、境界値、nil、遅延評価、途中終了、再評価などを検証します。  
+[Go Examples](seq/example_test.go) demonstrate each operator with expected output.  
+Regular tests cover boundary values, nil, lazy evaluation, early termination, and re-evaluation.  
 
-| 利用例 | Seq | Seq2 |
+| Example | Seq | Seq2 |
 | --- | --- | --- |
-| 要素・キーと値の変換 | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
-| 条件による選別 | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
-| 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
-| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
-| 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
-| 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
+| Transform elements or keys and values | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
+| Filter by a condition | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
+| Limit results and infer types (.Operator) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
+| Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleMap2_directCall](seq/example_test.go#L66) |
+| Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
+| Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 
-Example のみを実行するには、次のコマンドを使います。  
+To run only the Examples, use the following command.  
 
 ```sh
 go test ./... -run '^Example' -count=1
 ```
 
-## 評価と利用上の仕様
+## Evaluation and usage semantics
 
-### 遅延評価と途中終了
+### Lazy evaluation and early termination
 
-組み込みオペレーターによるパイプライン構築と `ToSeq` / `ToSeq2` では、要素を評価しません。  
-`ToSlice` / `ToMap` の呼び出し、またはイテレーターの実行時に、入力の反復順序で処理します。  
+Building a pipeline with built-in operators and calling `ToSeq` / `ToSeq2` do not evaluate elements.  
+Input is processed in iteration order when `ToSlice` / `ToMap` is called or the iterator is executed.  
 
-下流の `yield` が `false` を返すか、`range` を `break` すると、上流の反復も停止します。  
-例えば `Take` / `Take2` は、`n <= 0` なら上流を実行しません。  
-上限に達すると `return` で `range` を抜けて上流へ停止を伝えるため、それ以降の上流の処理も停止します。  
+When a downstream `yield` returns `false` or a `range` loop is stopped with `break`, upstream iteration also stops.  
+For example, `Take` / `Take2` do not execute the upstream iterator when `n <= 0`.  
+Once the limit is reached, they exit the `range` loop with `return`, propagating the stop upstream so subsequent upstream processing also stops.  
 
-独自オペレーターも、返すイテレーターの実行時に処理し、下流からの停止を上流へ伝える必要があります。  
+Custom operators must likewise process input when their returned iterator is executed and propagate downstream stops upstream.  
 
-### 再評価と入力の参照
+### Re-evaluation and input references
 
-再評価できるかどうかは元のイテレーターに従います。  
-`Take` / `Take2` の残り件数は評価ごとに初期化します。  
-`FromSlice` / `FromMap` は入力をコピーせず、評価時点の要素を参照します。  
-スライスは元の順序で反復し、map の反復順序は保証しません。  
-`ToMap` は同じキーでは反復順で後の値を採用します。  
+Whether a pipeline can be evaluated again depends on the original iterator.  
+`Take` / `Take2` initialize their remaining counts for each evaluation.  
+`FromSlice` / `FromMap` do not copy the input; they reference its elements at evaluation time.  
+Slices are iterated in their original order, while map iteration order is not guaranteed.  
+For duplicate keys, `ToMap` keeps the last value in iteration order.  
 
-ライブラリは goroutine や channel を使わず、非同期イベント処理を提供しません。  
-状態を持つコールバックの再利用や並行アクセスは、呼び出し側で管理してください。  
+The library does not use goroutines or channels and does not provide asynchronous event processing.  
+Callers are responsible for managing the reuse of stateful callbacks and concurrent access.  
 
-### nil と空の入力
+### Nil and empty input
 
-`Seq` / `Seq2` のゼロ値と、nil の標準イテレーターから変換した値は nil です。  
-組み込みの `Map` / `Filter` / `Take` とその `Seq2` 用 API は、nil の入力イテレーターを空として扱います。  
-独自オペレーターの nil の扱いは、渡した変換関数の実装に従います。  
+The zero values of `Seq` / `Seq2` and values converted from nil standard iterators are nil.  
+The built-in `Map` / `Filter` / `Take` operators and their `Seq2` counterparts treat nil input iterators as empty.  
+How a custom operator handles nil depends on its transformation function's implementation.  
 
-`ToSeq` / `ToSeq2` は nil をそのまま返します。  
-nil を直接呼び出す、`range` で反復する、`ToSlice` / `ToMap` に渡すと panic します。  
-空の非 nil イテレーターを収集すると、`ToSlice` は nil、`ToMap` は空の非 nil の map を返します。  
+`ToSeq` / `ToSeq2` return nil unchanged.  
+Calling nil directly, iterating over it with `range`, or passing it to `ToSlice` / `ToMap` causes a panic.  
+When collecting an empty non-nil iterator, `ToSlice` returns nil and `ToMap` returns an empty non-nil map.  
 
-## ライセンス
+## License
 
 [MIT License](LICENSE)  
