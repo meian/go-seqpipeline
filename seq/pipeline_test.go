@@ -124,10 +124,10 @@ func TestExternalOperator(t *testing.T) {
 	assertEqual(t, got, []string{"1", "1", "2"})
 }
 
-// TestDirectTransformPipeline は、Map と Take.Operator を Seq 変換関数へ代入して直接接続し、型推論と再評価を確認する。
+// TestDirectTransformPipeline は、Map と Take.Operator を Operator へ代入して直接接続し、型推論と再評価を確認する。
 func TestDirectTransformPipeline(t *testing.T) {
-	var transform func(seq.Seq[int]) seq.Seq[string] = seq.Map(strconv.Itoa)
-	var limit func(seq.Seq[string]) seq.Seq[string] = seq.Take(2).Operator
+	var transform seq.Operator[int, string] = seq.Map(strconv.Itoa)
+	var limit seq.Operator[string, string] = seq.Take(2).Operator
 	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(transform).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1", "2"})
@@ -256,13 +256,13 @@ func TestMap2Filter2DirectCall(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(filtered)), []pair[string, int]{{Key: "2", Value: 20}})
 }
 
-// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Seq2 変換関数として接続し、型推論と再評価を確認する。
+// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take2.Operator を Operator2 として接続し、型推論と再評価を確認する。
 func TestDirectTransform2Pipeline(t *testing.T) {
 	op := keyText
-	var transform func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Filter2(func(k string, v int) bool {
+	var transform seq.Operator2[string, int, string, int] = seq.Filter2(func(k string, v int) bool {
 		return v > 1
 	})
-	var limit func(seq.Seq2[string, int]) seq.Seq2[string, int] = seq.Take2(1).Operator
+	var limit seq.Operator2[string, int, string, int] = seq.Take2(1).Operator
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe(op).Pipe(transform).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})

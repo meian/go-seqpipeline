@@ -34,10 +34,23 @@ func TestTransform(t *testing.T) {
 	assertEqual(t, seq.ToSlice(seq.FromSlice([]int{1, 2}).Pipe(op)), []string{"1", "2"})
 }
 
-func takeWith[T any](n int, predicate func(T) bool) func(seq.Seq[T]) seq.Seq[T] {
+func takeWith[T any](n int, predicate func(T) bool) seq.Operator[T, T] {
 	return func(src seq.Seq[T]) seq.Seq[T] {
 		return src.Pipe(seq.Filter(predicate)).Pipe(seq.Take(n).Operator)
 	}
+}
+
+func TestOperatorDirectCall(t *testing.T) {
+	// 生成関数の戻り値が Operator 型であることも確認する。
+	var mapFactory func(func(int) string) seq.Operator[int, string] = seq.Map[int, string]
+	var filterFactory func(func(string) bool) seq.Operator[string, string] = seq.Filter[string]
+	mapped := mapFactory(strconv.Itoa)
+	filtered := filterFactory(func(v string) bool { return len(v) > 1 })
+	var limit seq.Operator[string, string] = seq.Take(1).Operator
+	var custom seq.Operator[int, string] = repeat
+	src := seq.FromSlice([]int{1, 22, 333})
+	assertEqual(t, seq.ToSlice(limit(filtered(mapped(src)))), []string{"22"})
+	assertEqual(t, seq.ToSlice(src.Pipe(custom).Pipe(filtered).Pipe(limit)), []string{"22"})
 }
 
 func TestComposedOperator(t *testing.T) {
@@ -73,9 +86,26 @@ func TestTransform2(t *testing.T) {
 	assertEqual(t, got, []pair[string, int]{{Key: "0", Value: 4}, {Key: "1", Value: 5}})
 }
 
+func TestOperator2DirectCall(t *testing.T) {
+	// 生成関数の戻り値が Operator2 型であることも確認する。
+	var mapFactory func(func(int, int) (string, string)) seq.Operator2[int, int, string, string] = seq.Map2[int, int, string, string]
+	var filterFactory func(func(string, string) bool) seq.Operator2[string, string, string, string] = seq.Filter2[string, string]
+	mapped := mapFactory(func(k, v int) (string, string) { return strconv.Itoa(k), strconv.Itoa(v) })
+	filtered := filterFactory(func(k, v string) bool { return len(v) > 1 })
+	var limit seq.Operator2[string, string, string, string] = seq.Take2(1).Operator
+	var custom seq.Operator2[int, int, string, int] = keyText
+	src := seq.FromSeq2(slices.All([]int{1, 22, 333}))
+	want := []pair[string, string]{{Key: "1", Value: "22"}}
+	assertEqual(t, collectPairs(seq.ToSeq2(limit(filtered(mapped(src))))), want)
+	pipeline := src.Pipe(custom).
+		Pipe(seq.Map2(func(k string, v int) (string, string) { return k, strconv.Itoa(v) })).
+		Pipe(filtered).Pipe(limit)
+	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
+}
+
 func TestComposedOperator2(t *testing.T) {
 	reads := 0
-	op := func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
+	var op seq.Operator2[int, int, int, int] = func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
 		return src.Pipe(seq.Filter2(func(k, v int) bool { return v%2 == 0 })).
 			Pipe(seq.Take2(2).Operator)
 	}
