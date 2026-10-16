@@ -78,9 +78,7 @@ func main() {
 
 ## オペレーター
 
-オペレーターは、`Seq` / `Seq2` を新しいシーケンスへ変換する処理です。  
-関数型 `Operator`、`ToSeq2Operator`、`ToSeqOperator`、`Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
-`Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  
+go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  
 
 ### ライブラリが提供するオペレーター
 
@@ -97,7 +95,8 @@ func main() {
 
 ### 接続
 
-4 通りの接続で、次の変換関数を受け取ります。  
+`Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  
+関数型 `Operator`、`ToSeq2Operator`、`ToSeqOperator`、`Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
 
 | 入力 | メソッド | 変換関数 | 出力 |
 | --- | --- | --- | --- |
@@ -132,9 +131,9 @@ func main() {
 | 要素・キーと値の変換 | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | 条件による選別 | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | 取得件数の制限と型推論（.Operator） | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
-| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L196) |
-| Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L176) | [ExampleSeq2_Pipe](seq/example_test.go#L188) |
-| Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](seq/example_test.go#L208) | [ExampleToSeqOperator](seq/example_test.go#L219) |
+| 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L198) |
+| Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L178) | [ExampleSeq2_Pipe](seq/example_test.go#L190) |
+| Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](seq/example_test.go#L210) | [ExampleToSeqOperator](seq/example_test.go#L221) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 

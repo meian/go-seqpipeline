@@ -160,6 +160,8 @@ func ExampleSeq2_Values() {
 }
 
 // withLength は入力順序を保ち、非 comparable なキーを持つ Seq2 に遅延変換する。
+// Seq から Seq2 に変換する組み込みオペレーターがないため、Example ではこの関数を使用している。
+// TODO: 対応する組み込みオペレーターの追加時に、Example をそのオペレーターを使う例に差し替える。
 func withLength[T ~string](src seq.Seq[T]) seq.Seq2[[]int, T] {
 	return func(yield func([]int, T) bool) {
 		if src == nil {

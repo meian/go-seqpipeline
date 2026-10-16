@@ -78,9 +78,7 @@ Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the st
 
 ## Operators
 
-Operators transform `Seq` / `Seq2` into new sequences.  
-The function types `Operator`, `ToSeq2Operator`, `ToSeqOperator`, and `Operator2` represent the four combinations of input and output types.  
-Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
+In go-seqpipeline, an operator is an operation that transforms `Seq` / `Seq2` to produce a new sequence.  
 
 ### Built-in operators
 
@@ -97,7 +95,8 @@ Operators that accept only configuration values without element type information
 
 ### Connecting operators
 
-The four connections accept the following transformation functions.  
+Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
+The function types `Operator`, `ToSeq2Operator`, `ToSeqOperator`, and `Operator2` represent the four combinations of input and output types.  
 
 | Input | Method | Transformation function | Output |
 | --- | --- | --- | --- |
@@ -132,9 +131,9 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Transform elements or keys and values | [ExampleMap](seq/example_test.go#L11) | [ExampleMap2](seq/example_test.go#L17) |
 | Filter by a condition | [ExampleFilter](seq/example_test.go#L27) | [ExampleFilter2](seq/example_test.go#L33) |
 | Limit results and infer types (.Operator) | [ExampleTake](seq/example_test.go#L41) | [ExampleTake2](seq/example_test.go#L47) |
-| Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L196) |
-| Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L176) | [ExampleSeq2_Pipe](seq/example_test.go#L188) |
-| Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](seq/example_test.go#L208) | [ExampleToSeqOperator](seq/example_test.go#L219) |
+| Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L198) |
+| Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L178) | [ExampleSeq2_Pipe](seq/example_test.go#L190) |
+| Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](seq/example_test.go#L210) | [ExampleToSeqOperator](seq/example_test.go#L221) |
 | Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |
 

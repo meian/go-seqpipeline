@@ -8,13 +8,13 @@ import "iter"
 // nil を直接呼び出したり、range で反復したり、収集関数に渡したりすると panic する。
 type Seq[T any] iter.Seq[T]
 
-// Pipe は、この Seq に Operator op を適用した新しい Seq を返す。
+// Pipe は、この Seq に対して Seq に変換するオペレーターを適用する。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq[T]) Pipe[U any](op Operator[T, U]) Seq[U] {
 	return op(s)
 }
 
-// Pipe2 は、この Seq に ToSeq2Operator op を適用した新しい Seq2 を返す。
+// Pipe2 は、この Seq に対して Seq2 に変換するオペレーターを適用する。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq[T]) Pipe2[K, V any](op ToSeq2Operator[T, K, V]) Seq2[K, V] {
 	return op(s)
@@ -26,13 +26,13 @@ func (s Seq[T]) Pipe2[K, V any](op ToSeq2Operator[T, K, V]) Seq2[K, V] {
 // nil を直接呼び出したり、range で反復したり、収集関数に渡したりすると panic する。
 type Seq2[K, V any] iter.Seq2[K, V]
 
-// Pipe は、この Seq2 に ToSeqOperator op を適用した新しい Seq を返す。
+// Pipe は、この Seq2 に対して Seq に変換するオペレーターを適用する。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq2[K, V]) Pipe[U any](op ToSeqOperator[K, V, U]) Seq[U] {
 	return op(s)
 }
 
-// Pipe2 は、この Seq2 に Operator2 op を適用した新しい Seq2 を返す。
+// Pipe2 は、この Seq2 に対して Seq2 に変換するオペレーターを適用する。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq2[K, V]) Pipe2[K2, V2 any](op Operator2[K, V, K2, V2]) Seq2[K2, V2] {
 	return op(s)
