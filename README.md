@@ -103,14 +103,26 @@ Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the st
 
 ### Channel conversions
 
-`FromChannel(ctx, ch)` receives during iteration and ends when the input closes.  
-It never closes the input; callers manage stopping the sender.  
-Re-evaluation consumes remaining values, and multiple receivers divide values among themselves.  
-`ToChannel(ctx, src)` returns an unbuffered receive-only channel and closes it when evaluation ends.  
+Functions that convert to and from channels take a context to support early cancellation, including channel communication waits.  
+To stop processing early, cancel the context passed to the conversion.  
 
-Both APIs take `ctx` to interrupt input receive waits and stop the output goroutine when you stop receiving.  
-Cancel on early termination and share the stop signal upstream.  
-See [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) for nil and cancellation race semantics, and [ExampleFromChannel](seq/example_test.go#L271) / [ExampleToChannel](seq/example_test.go#L286) for usage.  
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+src := seq.FromSlice([]int{1, 2, 3})
+for v := range seq.ToChannel(ctx, src) {
+    fmt.Println(v)
+    cancel()
+}
+```
+
+Calling `cancel()` interrupts the remaining sends, closes the channel, and ends the loop.  
+However, if a send races with cancellation, the send may be selected, so you may receive the next value depending on timing.  
+
+`FromChannel(ctx, ch)` receives during iteration without closing the input.  
+`ToChannel(ctx, src)` returns an unbuffered channel and closes it when evaluation ends.  
+To also interrupt upstream communication waits, pass the same context upstream.  
 
 ## Operators
 

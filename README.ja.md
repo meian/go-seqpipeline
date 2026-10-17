@@ -103,14 +103,26 @@ channel との相互変換以外の組み込み処理は、goroutine や channel
 
 ### channel との相互変換
 
-`FromChannel(ctx, ch)` は反復時に受信し、入力の close で終了します。  
-入力を close せず、送信者の停止は呼び出し側で管理します。  
-再評価では未受信の値を消費し、複数の受信者には値が分配されます。  
-`ToChannel(ctx, src)` はバッファなしの受信専用 channel を返し、評価終了時に close します。  
+channel の通信待ちを含めて途中の中断をサポートするため、channel と相互変換する関数にはコンテキストを渡します。  
+途中で処理をやめる場合は、変換時に渡したコンテキストをキャンセルしてください。  
 
-入力の受信待ちを中断し、出力の送信 goroutine を終了するため、`ctx` を受け取ります。  
-途中終了時はキャンセルし、上流にも通知してください。  
-nil やキャンセル競合時の詳細は [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq)、利用例は [ExampleFromChannel](seq/example_test.go#L271) / [ExampleToChannel](seq/example_test.go#L286) を参照してください。  
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+src := seq.FromSlice([]int{1, 2, 3})
+for v := range seq.ToChannel(ctx, src) {
+    fmt.Println(v)
+    cancel()
+}
+```
+
+`cancel()` を呼ぶと残りの送信を中断し、channel を閉じてループを終了します。  
+ただし、送信とキャンセルが競合した場合は送信が選ばれることがあり、タイミングによっては次の値を受信します。  
+
+`FromChannel(ctx, ch)` は反復時に受信し、入力を close しません。  
+`ToChannel(ctx, src)` はバッファなしの channel を返し、評価終了時に close します。  
+上流の通信待ちも中断する場合は、上流にも同じコンテキストを渡してください。  
 
 ## オペレーター
 
