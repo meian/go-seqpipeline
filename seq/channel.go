@@ -3,8 +3,8 @@ package seq
 import "context"
 
 // FromChannel は反復時に channel から受信する Seq を返す。
-// 元の channel を close して残りの値を読み終えるか、ctx をキャンセルすると反復を終了する。
-// break による途中終了も可能で、入力 channel は close しない。
+// 元の channel を close して残りの値を読み終えるか、ctx をキャンセルするか、break することで反復を終了する。
+// 入力 channel は、外部で明示的に close しない限り close されない。
 // 再評価では先頭に戻らず、後続の値を受信する。
 // 同じ channel から複数の Seq を作ると、受信タイミングに応じて値が分配される。
 // ctx に nil を渡すと呼び出し時に panic する。
@@ -35,7 +35,7 @@ func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 // 受信を途中でやめる場合は ctx をキャンセルして送信待ちを解除する。
 // キャンセルと競合した送信は完了することがある。
 // 次の送信値を得るため、入力は受信側より先に評価されることがある。
-// 入力内部の待機も解除できるよう、上流にも同じ ctx などで停止手段を用意する。
+// 入力内部の待機を解除するためには、上流にも同じ ctx などで停止手段を用意する必要がある。
 func ToChannel[T any](ctx context.Context, s Seq[T]) <-chan T {
 	done := ctx.Done()
 	ch := make(chan T)
