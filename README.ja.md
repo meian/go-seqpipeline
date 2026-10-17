@@ -66,7 +66,8 @@ func main() {
 
 ### 評価と停止
 
-組み込みの入力変換とオペレーターは遅延評価し、収集関数の呼び出しや反復で処理を開始します。  
+キャッシュ以外の組み込みの入力変換とオペレーターは遅延評価し、収集関数の呼び出しや反復で処理を開始します。  
+`Cache` / `Cache2` は、`Pipe` / `Pipe2` での接続時を含め、呼び出し時に入力を全件評価します。  
 channel への出力は、呼び出し時に goroutine で評価を開始します。  
 `Seq` / `Seq2` の反復中に下流の `yield` が `false` を返すか、`range` を `break` すると、上流へ停止を伝えます。  
 入力やコールバック内部の待機は強制中断できないため、呼び出し側で停止手段を用意してください。  
@@ -75,8 +76,60 @@ channel への出力は、呼び出し時に goroutine で評価を開始しま�
 
 入出力の変換は入力の反復順序と重複を保ちますが、map の順序は不定で、`ToMap` は同じキーの最後の値を採用します。  
 `FromSlice` / `FromMap` は入力をコピーせず、評価時点の要素を参照します。  
-組み込みオペレーターの内部状態は評価ごとに初期化し、再評価や並行評価の可否は入力とコールバックに従います。  
+キャッシュ以外の組み込みオペレーターの内部状態は評価ごとに初期化し、再評価や並行評価の可否は入力とコールバックに従います。  
 channel との相互変換以外の組み込み処理は、goroutine や channel を使いません。  
+
+### 評価結果の再利用
+
+`Pipe(seq.Cache)` / `Pipe2(seq.Cache2)` で途中までの結果を保存し、同じキャッシュから複数の後続処理を組み立てられます。  
+キャッシュは接続時に上流を一度だけ評価し、順序と重複を保持し、nil・空入力にも非 nil のシーケンスを返します。  
+以降の反復では途中終了後も保存済みの先頭から読み出し、キャッシュより後の処理は反復ごとに実行します。  
+
+```go
+cached := seq.FromSlice([]string{"a", "bbb", "cc"}).
+    Pipe(seq.Map(func(v string) int { return len(v) })).
+    Pipe(seq.Cache)
+first := cached.Pipe(seq.Take(1).Operator)
+longer := cached.Pipe(seq.Filter(func(v int) bool { return v > 1 }))
+fmt.Println(seq.ToSlice(first))  // [1]
+fmt.Println(seq.ToSlice(longer)) // [3 2]
+```
+
+入力は有限である必要があり、保存する要素数・組数に比例するメモリを使います。  
+無限入力はキャッシュより前で件数を制限してください。  
+後続処理の件数制限では初回の全件評価を止められません。  
+
+たとえば、次のように無限に値を生成する入力を考えます。  
+
+```go
+naturals := seq.Seq[int](func(yield func(int) bool) {
+    for n := 1; ; n++ {
+        if !yield(n) {
+            return
+        }
+    }
+})
+```
+
+次の接続は、`Cache` が無限入力を全件評価しようとするため戻りません。  
+後ろの `Take(3)` には到達しません。  
+
+```go
+naturals.Pipe(seq.Cache).Pipe(seq.Take(3).Operator)
+```
+
+`Take(3)` を前に置くと、上流を3件で停止してキャッシュを作成でき、繰り返し利用できます。  
+`Seq2` でも `Take(3).Operator2` を `Cache2` より前に接続します。  
+
+```go
+cached := naturals.Pipe(seq.Take(3).Operator).Pipe(seq.Cache)
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+```
+
+要素は値として保存し、深いコピーは行わないため、元の要素の置き換えは反映せず、ポインター・スライス・map などで共有する参照先の変更は反映します。  
+入力の反復はキャッシュ呼び出しが戻る前に終了し、キャッシュが使われなくなると保存領域は回収可能になります。  
+キャッシュは交互・並行に反復できますが、共有する参照先や下流のコールバックは必要に応じて呼び出し側で同期してください。  
 
 ### nil と空の入力
 

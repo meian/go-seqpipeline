@@ -66,7 +66,8 @@ A `Seq2` can also be converted into a single-value `Seq` to continue the pipelin
 
 ### Evaluation and stopping
 
-Built-in input conversions and operators are lazy; collection or iteration starts processing.  
+Built-in input conversions and operators are lazy, except for caching; collection or iteration starts processing.  
+`Cache` / `Cache2` evaluate the entire input when called, including when connected with `Pipe` / `Pipe2`.  
 Channel output starts evaluation in a goroutine when called.  
 During `Seq` / `Seq2` iteration, a downstream `yield` returning `false` or a `range` loop ending with `break` propagates a stop upstream.  
 Waits inside inputs or callbacks cannot be forcibly interrupted; callers must provide a way to stop them.  
@@ -75,8 +76,59 @@ Waits inside inputs or callbacks cannot be forcibly interrupted; callers must pr
 
 Input and output conversions preserve iteration order and duplicates, except that map order is unspecified and `ToMap` keeps the last value for each key.  
 `FromSlice` / `FromMap` reference input elements at evaluation time without copying them.  
-Built-in operators initialize internal state for each evaluation; repeated or concurrent evaluation depends on the input and callbacks.  
+Built-in operators other than caching initialize internal state for each evaluation; repeated or concurrent evaluation depends on the input and callbacks.  
 Built-in operations other than channel conversions do not use goroutines or channels.  
+
+### Reusing evaluated results
+
+Use `Pipe(seq.Cache)` / `Pipe2(seq.Cache2)` to save results at a pipeline boundary and build multiple downstream pipelines from them.  
+Caching evaluates upstream once during connection, preserves order and duplicates, and returns a non-nil sequence even for nil or empty input.  
+Later iterations read the saved results from the beginning, including after an early stop; downstream operations run on every iteration.  
+
+```go
+cached := seq.FromSlice([]string{"a", "bbb", "cc"}).
+    Pipe(seq.Map(func(v string) int { return len(v) })).
+    Pipe(seq.Cache)
+first := cached.Pipe(seq.Take(1).Operator)
+longer := cached.Pipe(seq.Filter(func(v int) bool { return v > 1 }))
+fmt.Println(seq.ToSlice(first))  // [1]
+fmt.Println(seq.ToSlice(longer)) // [3 2]
+```
+
+Input must be finite, and memory use grows with the number of saved elements or pairs.  
+For an unbounded input, limit it before caching; a downstream limit cannot stop the initial evaluation.  
+
+For example, consider an input that generates values indefinitely.  
+
+```go
+naturals := seq.Seq[int](func(yield func(int) bool) {
+    for n := 1; ; n++ {
+        if !yield(n) {
+            return
+        }
+    }
+})
+```
+
+The following connection never returns because `Cache` tries to evaluate the entire infinite input.  
+The downstream `Take(3)` is never reached.  
+
+```go
+naturals.Pipe(seq.Cache).Pipe(seq.Take(3).Operator)
+```
+
+Putting `Take(3)` first stops upstream after three values and creates a reusable cache.  
+For `Seq2`, likewise connect `Take(3).Operator2` before `Cache2`.  
+
+```go
+cached := naturals.Pipe(seq.Take(3).Operator).Pipe(seq.Cache)
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+```
+
+Elements are saved by value without a deep copy: replacing original elements does not change the cache, but mutations through shared pointers, slices, or maps remain visible.  
+Input iteration ends before the caching call returns, and the saved storage can be reclaimed when the cache is no longer used.  
+Cached sequences support interleaved and concurrent iteration; callers must synchronize shared referenced data and downstream callbacks as needed.  
 
 ### Nil and empty input
 
