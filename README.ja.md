@@ -94,9 +94,6 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 単一値を扱う場合は `.Operator` を `Pipe` に、キーと値の組を扱う場合は `.Operator2` を `Pipe2` にメソッド値として渡します。  
 接続時に入力の型が決まるため、型引数を明示する必要はありません。  
 
-`Keys` / `Values` はキー・値の組からキー / 値のシーケンスへ変換し、`pairs.Pipe(seq.Keys)` / `pairs.Pipe(seq.Values)` のように関数を直接渡します。  
-シグネチャは `ToSeqOperator` に対応し、接続時や直接呼び出す際に入力から型引数を推論します。  
-
 ### 接続
 
 `Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  

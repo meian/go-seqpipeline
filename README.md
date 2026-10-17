@@ -94,9 +94,6 @@ Operations whose factory arguments carry no type information return a configurat
 Pass `.Operator` as a method value to `Pipe` for single values, or `.Operator2` to `Pipe2` for key-value pairs.  
 The input determines the types when connected, so explicit type arguments are unnecessary.  
 
-`Keys` / `Values` transform key-value pairs into a sequence of keys / values; pass the function directly as `pairs.Pipe(seq.Keys)` / `pairs.Pipe(seq.Values)`.  
-Their signatures match `ToSeqOperator`, and type arguments are inferred from the input when connected or called directly.  
-
 ### Connecting operators
 
 Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
