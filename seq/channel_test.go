@@ -203,3 +203,23 @@ func TestFromChannelCloseReceive(t *testing.T) {
 		<-finished
 	})
 }
+
+// TestFromChannelNilContext は反復前の呼び出し時に nil context が panic することを確認する。
+func TestFromChannelNilContext(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("nil context must panic during FromChannel")
+		}
+	}()
+	_ = seq.FromChannel[int](nil, make(chan int))
+}
+
+// TestToChannelNilContext は goroutine の開始前に nil context が panic することを確認する。
+func TestToChannelNilContext(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("nil context must panic during ToChannel")
+		}
+	}()
+	_ = seq.ToChannel(nil, seq.FromSlice([]int{1}))
+}
