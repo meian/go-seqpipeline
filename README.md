@@ -64,8 +64,8 @@ A `Seq2` can also be converted into a single-value `Seq` to continue the pipelin
 
 ## Input and output
 
-Functions starting with `From` convert collections or standard iterators into pipeline inputs.  
-Functions starting with `To` collect results into collections or convert them to standard iterators.  
+Functions starting with `From` convert collections, standard iterators, or channels into pipeline inputs.  
+Functions starting with `To` collect results into collections or convert them to standard iterators or channels.  
 
 | Operation | Seq | Seq2 |
 | --- | --- | --- |
@@ -73,8 +73,29 @@ Functions starting with `To` collect results into collections or convert them to
 | Input from a standard iterator | `FromSeq` | `FromSeq2` |
 | Collect into a collection | `ToSlice` | `ToMap` (keys must be `comparable`) |
 | Convert to a standard iterator | `ToSeq` | `ToSeq2` |
+| Input from / output to a channel | `FromChannel` / `ToChannel` | — |
 
 Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the standard `iter.Seq` / `iter.Seq2` types.  
+
+### Channel conversions
+
+`FromChannel(ctx, ch)` receives during iteration without starting a goroutine and ends when the input closes or the context is canceled.  
+The caller owns the input channel; the conversion never closes it.  
+Early termination downstream stops further receives, but the caller must manage stopping the sender.  
+The input is consumable: re-evaluation receives remaining values, and multiple receivers divide the values among themselves.  
+A nil channel waits until cancellation, while a closed, drained channel ends iteration immediately.  
+
+`ToChannel(ctx, src)` starts evaluation in a dedicated goroutine when called and returns a new unbuffered receive-only channel.  
+That goroutine closes the output when the input ends or the context is canceled.  
+Nil or empty input closes the output without sending any values.  
+If you stop receiving early, always cancel the context created with `context.WithCancel` or a similar function.  
+Input may be evaluated ahead of the receiver to obtain the next value to send.  
+Whether repeated or concurrent evaluation is safe depends on the input.  
+
+Both conversions require a non-nil context and preserve value order and duplicates.  
+Cancellation releases communication waits, but a concurrent communication may still complete.  
+It cannot interrupt waits inside arbitrary iterators or callbacks; make those stoppable with the same context or another mechanism.  
+See [ExampleFromChannel](seq/example_test.go#L271) and [ExampleToChannel](seq/example_test.go#L286) for usage.  
 
 ## Operators
 
@@ -165,7 +186,7 @@ Whether a pipeline can be evaluated again depends on the original iterator.
 Slices are iterated in their original order, while map iteration order is not guaranteed.  
 For duplicate keys, `ToMap` keeps the last value in iteration order.  
 
-The library does not use goroutines or channels and does not provide asynchronous event processing.  
+Built-in operations other than channel conversions do not use goroutines or channels.  
 Callers are responsible for managing the reuse of stateful callbacks and concurrent access.  
 
 ### Nil and empty input

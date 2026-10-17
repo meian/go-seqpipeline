@@ -1,6 +1,7 @@
 package seq_test
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strconv"
@@ -265,4 +266,35 @@ func ExampleSkip() {
 	// [20 30]
 	// 1 b
 	// 2 c
+}
+
+func ExampleFromChannel() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	input := make(chan int, 4)
+	for _, v := range []int{1, 2, 2, 3} {
+		input <- v
+	}
+	close(input)
+	pipeline := seq.FromChannel(ctx, input).
+		Pipe(seq.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(seq.Map(func(v int) int { return v * 10 }))
+	fmt.Println(seq.ToSlice(pipeline))
+	// Output: [20 20]
+}
+
+func ExampleToChannel() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // 途中で受信をやめた場合も送信待ちを解除する。
+	pipeline := seq.FromSlice([]int{1, 2, 2, 3}).
+		Pipe(seq.Map(func(v int) int { return v * 10 }))
+	for v := range seq.ToChannel(ctx, pipeline) {
+		fmt.Println(v)
+		if v == 20 {
+			break
+		}
+	}
+	// Output:
+	// 10
+	// 20
 }
