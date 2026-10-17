@@ -108,8 +108,8 @@ It never closes the input; callers manage stopping the sender.
 Re-evaluation consumes remaining values, and multiple receivers divide values among themselves.  
 `ToChannel(ctx, src)` returns an unbuffered receive-only channel and closes it when evaluation ends.  
 
-Both conversions accept a non-nil context to release communication waits.  
-Always cancel when you stop receiving output early, and share the stop signal with upstream processing.  
+Both APIs take `ctx` to interrupt input receive waits and stop the output goroutine when you stop receiving.  
+Cancel on early termination and share the stop signal upstream.  
 See [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) for nil and cancellation race semantics, and [ExampleFromChannel](seq/example_test.go#L271) / [ExampleToChannel](seq/example_test.go#L286) for usage.  
 
 ## Operators

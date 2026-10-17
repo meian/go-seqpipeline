@@ -108,8 +108,8 @@ channel との相互変換以外の組み込み処理は、goroutine や channel
 再評価では未受信の値を消費し、複数の受信者には値が分配されます。  
 `ToChannel(ctx, src)` はバッファなしの受信専用 channel を返し、評価終了時に close します。  
 
-両方向とも非 nil の context で通信待ちを解除できます。  
-出力の受信を途中でやめる場合は必ずキャンセルし、上流にも停止通知を共有してください。  
+入力の受信待ちを中断し、出力の送信 goroutine を終了するため、`ctx` を受け取ります。  
+途中終了時はキャンセルし、上流にも通知してください。  
 nil やキャンセル競合時の詳細は [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq)、利用例は [ExampleFromChannel](seq/example_test.go#L271) / [ExampleToChannel](seq/example_test.go#L286) を参照してください。  
 
 ## オペレーター
