@@ -130,6 +130,7 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 | 先頭の要素・組の読み飛ばし | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | 型を変換する処理の接続 | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
+| Seq2 からキー・値を取り出す | — | [ExampleKeys](seq/example_test.go#L144)、[ExampleValues](seq/example_test.go#L153) |
 | Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](seq/example_test.go#L211) | [ExampleToSeqOperator](seq/example_test.go#L222) |
 | 関数オペレーターの接続と直接呼び出し | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | 独自オペレーターによる拡張 | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |

@@ -99,9 +99,9 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(op(nil))), []pair[[]int, string](nil))
 }
 
-// TestToSeqOperatorDirectCall は、メソッド式の代入、直接呼び出し、Pipe 接続を確認する。
+// TestToSeqOperatorDirectCall は、関数の代入、直接呼び出し、Pipe 接続を確認する。
 func TestToSeqOperatorDirectCall(t *testing.T) {
-	var op seq.ToSeqOperator[int, string, string] = seq.Seq2[int, string].Values
+	var op seq.ToSeqOperator[int, string, string] = seq.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
 	assertEqual(t, seq.ToSlice(op(src)), []string{"a", "bbb"})
 	assertEqual(t, seq.ToSlice(src.Pipe(op)), []string{"a", "bbb"})

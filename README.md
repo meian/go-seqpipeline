@@ -130,6 +130,7 @@ Regular tests cover boundary values, nil, lazy evaluation, early termination, an
 | Skip leading elements or pairs | [ExampleSkip](seq/example_test.go#L255) | [ExampleSkip](seq/example_test.go#L255) |
 | Connect operations that change types | [ExampleSeq_Pipe](seq/example_test.go#L57) | [ExampleSeq2_Pipe2](seq/example_test.go#L199) |
 | Connect between Seq and Seq2 | [ExampleSeq_Pipe2](seq/example_test.go#L179) | [ExampleSeq2_Pipe](seq/example_test.go#L191) |
+| Extract keys / values from Seq2 | — | [ExampleKeys](seq/example_test.go#L144), [ExampleValues](seq/example_test.go#L153) |
 | Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](seq/example_test.go#L211) | [ExampleToSeqOperator](seq/example_test.go#L222) |
 | Connect and directly call function operators | [ExampleOperator](seq/example_test.go#L81) | [ExampleOperator2](seq/example_test.go#L128) |
 | Extend with custom operators | [ExampleOperator_custom](seq/example_test.go#L111) | [ExampleOperator2](seq/example_test.go#L128) |

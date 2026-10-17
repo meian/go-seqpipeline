@@ -318,7 +318,7 @@ func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 // TestCrossTypePipeline は、4通りの接続、型推論、遅延評価、停止伝播、再評価を確認する。
 func TestCrossTypePipeline(t *testing.T) {
 	var toPairs seq.ToSeq2Operator[string, []int, string] = withLength
-	var toValues seq.ToSeqOperator[[]int, string, string] = seq.Seq2[[]int, string].Values
+	var toValues seq.ToSeqOperator[[]int, string, string] = seq.Values[[]int, string]
 	for _, n := range []int{0, 1, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			starts, reads, stops := 0, 0, 0
@@ -428,5 +428,79 @@ func TestTakeSharedConfigurationPipeline(t *testing.T) {
 		want := []pair[string, string]{{Key: "0", Value: "1"}, {Key: "1", Value: "22"}}
 		assertEqual(t, collectPairs(seq.ToSeq2(pairs)), want)
 		assertEqual(t, seq.ToSlice(other), []int{4, 5})
+	}
+}
+
+// TestKeysPipeline は、組の変換後にキーを取り出し、単一値のパイプラインを続ける。
+func TestKeysPipeline(t *testing.T) {
+	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
+		Pipe2(seq.Map2(func(k int, v string) (int, int) { return k + 1, len(v) }))
+	pipeline := pairs.Pipe(seq.Keys).
+		Pipe(seq.Filter(func(k int) bool { return k > 1 })).
+		Pipe(seq.Map(strconv.Itoa)).
+		Pipe(seq.Take(1).Operator)
+	for i := 0; i < 2; i++ {
+		assertEqual(t, seq.ToSlice(pipeline), []string{"2"})
+	}
+}
+
+// TestValuesPipeline は、組の選別後に値を取り出し、単一値のパイプラインを続ける。
+func TestValuesPipeline(t *testing.T) {
+	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
+		Pipe2(seq.Filter2(func(k int, v string) bool { return k > 0 }))
+	pipeline := pairs.Pipe(seq.Values).
+		Pipe(seq.Filter(func(v string) bool { return len(v) > 1 })).
+		Pipe(seq.Map(func(v string) int { return len(v) })).
+		Pipe(seq.Take(1).Operator)
+	for i := 0; i < 2; i++ {
+		assertEqual(t, seq.ToSlice(pipeline), []int{3})
+	}
+}
+
+// TestProjectionWithSkip は、Seq2 と Seq の両側の Skip、射影、Take を接続して評価と停止を確認する。
+func TestProjectionWithSkip(t *testing.T) {
+	for _, projection := range []struct {
+		name string
+		op   seq.ToSeqOperator[int, int, int]
+		want []int
+	}{
+		{name: "keys", op: seq.Keys[int, int], want: []int{3, 4}},
+		{name: "values", op: seq.Values[int, int], want: []int{30, 40}},
+	} {
+		t.Run(projection.name, func(t *testing.T) {
+			for _, n := range []int{0, 1, 2} {
+				t.Run(strconv.Itoa(n), func(t *testing.T) {
+					starts, reads, stops := 0, 0, 0
+					src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+						starts++
+						defer func() { stops++ }()
+						for i := 1; i <= 5; i++ {
+							reads++
+							if !yield(i, i*10) {
+								return
+							}
+						}
+					})
+					skip := seq.Skip(1)
+					pipeline := src.Pipe2(skip.Operator2).
+						Pipe(projection.op).
+						Pipe(skip.Operator).
+						Pipe(seq.Take(n).Operator)
+					assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
+					want := projection.want[:n]
+					if n == 0 {
+						want = nil
+					}
+					for round := 1; round <= 2; round++ {
+						assertEqual(t, seq.ToSlice(pipeline), want)
+						if n == 0 {
+							assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
+						} else {
+							assertEqual(t, []int{starts, reads, stops}, []int{round, (n + 2) * round, round})
+						}
+					}
+				})
+			}
+		})
 	}
 }
