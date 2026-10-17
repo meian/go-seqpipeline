@@ -2,13 +2,11 @@ package seq
 
 import "context"
 
-// FromChannel は受信 channel を、反復時に値を受信する Seq に変換する。
-// channel の受信順序と重複を保持し、入力の close または ctx のキャンセルで終了する。
-// ctx は非 nil とする。nil の channel はキャンセルまで待機する。
-// goroutine を作らず、入力を close しない。yield が false を返すと追加の受信をせず終了する。
-// 入力は消費型であり、再評価では残りの値を受信する。複数の受信者には値が分配される。
-// キャンセルと受信が競合した場合、受信した値を yield することがある。
-// 入力の送信者の停止は呼び出し側で管理する。
+// FromChannel は反復時に channel から受信する Seq を返す。
+// 入力を close せず、入力の close・途中終了・ctx のキャンセルで受信を終える。
+// 再評価では残りの値を消費し、複数の受信者には値が分配される。
+// ctx は非 nil とし、nil の channel はキャンセルまで待機する。
+// キャンセルと競合した値を返すことがある。送信者の停止は呼び出し側で管理する。
 func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 	done := ctx.Done()
 	return func(yield func(T) bool) {
@@ -28,14 +26,12 @@ func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 	}
 }
 
-// ToChannel は Seq の評価を専用 goroutine で開始し、値を反復順に送信する。
-// 呼び出すたびにバッファなしの受信専用 channel を新しく作り、順序と重複を保持する。
-// goroutine は入力の終了または ctx のキャンセルで出力を close する。nil の入力は空として扱う。
-// ctx は非 nil とする。受信を途中でやめる場合は、呼び出し側で ctx をキャンセルする。
-// キャンセルは送信待ちを解除し、入力へ停止を伝えるが、競合した送信が完了することもある。
-// 入力は次の送信値を得るために、受信側より先に評価されることがある。
-// 入力やコールバック内部での待機は中断できないため、それらも同じ ctx などで停止可能にする。
-// 再評価や並行評価の可否は入力に従い、呼び出し側で管理する。
+// ToChannel は呼び出し時に goroutine で Seq を評価し、バッファなしの channel へ順に送信する。
+// 出力は評価終了時に close し、nil の入力は空として扱う。
+// ctx は非 nil とし、受信を途中でやめる場合はキャンセルして送信待ちを解除する。
+// キャンセルと競合した送信は完了することがある。
+// 次の送信値を得るため、入力は受信側より先に評価されることがある。
+// 入力内部の待機も解除できるよう、上流にも同じ ctx などで停止手段を用意する。
 func ToChannel[T any](ctx context.Context, s Seq[T]) <-chan T {
 	done := ctx.Done()
 	ch := make(chan T)
