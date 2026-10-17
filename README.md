@@ -97,6 +97,35 @@ fmt.Println(seq.ToSlice(longer)) // [3 2]
 
 Input must be finite, and memory use grows with the number of saved elements or pairs.  
 For an unbounded input, limit it before caching; a downstream limit cannot stop the initial evaluation.  
+
+For example, consider an input that generates values indefinitely.  
+
+```go
+naturals := seq.Seq[int](func(yield func(int) bool) {
+    for n := 1; ; n++ {
+        if !yield(n) {
+            return
+        }
+    }
+})
+```
+
+The following connection never returns because `Cache` tries to evaluate the entire infinite input.  
+The downstream `Take(3)` is never reached.  
+
+```go
+naturals.Pipe(seq.Cache).Pipe(seq.Take(3).Operator)
+```
+
+Putting `Take(3)` first stops upstream after three values and creates a reusable cache.  
+For `Seq2`, likewise connect `Take(3).Operator2` before `Cache2`.  
+
+```go
+cached := naturals.Pipe(seq.Take(3).Operator).Pipe(seq.Cache)
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+```
+
 Elements are saved by value without a deep copy: replacing original elements does not change the cache, but mutations through shared pointers, slices, or maps remain visible.  
 Input iteration ends before the caching call returns, and the saved storage can be reclaimed when the cache is no longer used.  
 Cached sequences support interleaved and concurrent iteration; callers must synchronize shared referenced data and downstream callbacks as needed.  

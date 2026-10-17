@@ -98,6 +98,35 @@ fmt.Println(seq.ToSlice(longer)) // [3 2]
 入力は有限である必要があり、保存する要素数・組数に比例するメモリを使います。  
 無限入力はキャッシュより前で件数を制限してください。  
 後続処理の件数制限では初回の全件評価を止められません。  
+
+たとえば、次のように無限に値を生成する入力を考えます。  
+
+```go
+naturals := seq.Seq[int](func(yield func(int) bool) {
+    for n := 1; ; n++ {
+        if !yield(n) {
+            return
+        }
+    }
+})
+```
+
+次の接続は、`Cache` が無限入力を全件評価しようとするため戻りません。  
+後ろの `Take(3)` には到達しません。  
+
+```go
+naturals.Pipe(seq.Cache).Pipe(seq.Take(3).Operator)
+```
+
+`Take(3)` を前に置くと、上流を3件で停止してキャッシュを作成でき、繰り返し利用できます。  
+`Seq2` でも `Take(3).Operator2` を `Cache2` より前に接続します。  
+
+```go
+cached := naturals.Pipe(seq.Take(3).Operator).Pipe(seq.Cache)
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+fmt.Println(seq.ToSlice(cached)) // [1 2 3]
+```
+
 要素は値として保存し、深いコピーは行わないため、元の要素の置き換えは反映せず、ポインター・スライス・map などで共有する参照先の変更は反映します。  
 入力の反復はキャッシュ呼び出しが戻る前に終了し、キャッシュが使われなくなると保存領域は回収可能になります。  
 キャッシュは交互・並行に反復できますが、共有する参照先や下流のコールバックは必要に応じて呼び出し側で同期してください。  
