@@ -241,6 +241,12 @@ To run only the Examples, use the following command.
 go test ./... -run '^Example' -count=1
 ```
 
+## Benchmarks
+
+[Benchmark report](benchmarks/REPORT.md) records reproducible comparisons of pipelines, loops, per-element function calls, channels, and caching.  
+The report includes its target commit, measurement conditions, raw results, and aggregation script.  
+Benchmarks and reports are updated through dedicated periodic issues; ordinary code changes do not require rerunning them.  
+
 ## License
 
 [MIT License](LICENSE)  
