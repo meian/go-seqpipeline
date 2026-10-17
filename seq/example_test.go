@@ -298,3 +298,52 @@ func ExampleToChannel() {
 	// 10
 	// 20
 }
+
+func ExampleCache() {
+	calls := 0
+	cached := seq.FromSlice([]string{"a", "bbb", "cc"}).
+		Pipe(seq.Map(func(v string) int {
+			calls++
+			return len(v)
+		})).
+		Pipe(seq.Cache)
+	fmt.Println("cached:", calls)
+	first := cached.Pipe(seq.Take(1).Operator)
+	longer := cached.Pipe(seq.Filter(func(v int) bool { return v > 1 }))
+	fmt.Println(seq.ToSlice(first))
+	fmt.Println(seq.ToSlice(longer))
+	fmt.Println(seq.ToSlice(first))
+	fmt.Println("upstream calls:", calls)
+	// Output:
+	// cached: 3
+	// [1]
+	// [3 2]
+	// [1]
+	// upstream calls: 3
+}
+
+func ExampleCache2() {
+	calls := 0
+	cached := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
+		Pipe2(seq.Map2(func(k int, v string) (int, int) {
+			calls++
+			return k, len(v)
+		})).
+		Pipe2(seq.Cache2)
+	fmt.Println("cached:", calls)
+	first := cached.Pipe2(seq.Take(1).Operator2)
+	for k, v := range first {
+		fmt.Println(k, v)
+	}
+	fmt.Println(seq.ToSlice(cached.Pipe(seq.Values)))
+	for k, v := range first {
+		fmt.Println(k, v)
+	}
+	fmt.Println("upstream calls:", calls)
+	// Output:
+	// cached: 3
+	// 0 1
+	// [1 3 2]
+	// 0 1
+	// upstream calls: 3
+}

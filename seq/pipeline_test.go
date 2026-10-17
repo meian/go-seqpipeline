@@ -504,3 +504,51 @@ func TestProjectionWithSkip(t *testing.T) {
 		})
 	}
 }
+
+// TestCachePipeline は上流を一度だけ評価し、分岐した下流は反復ごとに実行することを確認する。
+func TestCachePipeline(t *testing.T) {
+	upstream, downstream := 0, 0
+	var cache seq.Operator[int, int] = seq.Cache
+	cached := seq.FromSlice([]int{1, 2, 3, 4}).
+		Pipe(seq.Map(func(v int) int { upstream++; return v * 10 })).
+		Pipe(seq.Take(3).Operator).
+		Pipe(cache)
+	assertEqual(t, upstream, 3)
+	first := cached.Pipe(seq.Map(func(v int) string {
+		downstream++
+		return strconv.Itoa(v)
+	})).Pipe(seq.Take(1).Operator)
+	second := cached.Pipe(seq.Filter(func(v int) bool { return v >= 20 }))
+	for round := 1; round <= 2; round++ {
+		assertEqual(t, seq.ToSlice(first), []string{"10"})
+		assertEqual(t, seq.ToSlice(second), []int{20, 30})
+		assertEqual(t, upstream, 3)
+		assertEqual(t, downstream, round)
+	}
+	// 型引数なしの関数値を Pipe に直接渡せることも確認する。
+	assertEqual(t, seq.ToSlice(cached.Pipe(seq.Cache)), []int{10, 20, 30})
+}
+
+// TestCache2Pipeline は組のキャッシュを分岐し、上流の再計算と下流の再評価を区別する。
+func TestCache2Pipeline(t *testing.T) {
+	upstream, downstream := 0, 0
+	var cache seq.Operator2[int, int, int, int] = seq.Cache2
+	cached := seq.FromSeq2(slices.All([]int{1, 2, 3, 4})).
+		Pipe2(seq.Map2(func(k, v int) (int, int) { upstream++; return k, v * 10 })).
+		Pipe2(seq.Take(3).Operator2).
+		Pipe2(cache)
+	assertEqual(t, upstream, 3)
+	first := cached.Pipe2(seq.Map2(func(k, v int) (string, int) {
+		downstream++
+		return strconv.Itoa(k), v
+	})).Pipe2(seq.Take(1).Operator2)
+	second := cached.Pipe(seq.Values).Pipe(seq.Filter(func(v int) bool { return v >= 20 }))
+	want := []pair[string, int]{{Key: "0", Value: 10}}
+	for round := 1; round <= 2; round++ {
+		assertEqual(t, collectPairs(seq.ToSeq2(first)), want)
+		assertEqual(t, seq.ToSlice(second), []int{20, 30})
+		assertEqual(t, upstream, 3)
+		assertEqual(t, downstream, round)
+	}
+	assertEqual(t, seq.ToSlice(cached.Pipe2(seq.Cache2).Pipe(seq.Values)), []int{10, 20, 30})
+}
