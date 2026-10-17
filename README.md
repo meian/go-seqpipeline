@@ -62,10 +62,34 @@ Like standard iterators, the results can be iterated over directly with `for v :
 `Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
 A `Seq2` can also be converted into a single-value `Seq` to continue the pipeline.  
 
+## Evaluation and usage semantics
+
+### Evaluation and stopping
+
+Built-in input conversions and operators are lazy; collection or iteration starts processing.  
+Channel output starts evaluation in a goroutine when called.  
+During `Seq` / `Seq2` iteration, a downstream `yield` returning `false` or a `range` loop ending with `break` propagates a stop upstream.  
+Waits inside inputs or callbacks cannot be forcibly interrupted; callers must provide a way to stop them.  
+
+### Input, order, and re-evaluation
+
+Input and output conversions preserve iteration order and duplicates, except that map order is unspecified and `ToMap` keeps the last value for each key.  
+`FromSlice` / `FromMap` reference input elements at evaluation time without copying them.  
+Built-in operators initialize internal state for each evaluation; repeated or concurrent evaluation depends on the input and callbacks.  
+Built-in operations other than channel conversions do not use goroutines or channels.  
+
+### Nil and empty input
+
+The zero values of `Seq` / `Seq2` are nil, and conversions to and from standard iterators preserve nil.  
+Built-in operators treat nil as empty, but direct calls, iteration, and passing nil to `ToSlice` / `ToMap` panic.  
+For empty non-nil iterators, `ToSlice` returns nil and `ToMap` returns an empty non-nil map.  
+Evaluation, stopping, and nil handling for custom operators depend on their implementation.  
+See [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) and [tests](seq) for each API's boundary conditions.  
+
 ## Input and output
 
-Functions starting with `From` convert collections or standard iterators into pipeline inputs.  
-Functions starting with `To` collect results into collections or convert them to standard iterators.  
+Functions starting with `From` convert collections, standard iterators, or channels into pipeline inputs.  
+Functions starting with `To` collect results into collections or convert them to standard iterators or channels.  
 
 | Operation | Seq | Seq2 |
 | --- | --- | --- |
@@ -73,8 +97,32 @@ Functions starting with `To` collect results into collections or convert them to
 | Input from a standard iterator | `FromSeq` | `FromSeq2` |
 | Collect into a collection | `ToSlice` | `ToMap` (keys must be `comparable`) |
 | Convert to a standard iterator | `ToSeq` | `ToSeq2` |
+| Input from / output to a channel | `FromChannel` / `ToChannel` | — |
 
 Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the standard `iter.Seq` / `iter.Seq2` types.  
+
+### Channel conversions
+
+Functions that convert to and from channels take a context to support early cancellation, including channel communication waits.  
+To stop processing early, cancel the context passed to the conversion.  
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+src := seq.FromSlice([]int{1, 2, 3})
+for v := range seq.ToChannel(ctx, src) {
+    fmt.Println(v)
+    cancel()
+}
+```
+
+Calling `cancel()` interrupts the remaining sends, closes the channel, and ends the loop.  
+However, if a send races with cancellation, the send may be selected, so you may receive the next value depending on timing.  
+
+`FromChannel(ctx, ch)` receives during iteration without closing the input.  
+`ToChannel(ctx, src)` returns an unbuffered channel and closes it when evaluation ends.  
+To also interrupt upstream communication waits, pass the same context upstream.  
 
 ## Operators
 
@@ -140,43 +188,6 @@ To run only the Examples, use the following command.
 ```sh
 go test ./... -run '^Example' -count=1
 ```
-
-## Evaluation and usage semantics
-
-### Lazy evaluation and early termination
-
-Building a pipeline with built-in operators and calling `ToSeq` / `ToSeq2` do not evaluate elements.  
-Input is processed in iteration order when `ToSlice` / `ToMap` is called or the iterator is executed.  
-
-When a downstream `yield` returns `false` or a `range` loop is stopped with `break`, upstream iteration also stops.  
-For example, `Take` does not execute the upstream iterator when `n <= 0`.  
-Once the limit is reached, its operators exit the `range` loop with `return`, propagating the stop upstream so subsequent upstream processing also stops.  
-
-`Skip(n)` skips up to the first `n` elements or pairs during iteration, preserving the order and duplicates of the rest.  
-It skips nothing when `n <= 0` and returns an empty sequence when `n` is at least the input count.  
-
-Custom operators must likewise process input when their returned iterator is executed and propagate downstream stops upstream.  
-
-### Re-evaluation and input references
-
-Whether a pipeline can be evaluated again depends on the original iterator.  
-`Take` and `Skip` initialize their remaining counts for each evaluation.  
-`FromSlice` / `FromMap` do not copy the input; they reference its elements at evaluation time.  
-Slices are iterated in their original order, while map iteration order is not guaranteed.  
-For duplicate keys, `ToMap` keeps the last value in iteration order.  
-
-The library does not use goroutines or channels and does not provide asynchronous event processing.  
-Callers are responsible for managing the reuse of stateful callbacks and concurrent access.  
-
-### Nil and empty input
-
-The zero values of `Seq` / `Seq2` and values converted from nil standard iterators are nil.  
-Built-in pipeline transformations treat nil input iterators as empty.  
-How a custom operator handles nil depends on its transformation function's implementation.  
-
-`ToSeq` / `ToSeq2` return nil unchanged.  
-Calling nil directly, iterating over it with `range`, or passing it to `ToSlice` / `ToMap` causes a panic.  
-When collecting an empty non-nil iterator, `ToSlice` returns nil and `ToMap` returns an empty non-nil map.  
 
 ## License
 
