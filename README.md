@@ -241,11 +241,9 @@ To run only the Examples, use the following command.
 go test ./... -run '^Example' -count=1
 ```
 
-## Benchmarks
+## Performance
 
-Pipeline costs depend on the number of stages, early termination, channel transfers, and cache reuse.  
-See the [performance overview](benchmarks/REPORT.md) for representative scenarios from the current measurement snapshot.  
-Benchmarks are updated through dedicated periodic issues; ordinary feature changes and releases do not require updates.  
+See the [performance summary](benchmarks/REPORT.md).  
 
 ## License
 

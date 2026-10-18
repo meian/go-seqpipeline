@@ -61,20 +61,9 @@ func channelRun(values []int, capacity int, impl string) []pair {
 		}
 	case "ToChannel":
 		s := transform(seq.FromSlice(values))
-		// 入力を最後まで評価した goroutine の終了も待つ。
-		done := make(chan struct{})
-		joined := seq.Seq[int](func(yield func(int) bool) {
-			defer close(done)
-			for v := range s {
-				if !yield(v) {
-					return
-				}
-			}
-		})
-		for v := range seq.ToChannel(ctx, joined) {
+		for v := range seq.ToChannel(ctx, s) {
 			collect(v)
 		}
-		<-done
 	default:
 		ch, done := producer(values, capacity)
 		switch impl {

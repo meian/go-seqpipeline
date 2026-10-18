@@ -1,6 +1,6 @@
-# 今回の公開 API の測定対応
+# 公開 API の測定対応（保守者向け）
 
-対象コミットは [測定環境](results/environment.md) に記録する。  
+対象コミットは [測定環境](../../benchmarks/results/environment.md) に記録する。  
 `seq` の公開関数 21 件と公開メソッド 16 件、計 37 件を今回のコードから棚卸しした。  
 非公開の設定値型が返す公開メソッドも含む。  
 34 種の API 名・36 種の API/phase を N64 / N4096 の計 72 ケースで測定し、設定値の生成 3 関数は関連する評価ケースで代替する。  
@@ -49,19 +49,19 @@
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
 それぞれ入力・Map / Map2・Zip・Values と Pipe / Pipe2 の測定で利用する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
-各ケースの詳しい条件は [測定方法](METHOD.md) を参照。  
+各ケースの詳しい条件は [測定方法](../../benchmarks/METHOD.md) を参照。  
 
 ## 測定コードの配置
 
 | API・機能 | 測定・結果検証のファイル |
 | --- | --- |
-| FromSlice / FromSeq / ToSeq / ToSlice / FromMap / FromSeq2 / ToSeq2 / ToMap | [conversion_test.go](conversion_test.go) |
-| Map / Map2 / Filter / Filter2 / Keys / Values | [transform_test.go](transform_test.go) |
-| Take / Skip と Operator / Operator2 | [limit_test.go](limit_test.go) |
-| Zip と設定メソッド | [zip_test.go](zip_test.go) |
-| Seq / Seq2 の Pipe / Pipe2 | [pipe_test.go](pipe_test.go) |
-| FromChannel / ToChannel、相互変換 Scenario | [channel_test.go](channel_test.go) |
-| Cache / Cache2、Fill / Warm / Reuse Scenario | [cache_test.go](cache_test.go) |
-| Map / Filter / Take を接続する Pipeline Scenario | [pipeline_test.go](pipeline_test.go) |
+| FromSlice / FromSeq / ToSeq / ToSlice / FromMap / FromSeq2 / ToSeq2 / ToMap | [conversion_test.go](../../benchmarks/conversion_test.go) |
+| Map / Map2 / Filter / Filter2 / Keys / Values | [transform_test.go](../../benchmarks/transform_test.go) |
+| Take / Skip と Operator / Operator2 | [limit_test.go](../../benchmarks/limit_test.go) |
+| Zip と設定メソッド | [zip_test.go](../../benchmarks/zip_test.go) |
+| Seq / Seq2 の Pipe / Pipe2 | [pipe_test.go](../../benchmarks/pipe_test.go) |
+| FromChannel / ToChannel、相互変換 Scenario | [channel_test.go](../../benchmarks/channel_test.go) |
+| Cache / Cache2、Fill / Warm / Reuse Scenario | [cache_test.go](../../benchmarks/cache_test.go) |
+| Map / Filter / Take を接続する Pipeline Scenario | [pipeline_test.go](../../benchmarks/pipeline_test.go) |
 
-共通の Unit ランナーは [benchmark_helper_test.go](benchmark_helper_test.go) に置き、全件を従来の `Unit/api=...` という名前で実行する。  
+共通の Unit ランナーは [benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) に置き、全件を従来の `Unit/api=...` という名前で実行する。  

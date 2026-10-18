@@ -19,6 +19,33 @@
 - 通常の機能追加・変更PRで公開APIが増減しても即時のベンチマーク追加・レポート更新は必須とせず、次の定期更新でまとめて棚卸し・反映する
 - 生データ（`raw.txt` 等）は集計に必要な一時入力であり、Git管理・アーティファクト保管・長期保存のいずれも行わない
 
+## 読者と情報の置き場所
+
+| 文書 | 読者にしてほしいこと | 残す情報 |
+| --- | --- | --- |
+| README | 性能概要を開く | リンクのみ |
+| `benchmarks/REPORT.md` | 一瞥で利用上のトレードオフをつかむ | 少数の代表値・倍率・割り当て量・短い解釈 |
+| `results/unit.md` | 使う API の費用を探す | 全 API の値・測定範囲・統計の凡例 |
+| `results/scenario.md` | 自分の利用条件に近い実装を比較する | 同条件の対照・時間・割り当て・検定 |
+| `benchmarks/METHOD.md` | 自分の用途に当てはまる測定か判断する | 入力・出力・処理内容・計測範囲・比較上の注意 |
+| `results/environment.md` | どの版・環境の結果か確認する | 日時・対象コード・Go・OS・CPU・実行条件 |
+| 本ガイド・`benchmark-api.md` | 次の測定と公開を実施する | 棚卸し・配置・コマンド・検証・保存・更新方針 |
+
+各文は、ないと利用者が何を誤解するかを説明できるものだけ残す。  
+「担当者が何をしたか」「次に何をすべきか」は利用者向けに書かず、ここへ置く。  
+利用者が結果を選ぶのに必要な条件と、担当者が測定を再現する手順を混同しない。  
+概要に P 値や全条件を詰め込まず、詳細表へ導く。  
+公開文書の説明は必要な場所に一度だけ置き、細かい統計は条件・凡例の参照で補う。  
+
+## 集計の実装
+
+`measure.sh` は通常テスト、全件測定、benchstat の全件・比較 CSV、一時 Markdown 生成、公開ファイル置き換えを順に行う。  
+`publish.py` は全ケースの 3 指標と比較検定がそろい、全件 CSV と比較 CSV の中央値・信頼区間が一致することを確認する。  
+全指標が詳細表で使われていない場合は公開を失敗させる。  
+概要の代表ケースはコードで選び、値は同じ集計結果から取得する。  
+公開文書を直すときは生成元も修正し、次の測定で古い説明が復活しないことを確認する。  
+ツールの版を変更する場合はこの導入コマンドも更新し、公開先にコマンドや作業履歴を埋め込まない。  
+
 ## ベンチマークの設計
 
 ### Unit Benchmark
@@ -114,10 +141,10 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 | `benchmarks/channel_test.go` | Channel の Unit / Scenario と結果・等価性テスト |
 | `benchmarks/cache_test.go` | Cache の Unit / Scenario と結果・等価性テスト |
 | `benchmarks/benchmark_helper_test.go` | 共通入力・集計・Unit 実行ループ |
-| `benchmarks/API.md` | 今回の公開 API 対応表と代替測定の理由 |
-| `benchmarks/METHOD.md` | 測定範囲・ケース名・再現条件・ツール導入 |
+| `doc/ai/benchmark-api.md` | 今回の公開 API 対応表と代替測定の理由 |
+| `benchmarks/METHOD.md` | 利用者が結果を解釈するための測定条件 |
 | `benchmarks/REPORT.md` | Scenario の代表値・倍率・考察 |
-| `benchmarks/results/environment.md` | 今回の環境・対象コミット・測定条件・ツール版 |
+| `benchmarks/results/environment.md` | 利用者が結果を適用できるか判断する実行環境 |
 | `benchmarks/results/unit.md` | 全 Unit の API・条件別 Markdown 表 |
 | `benchmarks/results/scenario.md` | 全 Scenario の時間・割り当て量・検定の Markdown 表 |
 | `benchmarks/measure.sh` | 一時測定・集計・公開表の再作成・raw 削除 |
@@ -126,10 +153,11 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 
 リポジトリのルートで実行する。  
 Go・Python 3・benchstat を用意し、ライブラリ本体の go.mod に測定ツールの依存を追加しない。  
+Go の版は `go.mod` に合わせ、集計ツールの版は実行時に確認する。  
 
 ```sh
-# ツール導入。実際の版は environment.md に記録される
-go install golang.org/x/perf/cmd/benchstat@latest
+# 測定に使う集計ツールを明示して導入
+go install golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e
 # 通常テスト・等価性テスト
 go test ./... -count=1
 python3 -m unittest discover -s benchmarks -p 'test_*.py'
@@ -143,7 +171,7 @@ BENCHSTAT="$(go env GOPATH)/bin/benchstat" BENCHTIME=1s COUNT=10 GOMAXPROCS=2 sh
 Go の自動取得を避ける場合は、適切な版の `GO_BINARY` を指定して `GOTOOLCHAIN=local` を付ける。  
 `GOCACHE` を省略するとスクリプトが一時ディレクトリ内に作成する。  
 再利用できる書き込み先があれば `GOCACHE` を明示してよいが、raw の出力先は変わらない。  
-実際に使った `BENCHTIME` / `COUNT` / `GOMAXPROCS` とツールの版は環境記録に出力される。  
+実際に使った `BENCHTIME` / `COUNT` / `GOMAXPROCS` は環境記録に出力される。  
 測定中は別のテストやビルドを並行実行しない。  
 
 raw・benchstat CSV・環境記録用の中間ファイルはリポジトリ外の `/tmp/seq-benchmark.XXXXXX/` にだけ出力する。  
@@ -163,7 +191,7 @@ Warm / Fill は絶対指標にとどめ、構築範囲の異なる Warm / Uncach
 
 ### 更新時チェックリスト
 
-- [ ] 全公開関数・メソッドと代替測定の理由を API.md に記録した
+- [ ] 全公開関数・メソッドと代替測定の理由を benchmark-api.md に記録した
 - [ ] Unit / Scenario の対象・条件・名前を現行コードに合わせた
 - [ ] 比較実装の入力・出力・順序・途中終了などを確認し、等価性テストが通った
 - [ ] 測定コードをコミットし、そのコミットで全件を複数回測定した
@@ -171,6 +199,8 @@ Warm / Fill は絶対指標にとどめ、構築範囲の異なる Warm / Uncach
 - [ ] 詳細集計・概要・測定方法・環境・対象コミットの対応を確認した
 - [ ] 現在の結果を置き換え、過去との比較・推移・回帰判定を追加していない
 - [ ] README は日英で同期し、文書のコマンド・リンクを検証した
+- [ ] 利用者向け文書に生成手順・Git 管理・世代管理・更新手続きが混ざっていない
+- [ ] 各説明がないと利用者が何に困るかを確認し、概要は一瞥で読める量にした
 - [ ] raw・TXT・CSV が Git 管理されず、今回の一時 raw・中間ファイルも残っていない
 - [ ] 全件の指標・信頼区間・比較検定が Markdown に残り、生成処理のテストが通った
 - [ ] 通常の機能 PR・リリースへの測定義務や、定期実行の自動化を追加していない

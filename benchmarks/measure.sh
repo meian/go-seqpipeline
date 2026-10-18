@@ -34,7 +34,6 @@ compare channel-to '.name:ScenarioChannel' '/impl@(Seq ToChannel)'
 compare cache-reuse '.name:ScenarioCache /phase:Reuse' '/impl@(Uncached Cached)'
 "$GO_BINARY" version > "$workdir/go-version.txt"
 "$GO_BINARY" env GOOS GOARCH GOARM64 GOAMD64 GOGC GOMEMLIMIT GOEXPERIMENT > "$workdir/go-env.txt"
-"$GO_BINARY" version -m "$(command -v "$BENCHSTAT")" > "$workdir/benchstat-version.txt"
 git rev-parse HEAD > "$workdir/commit.txt"
 python3 benchmarks/publish.py report "$workdir" "$BENCHTIME" "$COUNT" "$GOMAXPROCS"
 # 検証・全ファイルの生成が成功してから公開結果を置き換える。

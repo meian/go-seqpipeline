@@ -50,6 +50,28 @@ class PublishTest(unittest.TestCase):
         self.assertIn('保存済み反復 Warm', scenario)
         self.assertIn('| N=8 | Pipeline | 4 ±2% | 4 ±2% |', scenario)
 
+    def test_public_reports_exclude_maintainer_instructions(self):
+        destination = self.directory/'output/results'
+        publish.render(self.directory, destination)
+        for path in [destination/'unit.md', destination/'scenario.md', destination.parent/'REPORT.md']:
+            with self.subTest(path=path.name):
+                for term in ('raw', 'CSV', 'Git 管理', '定期更新', '世代管理', 'doc/ai', '生成手順'):
+                    self.assertNotIn(term, path.read_text())
+
+    def test_environment_contains_conditions_without_workflow(self):
+        (self.directory/'commit.txt').write_text('a'*40+'\n')
+        (self.directory/'go-version.txt').write_text('go version test\n')
+        (self.directory/'go-env.txt').write_text('darwin\narm64\nv8.0\n\n\n\n\n')
+        (self.directory/'raw.txt').write_text('cpu: Test CPU\nBenchmarkUnit/api=X-2 1 1 ns/op 0 B/op 0 allocs/op\nPASS\n')
+        destination = self.directory/'environment.md'
+        publish.environment(self.directory, '100ms', '1', '2', destination)
+        text = destination.read_text()
+        self.assertIn('Test CPU', text)
+        self.assertIn('go version test', text)
+        self.assertIn('100ms / 1', text)
+        for term in ('raw', 'CSV', 'Git 管理', '後続コミット', '一時ディレクトリ', '世代管理'):
+            self.assertNotIn(term, text)
+
     def test_missing_metric_is_rejected(self):
         self.write('all.csv', self.all_rows[:-1])
         with self.assertRaisesRegex(ValueError, 'missing metric'):

@@ -154,9 +154,8 @@ def condition(case, omit=()):
 def preface(title):
     return f'''# {title}
 
-[測定環境・対象コミット](environment.md) / [測定方法](../METHOD.md) / [性能概要](../REPORT.md)。  
-値は benchstat の中央値で、`±` は中央値の 95% 信頼区間の相対幅を表す。  
-B/op は割り当て総量であり、保持メモリ量ではない。  
+[性能概要](../REPORT.md) / [測定条件](../METHOD.md) / [実行環境](environment.md)。  
+値は中央値（`±` は 95% 信頼区間）で、割り当て量は保持メモリ量とは異なる。  
 
 '''
 
@@ -178,7 +177,7 @@ def unit_category(api):
 
 
 def render_unit(snapshot):
-    text = preface('Unit Benchmark 全結果')
+    text = preface('API 別の性能')
     groups = {}
     for case in snapshot.cases:
         if case[0] == 'Unit':
@@ -194,11 +193,10 @@ def render_unit(snapshot):
 
 
 def render_scenario(snapshot):
-    text = preface('Scenario Benchmark 全結果')
-    text += '''倍率は対象 / 対照で、1 より大きいと対象が遅く、1 より小さいと対象が速い。  
-検定は有意水準 0.05 の同一条件内の比較で、`~` の差は断定しない。  
-メモリ割り当ての検定も保持し、正の増減率は対象の割り当て増加を表す。  
-Fill / Warm は独立した指標であり、保存費用込み Reuse と比較しない。  
+    text = preface('利用場面別の性能')
+    text += '''倍率は対象 / 対照で、1 を超えると対象が遅い。  
+検定の `~` は差が不明確で、増減率の正値は対象の時間・割り当ての増加を表す。  
+Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。  
 
 '''
     groups = {}
@@ -243,16 +241,13 @@ Fill / Warm は独立した指標であり、保存費用込み Reuse と比較�
 def render_overview(snapshot):
     text = '''# 性能概要
 
-測定時点の代表的な Scenario を示す。  
-全件は [Unit](results/unit.md) / [Scenario](results/scenario.md)、条件は [測定環境](results/environment.md) / [測定方法](METHOD.md) を参照。  
-時間・割り当て量は中央値、倍率は対象 / 対照で、1 より大きいと対象が遅い。  
-割り当て量は保持メモリ量とは異なり、統計的に不明確な差は断定しない。  
+[API 別の全結果](results/unit.md) / [利用場面別の全結果](results/scenario.md) / [測定条件](METHOD.md) / [実行環境](results/environment.md)。  
+時間・割り当て量は中央値で、倍率は対象 / 対照（1 を超えると対象が遅い）。  
 
 '''
     # 代表例の選択だけを固定し、詳細表は全ケースから自動生成する。
     choices = [
         ('ScenarioPipeline', {'kind': 'Seq', 'N': '4096', 'depth': '2', 'mode': 'All'}, 'Loop', 'Pipeline'),
-        ('ScenarioPipeline', {'kind': 'Seq', 'N': '4096', 'depth': '6', 'mode': 'All'}, 'Functions', 'Pipeline'),
         ('ScenarioChannel', {'N': '4096', 'buffer': '64'}, 'Direct', 'FromChannel'),
         ('ScenarioChannel', {'N': '4096', 'buffer': '0'}, 'Seq', 'ToChannel'),
         ('ScenarioCache', {'kind': 'Seq', 'N': '4096', 'work': '0', 'phase': 'Reuse', 'reuse': '1'}, 'Uncached', 'Cached'),
@@ -265,18 +260,15 @@ def render_overview(snapshot):
             if (comparison.base[0] == kind and dims == dict(dimensions, impl=base)
                     and dict(comparison.target[1])['impl'] == target):
                 pairs = [snapshot.cell(comparison.base, metric, False)+' → '+snapshot.cell(comparison.target, metric, False)
-                         for metric in METRICS]
+                         for metric in ('sec/op', 'B/op')]
                 label = kind.removeprefix('Scenario')+'<br>'+condition(comparison.base)+'<br>'+base+' → '+target
-                rows.append([label, pairs[0], snapshot.ratio(comparison), pairs[1], pairs[2], snapshot.statistic(comparison, 'sec/op')])
+                ratio = '差は不明確' if comparison.stats['sec/op'][0] == '~' else snapshot.ratio(comparison)
+                rows.append([label, pairs[0], ratio, pairs[1]])
                 break
-    text += table(['代表条件（対照 → 対象）', 'ns/op（対照 → 対象）', '倍率',
-                   'B/op（対照 → 対象）', 'allocs/op（対照 → 対象）', '時間の検定'], rows)
-    text += '''軽い処理では接続する段数の費用が表れやすく、途中終了は不要な上流評価を抑える。  
-Channel は起動・送受信・終了の費用を含み、入力容量でも特性が変わる。  
-Cache は初回保存と保持メモリを必要とし、上流負荷・利用回数によって有利な条件が変わる。  
-整数の算術処理での結果であり、外部 I/O や他の型・出力方式への速度保証ではない。  
-
-更新は [運用ガイド](../doc/ai/benchmark.md) に従い、定期更新 Issue で現在の結果を置き換える。  
+    text += table(['処理（対照 → 対象）', '時間 ns/op（対照 → 対象）', '倍率', '割り当て B/op（対照 → 対象）'], rows)
+    text += '''軽い変換では、パイプライン接続や channel 変換の追加費用が目立つ。  
+キャッシュは初回保存の費用と保持メモリを要するが、重い上流を繰り返し使うと再評価を省ける。  
+この整数処理での結果を、外部 I/O や他の型の速度保証には使わない。  
 '''
     return text.rstrip('\n')+'\n'
 
@@ -300,34 +292,24 @@ def environment(workdir, benchtime, count, procs, destination):
     version = (workdir/'go-version.txt').read_text().strip()
     raw = (workdir/'raw.txt').read_text()
     cpu = next(line.removeprefix('cpu: ') for line in raw.splitlines() if line.startswith('cpu: '))
-    cases = validate(workdir/'raw.txt', int(count))
+    validate(workdir/'raw.txt', int(count))
     env_names = ['GOOS', 'GOARCH', 'GOARM64', 'GOAMD64', 'GOGC', 'GOMEMLIMIT', 'GOEXPERIMENT']
     env_values = (workdir/'go-env.txt').read_text().splitlines()
-    benchstat = next(line.strip() for line in (workdir/'benchstat-version.txt').read_text().splitlines() if '\tmod\t' in line)
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')
-    env = f'''# 測定環境
-
-測定日時は {timestamp}、対象コミットは `{commit}`。  
-対象コードと測定コードをこのコミットに固定し、文書・集計結果だけを後続コミットで公開する。  
+    settings = dict(zip(env_names, env_values))
+    env = f'''# 実行環境
 
 | 項目 | 値 |
 | --- | --- |
+| 測定日時（UTC） | {timestamp} |
+| 対象コード（ライブラリ・測定） | [{commit[:12]}](https://github.com/meian/go-seqpipeline/commit/{commit}) |
 | Go | {version} |
-| OS | {platform.platform()} |
-| CPU | {cpu} |
+| OS / CPU | {platform.platform()} / {cpu} |
 | GOMAXPROCS | {procs} |
-| benchtime / count | {benchtime} / {count} |
-| ケース数 | {cases} |
-| benchstat | {benchstat} |
-'''
-    for name, value in zip(env_names, env_values):
-        env += f'| {name} | {value or "既定値"} |\n'
-    env += '''
-通常のコンパイラ最適化・インライン化を有効にし、CPU 固定・温度制御・測定順のランダム化は行っていない。  
-測定中には別のテストやビルドを実行せず、OS や他プロセスの負荷は制御していない。  
-Go のキャッシュと測定の一時ファイルには書き込み可能な一時ディレクトリを使用した。  
-信頼区間は benchstat の既定の 95%、同一スナップショット内の比較検定の有意水準は 0.05。  
-raw は集計時の一時入力のみで、集計後に削除する。  
+| 測定時間 / 測定回数 | {benchtime} / {count} |
+| GOGC / GOMEMLIMIT / GOEXPERIMENT | {settings.get('GOGC') or '既定値'} / {settings.get('GOMEMLIMIT') or '既定値'} / {settings.get('GOEXPERIMENT') or '既定値'} |
+
+通常の最適化は有効で、CPU・温度・OS 負荷は固定していない。  
 '''
     destination.write_text(env)
 
