@@ -43,12 +43,36 @@ class PublishTest(unittest.TestCase):
         unit = (destination/'unit.md').read_text()
         scenario = (destination/'scenario.md').read_text()
         self.assertIn('## その他', unit)
-        self.assertIn('| FutureAPI | N=8 / 構築・評価 | 1,000,000,000 ±2%', unit)
+        self.assertIn('| FutureAPI | 8 | 1,000,000,000 ±2%', unit)
         self.assertIn('## Future', scenario)
         self.assertIn('2.000×', scenario)
-        self.assertIn('差は不明確 (~)<br>p=0.123 n=10', scenario)
+        self.assertIn('| 8 | sec/op | ~ | p=0.123 n=10 |', scenario)
         self.assertIn('保存済み反復 Warm', scenario)
-        self.assertIn('| N=8 | Pipeline | 4 ±2% | 4 ±2% |', scenario)
+        self.assertIn('| 8 | Pipeline | 4 ±2% | 4 ±2% |', scenario)
+
+    def test_result_tables_keep_conditions_and_comparisons_separate(self):
+        snapshot = publish.Snapshot(self.directory)
+        # 概要の代表ケースも、同じ条件を持つ比較から自動生成する。
+        comparison = snapshot.comparisons[0]
+        dimensions = {'kind': 'Seq', 'N': '4096', 'depth': '2', 'mode': 'All'}
+        for label, attribute in [('Loop', 'base'), ('Pipeline', 'target')]:
+            original = getattr(comparison, attribute)
+            case = ('ScenarioPipeline', tuple(sorted(dict(dimensions, impl=label).items())))
+            snapshot.cases.append(case)
+            for metric in publish.METRICS:
+                snapshot.values[case, metric] = snapshot.values[original, metric]
+            setattr(comparison, attribute, case)
+        overview = publish.render_overview(snapshot)
+        self.assertIn('| Loop | 2,000,000,000 | 1× | 2 |', overview)
+        self.assertIn('| Pipeline | 4,000,000,000 | ~ | 4 |', overview)
+        for text in (overview, publish.render_unit(snapshot), publish.render_scenario(snapshot)):
+            for line in text.splitlines():
+                if line.startswith('|'):
+                    self.assertNotIn('→', line)
+                    self.assertNotIn('<br>', line)
+                    self.assertNotIn(' / ', line)
+                    self.assertLessEqual(len(line.strip('|').split('|')), 5)
+        self.assertIn('<summary>検定：Loop と Pipeline</summary>', publish.render_scenario(snapshot))
 
     def test_public_reports_exclude_maintainer_instructions(self):
         destination = self.directory/'output/results'

@@ -118,12 +118,6 @@ class Snapshot:
         target = self.values[comparison.target, 'sec/op'].median
         return f'{target/base:.3f}×' if base else '—（対照が 0）'
 
-    def statistic(self, comparison, metric):
-        self.stats_seen.add((comparison.base, comparison.target, metric))
-        delta, probability = comparison.stats[metric]
-        interpretation = '差は不明確 (~)' if delta == '~' else delta
-        return f'{interpretation}<br>{probability}'
-
     def verify(self):
         if self.seen != set(self.values):
             raise ValueError(f'unpublished metrics: {set(self.values)-self.seen}')
@@ -176,6 +170,19 @@ def unit_category(api):
     return 'その他'
 
 
+def condition_groups(cases):
+    """共通条件を表の外へ出し、件数・段数などは独立した列にする。"""
+    groups = {}
+    for case in cases:
+        groups.setdefault(condition(case, omit=('N', 'depth', 'buffer', 'reuse')), []).append(case)
+    for group in groups.values():
+        group.sort(key=lambda case: (
+            *(int(dict(case[1]).get(k, 0)) for k in ('N', 'depth', 'buffer', 'reuse')),
+            dict(case[1]).get('impl', ''),
+        ))
+    return groups.items()
+
+
 def render_unit(snapshot):
     text = preface('API 別の性能')
     groups = {}
@@ -186,22 +193,26 @@ def render_unit(snapshot):
         cases.sort(key=lambda case: (dict(case[1])['api'], dict(case[1]).get('phase', ''),
                                      int(dict(case[1]).get('N', 0))))
         text += f'## {group}\n\n'
-        rows = []
+        # 同じ API の設定メソッドでも、キー既定値の有無は区別する。
+        sections = {}
         for case in cases:
-            api = dict(case[1])['api']
-            detail = condition(case)
-            if api.startswith('ZipKey.'):
-                api = api.replace('ZipKey.', 'Zip.', 1)
+            detail = condition(case, omit=('N',))
+            if dict(case[1])['api'].startswith('ZipKey.'):
                 detail += ' / キー既定値あり'
-            rows.append([api, detail, *(snapshot.cell(case, metric) for metric in METRICS)])
-        text += table(['API', '測定条件', 'ns/op', 'B/op', 'allocs/op'], rows)
+            sections.setdefault(detail, []).append(case)
+        for detail, section in sections.items():
+            text += f'### {detail or "既定条件"}\n\n'
+            rows = [[dict(case[1])['api'].replace('ZipKey.', 'Zip.', 1),
+                     dict(case[1]).get('N', '—'),
+                     *(snapshot.cell(case, metric) for metric in METRICS)] for case in section]
+            text += table(['API', 'N', 'ns/op', 'B/op', 'allocs/op'], rows)
     return text.rstrip('\n')+'\n'
 
 
 def render_scenario(snapshot):
     text = preface('利用場面別の性能')
-    text += '''倍率は対象 / 対照で、1 を超えると対象が遅い。  
-検定の `~` は差が不明確で、増減率の正値は対象の時間・割り当ての増加を表す。  
+    text += '''倍率は各表の右側の実装の時間 / 左側の実装の時間で、1 を超えると右側が遅い。  
+検定の `~` は差が不明確で、増減率の正値は右側の時間・割り当ての増加を表す。  
 Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。  
 
 '''
@@ -211,38 +222,49 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
             groups.setdefault(case[0], []).append(case)
     order = {'ScenarioPipeline': 0, 'ScenarioChannel': 1, 'ScenarioCache': 2}
     for group in sorted(groups, key=lambda name: (order.get(name, 3), name)):
-        cases = groups[group]
         text += f'## {group.removeprefix("Scenario")}\n\n'
-        pairs = [c for c in snapshot.comparisons if c.base[0] == group]
-        by_implementations = {}
-        for pair in pairs:
-            labels = (dict(pair.base[1])['impl'], dict(pair.target[1])['impl'])
-            by_implementations.setdefault(labels, []).append(pair)
-        covered = set()
-        for (base, target), comparisons in by_implementations.items():
-            text += f'### 時間：{base} → {target}\n\n'
-            rows = []
-            for comparison in comparisons:
-                covered.update((comparison.base, comparison.target))
-                rows.append([condition(comparison.base), snapshot.cell(comparison.base, 'sec/op'),
-                             snapshot.cell(comparison.target, 'sec/op'), snapshot.ratio(comparison),
-                             snapshot.statistic(comparison, 'sec/op')])
-            text += table(['測定条件', base+' ns/op', target+' ns/op', '倍率', '検定'], rows)
-        alone = [case for case in cases if case not in covered]
-        if alone:
-            text += '### 時間：単独測定（Fill / Warm など）\n\n'
-            text += table(['測定条件', '実装', 'ns/op'],
-                          [[condition(case), dict(case[1]).get('impl', '—'), snapshot.cell(case, 'sec/op')]
-                           for case in alone])
-        text += '### メモリ割り当て：全ケース\n\n'
-        text += table(['測定条件', '実装', 'B/op', 'allocs/op'],
-                      [[condition(case), dict(case[1]).get('impl', '—'),
-                        snapshot.cell(case, 'B/op'), snapshot.cell(case, 'allocs/op')] for case in cases])
-        if pairs:
-            text += '### メモリ割り当ての比較検定\n\n'
-            text += table(['測定条件', '対照 → 対象', 'B/op の検定', 'allocs/op の検定'],
-                          [[condition(c.base), dict(c.base[1])['impl']+' → '+dict(c.target[1])['impl'],
-                            snapshot.statistic(c, 'B/op'), snapshot.statistic(c, 'allocs/op')] for c in pairs])
+        for detail, cases in condition_groups(groups[group]):
+            text += f'### {detail or "入力条件別"}\n\n'
+            axes = [k for k in ('N', 'depth', 'buffer', 'reuse') if any(k in dict(c[1]) for c in cases)]
+            labels = {'N': 'N', 'depth': '段数', 'buffer': '入力容量', 'reuse': '利用回数'}
+            headers = [labels[k] for k in axes]
+
+            def fields(case):
+                return [dict(case[1]).get(k, '—') for k in axes]
+
+            pairs = [c for c in snapshot.comparisons if c.base in cases]
+            by_implementations = {}
+            for pair in pairs:
+                labels = (dict(pair.base[1])['impl'], dict(pair.target[1])['impl'])
+                by_implementations.setdefault(labels, []).append(pair)
+            covered = set()
+            for (base, target), comparisons in by_implementations.items():
+                text += f'#### 時間：{base} と {target}\n\n'
+                rows = []
+                for c in comparisons:
+                    covered.update((c.base, c.target))
+                    rows.append([*fields(c.base), snapshot.cell(c.base, 'sec/op'),
+                                 snapshot.cell(c.target, 'sec/op'), snapshot.ratio(c)])
+                text += table([*headers, base+' ns/op', target+' ns/op', '倍率'], rows)
+                text += f'<details>\n<summary>検定：{base} と {target}</summary>\n\n'
+                rows = []
+                for c in comparisons:
+                    for metric in METRICS:
+                        snapshot.stats_seen.add((c.base, c.target, metric))
+                        delta, probability = c.stats[metric]
+                        rows.append([*fields(c.base), metric, delta, probability])
+                text += table([*headers, '指標', '増減率', '検定'], rows)
+                text += '</details>\n\n'
+            alone = [case for case in cases if case not in covered]
+            if alone:
+                text += '#### 時間\n\n'
+                text += table([*headers, '実装', 'ns/op'],
+                              [[*fields(case), dict(case[1]).get('impl', '—'),
+                                snapshot.cell(case, 'sec/op')] for case in alone])
+            text += '#### メモリ割り当て\n\n'
+            text += table([*headers, '実装', 'B/op', 'allocs/op'],
+                          [[*fields(case), dict(case[1]).get('impl', '—'),
+                            snapshot.cell(case, 'B/op'), snapshot.cell(case, 'allocs/op')] for case in cases])
     return text.rstrip('\n')+'\n'
 
 
@@ -250,7 +272,7 @@ def render_overview(snapshot):
     text = '''# 性能概要
 
 [API 別の全結果](results/unit.md) / [利用場面別の全結果](results/scenario.md) / [測定条件](METHOD.md) / [実行環境](results/environment.md)。  
-時間・割り当て量は中央値で、倍率は対象 / 対照（1 を超えると対象が遅い）。  
+時間・割り当て量は中央値で、時間比は各表の先頭の実装を 1 とする（`~` は差が不明確）。  
 
 '''
     # 代表例の選択だけを固定し、詳細表は全ケースから自動生成する。
@@ -261,19 +283,24 @@ def render_overview(snapshot):
         ('ScenarioCache', {'kind': 'Seq', 'N': '4096', 'work': '0', 'phase': 'Reuse', 'reuse': '1'}, 'Uncached', 'Cached'),
         ('ScenarioCache', {'kind': 'Seq2', 'N': '4096', 'work': '32', 'phase': 'Reuse', 'reuse': '16'}, 'Uncached', 'Cached'),
     ]
-    rows = []
     for kind, dimensions, base, target in choices:
         for comparison in snapshot.comparisons:
             dims = dict(comparison.base[1])
             if (comparison.base[0] == kind and dims == dict(dimensions, impl=base)
                     and dict(comparison.target[1])['impl'] == target):
-                pairs = [snapshot.cell(comparison.base, metric, False)+' → '+snapshot.cell(comparison.target, metric, False)
-                         for metric in ('sec/op', 'B/op')]
-                label = kind.removeprefix('Scenario')+'<br>'+condition(comparison.base)+'<br>'+base+' → '+target
-                ratio = '差は不明確' if comparison.stats['sec/op'][0] == '~' else snapshot.ratio(comparison)
-                rows.append([label, pairs[0], ratio, pairs[1]])
+                title = {'ScenarioPipeline': 'パイプライン', 'FromChannel': 'Channel から読み込む',
+                         'ToChannel': 'Channel へ書き出す'}.get(kind if kind == 'ScenarioPipeline' else target)
+                if kind == 'ScenarioCache':
+                    title = 'キャッシュ：軽い処理を 1 回使う' if dimensions['reuse'] == '1' else 'キャッシュ：重い処理を 16 回使う'
+                text += f'## {title}\n\n'
+                text += condition(comparison.base)+'。  \n\n'
+                ratio = '~' if comparison.stats['sec/op'][0] == '~' else snapshot.ratio(comparison)
+                rows = [[base, snapshot.cell(comparison.base, 'sec/op', False), '1×',
+                         snapshot.cell(comparison.base, 'B/op', False)],
+                        [target, snapshot.cell(comparison.target, 'sec/op', False), ratio,
+                         snapshot.cell(comparison.target, 'B/op', False)]]
+                text += table(['実装', 'ns/op', '時間比', 'B/op'], rows)
                 break
-    text += table(['処理（対照 → 対象）', '時間 ns/op（対照 → 対象）', '倍率', '割り当て B/op（対照 → 対象）'], rows)
     text += '''軽い変換では、パイプライン接続や channel 変換の追加費用が目立つ。  
 キャッシュは初回保存の費用と保持メモリを要するが、重い上流を繰り返し使うと再評価を省ける。  
 この整数処理での結果を、外部 I/O や他の型の速度保証には使わない。  
