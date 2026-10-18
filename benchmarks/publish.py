@@ -190,7 +190,7 @@ def render_unit(snapshot):
         rows = [[dict(case[1])['api'], condition(case),
                  *(snapshot.cell(case, metric) for metric in METRICS)] for case in cases]
         text += table(['API', '測定条件', 'ns/op', 'B/op', 'allocs/op'], rows)
-    return text.rstrip()+'\n'
+    return text.rstrip('\n')+'\n'
 
 
 def render_scenario(snapshot):
@@ -237,7 +237,7 @@ Fill / Warm は独立した指標であり、保存費用込み Reuse と比較�
             text += table(['測定条件', '対照 → 対象', 'B/op の検定', 'allocs/op の検定'],
                           [[condition(c.base), dict(c.base[1])['impl']+' → '+dict(c.target[1])['impl'],
                             snapshot.statistic(c, 'B/op'), snapshot.statistic(c, 'allocs/op')] for c in pairs])
-    return text.rstrip()+'\n'
+    return text.rstrip('\n')+'\n'
 
 
 def render_overview(snapshot):
@@ -278,7 +278,7 @@ Cache は初回保存と保持メモリを必要とし、上流負荷・利用�
 
 更新は [運用ガイド](../doc/ai/benchmark.md) に従い、定期更新 Issue で現在の結果を置き換える。  
 '''
-    return text.rstrip()+'\n'
+    return text.rstrip('\n')+'\n'
 
 
 def render(directory, destination):
