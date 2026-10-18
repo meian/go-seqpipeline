@@ -55,24 +55,33 @@
 
 | API・機能 | 測定・結果検証のファイル |
 | --- | --- |
-| FromSlice / FromSeq / ToSeq / ToSlice / FromMap / FromSeq2 / ToSeq2 / ToMap | [conversion_test.go](../../benchmarks/conversion_test.go) |
-| Map / Map2 / Filter / Filter2 / Keys / Values | [transform_test.go](../../benchmarks/transform_test.go) |
-| Take / Skip と Operator / Operator2 | [limit_test.go](../../benchmarks/limit_test.go) |
+| Map / Map2 | [map_test.go](../../benchmarks/map_test.go) |
+| Filter / Filter2 | [filter_test.go](../../benchmarks/filter_test.go) |
+| Keys / Values | [keys_test.go](../../benchmarks/keys_test.go)、[values_test.go](../../benchmarks/values_test.go) |
+| Take / Skip と Operator / Operator2 | [take_test.go](../../benchmarks/take_test.go)、[skip_test.go](../../benchmarks/skip_test.go) |
+| FromSlice / ToSlice | [from_slice_test.go](../../benchmarks/from_slice_test.go)、[to_slice_test.go](../../benchmarks/to_slice_test.go) |
+| FromSeq / FromSeq2 | [from_seq_test.go](../../benchmarks/from_seq_test.go) |
+| ToSeq / ToSeq2 | [to_seq_test.go](../../benchmarks/to_seq_test.go) |
+| FromMap / ToMap | [from_map_test.go](../../benchmarks/from_map_test.go)、[to_map_test.go](../../benchmarks/to_map_test.go) |
+| FromChannel / ToChannel | [from_channel_test.go](../../benchmarks/from_channel_test.go)、[to_channel_test.go](../../benchmarks/to_channel_test.go) |
 | Zip と設定メソッド | [zip_test.go](../../benchmarks/zip_test.go) |
 | Seq / Seq2 の Pipe / Pipe2 | [pipe_test.go](../../benchmarks/pipe_test.go) |
-| FromChannel / ToChannel、相互変換 Scenario | [channel_test.go](../../benchmarks/channel_test.go) |
-| Cache / Cache2、Fill / Warm / Reuse Scenario | [cache_test.go](../../benchmarks/cache_test.go) |
-| Map / Filter / Take を接続する Pipeline Scenario | [pipeline_test.go](../../benchmarks/pipeline_test.go) |
+| Cache / Cache2、Fill / Warm / Reuse | [cache_test.go](../../benchmarks/cache_test.go) |
+| Channel を含むパイプライン | [channel_test.go](../../benchmarks/channel_test.go) |
+| Map / Filter / Take を接続するパイプライン | [pipeline_test.go](../../benchmarks/pipeline_test.go) |
 
-共通の Unit ランナーは [benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) に置き、全件を従来の `Unit/api=...` という名前に `ref`（一般的な Go の書き方）と `impl=Go / Library` を付けて実行する。  
+[benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) は入力データの生成、結果保持用の変数、要素の変換・判定だけを共有する。  
+ケースの登録表、共通のベンチマークループ、テストのディスパッチャーは設けない。  
 
-Go 側の実装も同じ機能ファイルの `*UnitReferences` に置く。  
-各 API・phase の比較相手は登録時に検証し、対応漏れ・重複・不要な登録をテストで検出する。  
-公開結果には比較相手の書き方を示し、一般的な Go と Library の時間・割り当て・検定を併記する。  
+## 処理と入口
 
-## 処理へのリンク
+各 API・実装の処理全体を `mapLibrary` / `mapGo` のような型付き関数に置く。  
+通常の `BenchmarkMapLibrary` / `TestMapLibrary` は、どちらも `mapLibrary` を直接呼ぶ。  
+Seq の生成・演算子の構築・評価・収集・結果の加算は処理本体に含め、入力データだけを呼び出し元で準備する。  
+Cache / Cache2 は `cacheFillLibrary` / `cacheWarmLibrary` のように段階も名前へ含め、Warm の呼び出し元は Fill で保存済みの入力を用意する。  
+Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のように、種類と実装ごとに分ける。  
 
-各 API・phase・実装の処理を `runUnit{API名からドットを除いた文字列}{phase}{GoまたはLibrary}` に置く。  
-対応する `benchmarkUnit...` と `TestUnit...` は同じ処理を呼び、共通ランナーは測定名と入力準備を担当する。  
-Scenario も実装・Fill / Warm ごとの `runScenario...`・`benchmarkScenario...`・`TestScenario...` に分ける。  
+ベンチマーク関数内の各 `b.Run` は条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  
+`class=Unit` / `class=ScenarioPipeline` / `class=ScenarioChannel` / `class=ScenarioCache` で分類し、入力や段数などの比較条件も名前へ残す。  
+テストも条件ごとに処理本体を直接呼び、期待値・出力・順序を検証する。  
 公開表のリンクは測定コミットの関数宣言行から自動生成するため、行番号を手動で転記しない。  

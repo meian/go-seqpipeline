@@ -16,11 +16,11 @@ class PublishTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix='benchmark-publish-')
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
-        self.single = 'Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop/impl=Go-2'
-        self.library = 'Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop/impl=Library-2'
-        self.base = 'ScenarioFuture/N=8/impl=Loop-2'
-        self.target = 'ScenarioFuture/N=8/impl=Pipeline-2'
-        self.alone = 'ScenarioFuture/N=8/phase=Warm-2'
+        self.single = 'FutureGo/class=Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop/impl=Go-2'
+        self.library = 'FutureLibrary/class=Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop/impl=Library-2'
+        self.base = 'FutureLoop/class=ScenarioFuture/N=8/impl=Loop-2'
+        self.target = 'FuturePipeline/class=ScenarioFuture/N=8/impl=Pipeline-2'
+        self.alone = 'FutureWarm/class=ScenarioFuture/N=8/phase=Warm-2'
         self.all_rows = []
         self.comparison_rows = []
         self.unit_rows = []
@@ -30,10 +30,10 @@ class PublishTest(unittest.TestCase):
                              ((self.single, 1), (self.library, 2), (self.base, 2), (self.target, 4), (self.alone, 8))]
             self.comparison_rows += [['', 'Loop', '', 'Pipeline', '', '', ''],
                                      ['', metric, 'CI', metric, 'CI', 'vs base', 'P'],
-                                     ['ScenarioFuture/N=8-2', 2, '2%', 4, '2%', '~', 'p=0.123 n=10']]
+                                     ['*/class=ScenarioFuture/N=8-2', 2, '2%', 4, '2%', '~', 'p=0.123 n=10']]
             self.unit_rows += [['', 'Go', '', 'Library', '', '', ''],
                                ['', metric, 'CI', metric, 'CI', 'vs base', 'P'],
-                               ['Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop-2',
+                               ['*/class=Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop-2',
                                 1, '2%', 2, '2%', '+100.00%', 'p=0.000 n=10']]
         self.write('unit.csv', self.unit_rows)
         self.write('all.csv', self.all_rows)
@@ -165,20 +165,20 @@ class PublishTest(unittest.TestCase):
 class SourceLinksTest(unittest.TestCase):
     def setUp(self):
         self.case = publish.key('Unit/api=Map/N=64/phase=Evaluate/ref=MapLoop/impl=Go')
-        self.code = {'benchmarks/transform_test.go':
-                     'func runUnitMapEvaluateGo(data *unitInput) int64 { return 0 }\n'
-                     'func benchmarkUnitMapEvaluateGo(b *testing.B, values []int) {}\n'
-                     'func TestUnitMapEvaluateGo(t *testing.T) {}\n'}
+        self.code = {'benchmarks/map_test.go':
+                     'func mapGo(values []int) int64 { return 0 }\n'
+                     'func BenchmarkMapGo(b *testing.B) {}\n'
+                     'func TestMapGo(t *testing.T) {}\n'}
 
     def test_link_identifies_processing_at_measured_commit(self):
         sources = publish.SourceLinks(self.code, 'a'*40)
         self.assertEqual(sources.link(self.case, 'Go'),
                          '[Go](https://github.com/meian/go-seqpipeline/blob/'+'a'*40+
-                         '/benchmarks/transform_test.go#L1)')
+                         '/benchmarks/map_test.go#L1)')
         sources.verify([self.case])
 
     def test_missing_benchmark_or_test_entry_is_rejected(self):
-        for prefix in ('benchmarkUnit', 'TestUnit'):
+        for prefix in ('Benchmark', 'Test'):
             code = {path: '\n'.join(line for line in source.splitlines()
                                    if not line.startswith('func '+prefix))
                     for path, source in self.code.items()}
@@ -192,11 +192,11 @@ class SourceLinksTest(unittest.TestCase):
 
     def test_scenario_names_identify_implementation_or_phase(self):
         for name, function in [
-            ('ScenarioChannel/N=64/buffer=0/impl=Direct', 'runScenarioChannelDirect'),
-            ('ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Loop', 'runScenarioPipelineLoop'),
-            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Fill', 'runScenarioCacheFill'),
-            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Warm', 'runScenarioCacheWarm'),
-            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Cached', 'runScenarioCacheCached'),
+            ('ScenarioChannel/N=64/buffer=0/impl=Direct', 'scenarioChannelDirect'),
+            ('ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Loop', 'scenarioPipelineSeqLoop'),
+            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Fill', 'scenarioCacheSeqFill'),
+            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Warm', 'scenarioCacheSeqWarm'),
+            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Cached', 'scenarioCacheSeqCached'),
         ]:
             with self.subTest(name=name):
                 self.assertEqual(publish.processing_function(publish.key(name)), function)

@@ -7,136 +7,678 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func pipeUnitCases(values []int) []unitCase {
+func seqPipeLibrary(values []int) int64 {
 	source := seq.FromSlice(values)
+	var sum int64
+	for v := range source.Pipe(seq.Map(func(v int) int { return (v + 1) & 65535 })) {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func BenchmarkSeqPipeLibrary(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe/phase=Evaluate/ref=MapLoop/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipeLibrary(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq.Pipe/phase=Evaluate/ref=MapLoop/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipeLibrary(values)
+		}
+	})
+}
+
+func TestSeqPipeLibrary(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seqPipeLibrary(values)
+		const want int64 = 27
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seqPipeLibrary(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seqPipeLibrary(values)
+		const want int64 = 8
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seqPipeLibrary(values)
+		const want int64 = 131143
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seqPipeLibrary(values)
+		const want int64 = 2080
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seqPipeLibrary(values)
+		const want int64 = 8390656
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seqPipeGo(values []int) int64 {
+	var sum int64
+	for _, v := range values {
+		sum += int64((v + 1) & 65535)
+	}
+	return sum
+}
+
+func BenchmarkSeqPipeGo(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe/phase=Evaluate/ref=MapLoop/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipeGo(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq.Pipe/phase=Evaluate/ref=MapLoop/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipeGo(values)
+		}
+	})
+}
+
+func TestSeqPipeGo(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seqPipeGo(values)
+		const want int64 = 27
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seqPipeGo(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seqPipeGo(values)
+		const want int64 = 8
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seqPipeGo(values)
+		const want int64 = 131143
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seqPipeGo(values)
+		const want int64 = 2080
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seqPipeGo(values)
+		const want int64 = 8390656
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seqPipe2Library(values []int) int64 {
+	source := seq.FromSlice(values)
+	var sum int64
+	for k, v := range source.Pipe2(seq.Zip(source).Operator) {
+		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func BenchmarkSeqPipe2Library(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipe2Library(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipe2Library(values)
+		}
+	})
+}
+
+func TestSeqPipe2Library(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seqPipe2Library(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seqPipe2Library(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seqPipe2Library(values)
+		const want int64 = 14
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seqPipe2Library(values)
+		const want int64 = 120
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seqPipe2Library(values)
+		const want int64 = 4032
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seqPipe2Library(values)
+		const want int64 = 16773120
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seqPipe2Go(values []int) int64 {
+	var sum int64
+	for i, k := range values {
+		sum += int64(k) + int64(values[i])
+	}
+	return sum
+}
+
+func BenchmarkSeqPipe2Go(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipe2Go(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seqPipe2Go(values)
+		}
+	})
+}
+
+func TestSeqPipe2Go(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seqPipe2Go(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seqPipe2Go(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seqPipe2Go(values)
+		const want int64 = 14
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seqPipe2Go(values)
+		const want int64 = 120
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seqPipe2Go(values)
+		const want int64 = 4032
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seqPipe2Go(values)
+		const want int64 = 16773120
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seq2PipeLibrary(values []int) int64 {
 	pairs := seq.FromSeq2(slices.All(values))
-	var mapped, total, keys int64
+	var sum int64
+	for v := range pairs.Pipe(seq.Values) {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func BenchmarkSeq2PipeLibrary(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2PipeLibrary(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2PipeLibrary(values)
+		}
+	})
+}
+
+func TestSeq2PipeLibrary(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seq2PipeLibrary(values)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seq2PipeLibrary(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seq2PipeLibrary(values)
+		const want int64 = 7
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seq2PipeLibrary(values)
+		const want int64 = 60
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seq2PipeLibrary(values)
+		const want int64 = 2016
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seq2PipeLibrary(values)
+		const want int64 = 8386560
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seq2PipeGo(values []int) int64 {
+	var sum int64
+	for _, v := range values {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func BenchmarkSeq2PipeGo(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2PipeGo(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2PipeGo(values)
+		}
+	})
+}
+
+func TestSeq2PipeGo(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seq2PipeGo(values)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seq2PipeGo(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seq2PipeGo(values)
+		const want int64 = 7
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seq2PipeGo(values)
+		const want int64 = 60
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seq2PipeGo(values)
+		const want int64 = 2016
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seq2PipeGo(values)
+		const want int64 = 8386560
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seq2Pipe2Library(values []int) int64 {
+	pairs := seq.FromSeq2(slices.All(values))
+	var sum int64
+	for k, v := range pairs.Pipe2(seq.Map2(func(k, v int) (int, int) { return k, (v + 1) & 65535 })) {
+		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func BenchmarkSeq2Pipe2Library(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe2/phase=Evaluate/ref=Map2Loop/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2Pipe2Library(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq2.Pipe2/phase=Evaluate/ref=Map2Loop/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2Pipe2Library(values)
+		}
+	})
+}
+
+func TestSeq2Pipe2Library(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := seq2Pipe2Library(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+
+		got := seq2Pipe2Library(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+
+		got := seq2Pipe2Library(values)
+		const want int64 = 8
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+
+		got := seq2Pipe2Library(values)
+		const want int64 = 131198
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+
+		got := seq2Pipe2Library(values)
+		const want int64 = 4096
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+
+		got := seq2Pipe2Library(values)
+		const want int64 = 16777216
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func seq2Pipe2Go(values []int) int64 {
+	var sum int64
 	for k, v := range values {
-		total += int64(v)
-		keys += int64(k)
-		mapped += int64(mapValue(v))
-	}
-	data := &unitInput{
-		values: values,
-		source: source,
-		pairs:  pairs,
-	}
-	return []unitCase{
-		{"Seq.Pipe", "Evaluate", unitRun{data, runUnitSeqPipeEvaluateLibrary}, mapped},
-		{"Seq.Pipe2", "Evaluate", unitRun{data, runUnitSeqPipe2EvaluateLibrary}, total * 2},
-		{"Seq2.Pipe", "Evaluate", unitRun{data, runUnitSeq2PipeEvaluateLibrary}, total},
-		{"Seq2.Pipe2", "Evaluate", unitRun{data, runUnitSeq2Pipe2EvaluateLibrary}, keys + mapped},
-	}
-}
-
-func pipeUnitReferences(values []int) map[string]unitReference {
-	data := &unitInput{
-		values: values,
-	}
-	return map[string]unitReference{
-		"Seq.Pipe":   {"MapLoop", unitRun{data, runUnitSeqPipeEvaluateGo}},
-		"Seq.Pipe2":  {"ZipIndex", unitRun{data, runUnitSeqPipe2EvaluateGo}},
-		"Seq2.Pipe":  {"SliceRange", unitRun{data, runUnitSeq2PipeEvaluateGo}},
-		"Seq2.Pipe2": {"Map2Loop", unitRun{data, runUnitSeq2Pipe2EvaluateGo}},
-	}
-}
-
-func runUnitSeqPipeEvaluateLibrary(data *unitInput) int64 {
-	return sumSeq(data.source.Pipe(seq.Map(mapValue)))
-}
-
-func benchmarkUnitSeqPipeEvaluateLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeqPipeEvaluateLibrary)
-}
-
-func TestUnitSeqPipeEvaluateLibrary(t *testing.T) {
-	testUnitOperation(t, "Seq.Pipe", "Evaluate", "Library", runUnitSeqPipeEvaluateLibrary)
-}
-
-func runUnitSeqPipeEvaluateGo(data *unitInput) int64 {
-	var sum int64
-	for _, v := range data.values {
-		sum += int64(mapValue(v))
+		sum += int64(k) + int64((v+1)&65535)
 	}
 	return sum
 }
 
-func benchmarkUnitSeqPipeEvaluateGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeqPipeEvaluateGo)
+func BenchmarkSeq2Pipe2Go(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe2/phase=Evaluate/ref=Map2Loop/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2Pipe2Go(values)
+		}
+	})
+	b.Run("class=Unit/api=Seq2.Pipe2/phase=Evaluate/ref=Map2Loop/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = seq2Pipe2Go(values)
+		}
+	})
 }
 
-func TestUnitSeqPipeEvaluateGo(t *testing.T) {
-	testUnitOperation(t, "Seq.Pipe", "Evaluate", "Go", runUnitSeqPipeEvaluateGo)
-}
+func TestSeq2Pipe2Go(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func runUnitSeqPipe2EvaluateLibrary(data *unitInput) int64 {
-	return sumSeq2(data.source.Pipe2(seq.Zip(data.source).Operator))
-}
+		got := seq2Pipe2Go(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
 
-func benchmarkUnitSeqPipe2EvaluateLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeqPipe2EvaluateLibrary)
-}
+		got := seq2Pipe2Go(values)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
 
-func TestUnitSeqPipe2EvaluateLibrary(t *testing.T) {
-	testUnitOperation(t, "Seq.Pipe2", "Evaluate", "Library", runUnitSeqPipe2EvaluateLibrary)
-}
+		got := seq2Pipe2Go(values)
+		const want int64 = 8
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
 
-func runUnitSeqPipe2EvaluateGo(data *unitInput) int64 { return zipIndex(data.values, data.values) }
+		got := seq2Pipe2Go(values)
+		const want int64 = 131198
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
 
-func benchmarkUnitSeqPipe2EvaluateGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeqPipe2EvaluateGo)
-}
+		got := seq2Pipe2Go(values)
+		const want int64 = 4096
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
 
-func TestUnitSeqPipe2EvaluateGo(t *testing.T) {
-	testUnitOperation(t, "Seq.Pipe2", "Evaluate", "Go", runUnitSeqPipe2EvaluateGo)
-}
-
-func runUnitSeq2PipeEvaluateLibrary(data *unitInput) int64 {
-	return sumSeq(data.pairs.Pipe(seq.Values))
-}
-
-func benchmarkUnitSeq2PipeEvaluateLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeq2PipeEvaluateLibrary)
-}
-
-func TestUnitSeq2PipeEvaluateLibrary(t *testing.T) {
-	testUnitOperation(t, "Seq2.Pipe", "Evaluate", "Library", runUnitSeq2PipeEvaluateLibrary)
-}
-
-func runUnitSeq2PipeEvaluateGo(data *unitInput) int64 { return rangeValues(data.values) }
-
-func benchmarkUnitSeq2PipeEvaluateGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeq2PipeEvaluateGo)
-}
-
-func TestUnitSeq2PipeEvaluateGo(t *testing.T) {
-	testUnitOperation(t, "Seq2.Pipe", "Evaluate", "Go", runUnitSeq2PipeEvaluateGo)
-}
-
-func runUnitSeq2Pipe2EvaluateLibrary(data *unitInput) int64 {
-	return sumSeq2(data.pairs.Pipe2(seq.Map2(func(k, v int) (int, int) { return k, mapValue(v) })))
-}
-
-func benchmarkUnitSeq2Pipe2EvaluateLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeq2Pipe2EvaluateLibrary)
-}
-
-func TestUnitSeq2Pipe2EvaluateLibrary(t *testing.T) {
-	testUnitOperation(t, "Seq2.Pipe2", "Evaluate", "Library", runUnitSeq2Pipe2EvaluateLibrary)
-}
-
-func runUnitSeq2Pipe2EvaluateGo(data *unitInput) int64 {
-	var sum int64
-	for k, v := range data.values {
-		sum += int64(k) + int64(mapValue(v))
-	}
-	return sum
-}
-
-func benchmarkUnitSeq2Pipe2EvaluateGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitSeq2Pipe2EvaluateGo)
-}
-
-func TestUnitSeq2Pipe2EvaluateGo(t *testing.T) {
-	testUnitOperation(t, "Seq2.Pipe2", "Evaluate", "Go", runUnitSeq2Pipe2EvaluateGo)
+		got := seq2Pipe2Go(values)
+		const want int64 = 16777216
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }

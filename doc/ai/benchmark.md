@@ -48,8 +48,8 @@
 `publish.py` は全ケースの 3 指標と比較検定がそろい、全件 CSV と比較 CSV の中央値・信頼区間が一致することを確認する。  
 全指標が詳細表で使われていない場合は公開を失敗させる。  
 概要の代表ケースはコードで選び、値は同じ集計結果から取得する。  
-`publish.py` は測定コミットの Go ソースから関数宣言行を読み、実装名・時間列を対応する `run...` 関数へリンクする。  
-同じ処理の `benchmark...` / `Test...` が存在しない場合や、全処理にリンクできない場合は公開を失敗させる。  
+`publish.py` は測定コミットの Go ソースから関数宣言行を読み、実装名・時間列を対応する処理関数へリンクする。  
+同じ処理の `Benchmark...` / `Test...` が存在しない場合や、全処理にリンクできない場合は公開を失敗させる。  
 リンクは測定コミットに固定し、通常の機能変更でファイルの行が移動しても参照先がずれないようにする。  
 公開文書を直すときは生成元も修正し、次の測定で古い説明が復活しないことを確認する。  
 ツールの版を変更する場合はこの導入コマンドも更新し、公開先にコマンドや作業履歴を埋め込まない。  
@@ -83,21 +83,26 @@
 
 ### コードの配置
 
-- 測定分類ではなく、機能のまとまりで `*_test.go` を分ける
-- 対応する Seq / Seq2 のケースは同じファイルへ置き、各 API のケースをまとめる
-- 同じ機能の Unit / Scenario と結果・等価性テストは同じファイルへ置く
-- 各 API・評価段階・実装を名前付き `runUnit...` / `runScenario...` 関数にし、ベンチマーク入口 `benchmark...` とテスト入口 `Test...` から同じ処理を呼ぶ
-- 入力件数等の条件は引数にし、ライブラリ側と比較側の実装を一つの switch や無名関数表に埋め込まない
-- 公開用の測定名は親ランナーで保ち、入口の選択や入力の準備は測定ループの外へ置く
+- 測定分類ではなく、Map / Filter / Take / Skip などの機能ごとに `*_test.go` を分ける
+- 対応する Seq / Seq2 は同じファイルへ置いてよいが、各 API の処理・ベンチマーク・テストを連続して記述する
+- 同じ機能の Unit / Scenario は同じファイルへ置いてよい
 - 複数機能を組み合わせる Scenario は独立した機能群として扱う
-- 入力・出力保持・反復集計・共通の実行ループは必要に応じてヘルパーへ分離する
-- 機能別ファイルの Unit ケースを共通ランナーへ登録し、`Unit/api=...` の名前を保つ
-- Scenario も `ScenarioPipeline` / `ScenarioChannel` / `ScenarioCache` 等の名前で分類を保つ
-- 定期更新で追加する機能も同じ配置方針とし、ケースの登録漏れ・重複を確認する
+- 各 API・実装に `mapLibrary` / `mapGo` のような処理全体の関数を用意する
+- 通常の `BenchmarkMapLibrary` / `TestMapLibrary` から、同じ `mapLibrary` を直接呼ぶ
+- 共通化するのは処理全体と低水準の入力生成などに限り、ケース登録表・汎用状態構造体・共通の測定ループ・テストディスパッチャーを作らない
+- ベンチマークとテストをテーブル駆動にせず、条件は各 `b.Run` / `t.Run` へ明記する
+- ベンチマークは各条件で入力を用意し、`for b.Loop()` 内から処理関数を直接呼ぶ
+- テストは各条件で同じ処理関数を直接呼び、独立した期待値と比較する
+- Seq の生成・演算子の構築・評価・収集は処理本体に含める
+- Cache の Fill / Warm / Reuse は別関数にし、Warm だけは保存済み入力を処理関数へ渡す
+- 入力データと Warm の保存処理は `b.Loop()` より前に置く
+- `b.Loop()` の初回呼び出しで時間・割り当ての計測がリセットされるため、その準備を除くための `ResetTimer()` は不要
+- 測定分類は `class`、比較軸は `api`・`phase`・`kind`・`N`・`impl` 等の名前で識別する
+- 定期更新で追加する機能も同じ構成にし、全件の試行実行で条件の欠落・重複を確認する
 
 ファイルの分割だけを目的に細分化せず、機能のまとまりと保守性を優先する。  
-既存の名前・条件を保つ整理では、全ベンチマークの試行実行と結果検証で欠落がないことを確認する。  
-公開済みの測定値はその測定コミットのスナップショットとして維持し、コード整理だけで更新しない。  
+処理と入口の対応・ファイル一覧は [API 対応表](benchmark-api.md) に記録する。  
+測定する範囲を変えた場合は、全件を測り直して結果・測定条件をそろえる。  
 
 ### 測定の正確性
 
@@ -145,17 +150,15 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 
 | パス | 役割 |
 | --- | --- |
-| `benchmarks/conversion_test.go` | 入力変換・出力収集の Unit と結果検証 |
-| `benchmarks/transform_test.go` | Map / Filter / Keys / Values の Unit と結果検証 |
-| `benchmarks/limit_test.go` | Take / Skip の Unit と結果検証 |
-| `benchmarks/zip_test.go` | Zip と設定メソッドの Unit と結果検証 |
-| `benchmarks/pipe_test.go` | Pipe / Pipe2 の Unit と結果検証 |
-| `benchmarks/pipeline_test.go` | 複数段の Pipeline Scenario と等価性テスト |
-| `benchmarks/channel_test.go` | Channel の Unit / Scenario と結果・等価性テスト |
-| `benchmarks/cache_test.go` | Cache の Unit / Scenario と結果・等価性テスト |
-| `benchmarks/benchmark_helper_test.go` | 共通入力・集計・Unit 実行ループ |
-| `doc/ai/benchmark-api.md` | 今回の公開 API 対応表と代替測定の理由 |
-| `benchmarks/METHOD.md` | 利用者が結果を解釈するための測定条件 |
+| `benchmarks/map_test.go` / `filter_test.go` | Map / Map2、Filter / Filter2 の処理・測定・結果検証 |
+| `benchmarks/keys_test.go` / `values_test.go` | 射影の処理・測定・結果検証 |
+| `benchmarks/take_test.go` / `skip_test.go` | Take / Skip の処理・測定・結果検証 |
+| `benchmarks/from_*_test.go` / `to_*_test.go` | 入出力の変換・収集の処理・測定・結果検証 |
+| `benchmarks/zip_test.go` / `pipe_test.go` | Zip の設定、Pipe / Pipe2 の処理・測定・結果検証 |
+| `benchmarks/pipeline_test.go` | 複数段のパイプラインの処理・測定・等価性テスト |
+| `benchmarks/channel_test.go` | Channel を含むパイプラインの処理・測定・等価性テスト |
+| `benchmarks/cache_test.go` | Cache / Cache2 の Fill / Warm / Reuse の処理・測定・結果検証 |
+| `benchmarks/benchmark_helper_test.go` | 入力生成・結果保持と低水準の変換・判定 |
 | `benchmarks/REPORT.md` | Scenario の代表値・倍率・考察 |
 | `benchmarks/results/environment.md` | 利用者が結果を適用できるか判断する実行環境 |
 | `benchmarks/results/unit.md` | 全 Unit の API・条件別 Markdown 表 |
@@ -195,8 +198,9 @@ SIGKILL や OS 停止では trap が動かないため、残った該当一時�
 再集計が必要なら過去の raw を探さず、全件を再測定する。  
 
 benchstat の列は `impl` を使い、他の条件が同じ行の実装だけを比較する。  
-Unit の名前には `api`・`N`・`phase`・`ref`・`impl` を含め、`ref` は Go の書き方、`impl` は Go / Library を表す。  
-`benchstat -filter ".name:Unit" -col "/impl@(Go Library)" -format=csv` で同じスナップショット内を比較し、条件を行から除外しない。  
+Unit の名前には `class=Unit`・`api`・`N`・`phase`・`ref`・`impl` を含め、`ref` は Go の書き方、`impl` は Go / Library を表す。  
+`benchstat -ignore .name -filter "/class:Unit" -col "/impl@(Go Library)" -format=csv` で同じスナップショット内を比較し、条件を行から除外しない。  
+`.name` は各実装の入口名なので比較の行から除き、`class` と処理条件は残す。  
 Unit の Warm / Fill は同じ保存段階の Go 実装と比較し、構築範囲の異なる Warm / Uncached の倍率は作らない。  
 Scenario の比較相手がない Warm / Fill は全件掲載する。  
 `publish.py` は統計計算をせず、benchstat の中央値・信頼区間・検定結果を Markdown に整形する。  

@@ -30,7 +30,8 @@ def validate(path, count):
 def key(name):
     parts = re.sub(r'-\d+$', '', name).split('/')
     dimensions = dict(part.split('=', 1) for part in parts[1:])
-    return parts[0], tuple(sorted(dimensions.items()))
+    kind = dimensions.pop('class', parts[0])
+    return kind, tuple(sorted(dimensions.items()))
 
 
 def csv_metrics(path):
@@ -39,7 +40,7 @@ def csv_metrics(path):
         for row in csv.reader(stream):
             if len(row) > 1 and row[0] == '' and row[1] in METRICS:
                 metric = row[1]
-            elif metric and row and row[0].startswith(('Unit/', 'Scenario')):
+            elif metric and row and (row[0].startswith(('Unit/', 'Scenario')) or '/class=' in row[0]):
                 yield key(row[0]), metric, row
 
 
@@ -60,9 +61,14 @@ def processing_function(case):
     kind, entries = case
     dimensions = dict(entries)
     if kind == 'Unit':
-        return 'runUnit'+dimensions['api'].replace('.', '')+dimensions['phase']+dimensions['impl']
+        api = dimensions['api'].replace('.', '')
+        phase = dimensions['phase'] if api in ('Cache', 'Cache2') else ''
+        return api[0].lower()+api[1:]+phase+dimensions['impl']
     implementation = dimensions.get('impl', dimensions.get('phase'))
-    return 'run'+kind+implementation
+    if kind == 'ScenarioPipeline':
+        implementation = 'Library' if implementation == 'Pipeline' else implementation
+    stem = kind[0].lower()+kind[1:]
+    return stem+dimensions.get('kind', '')+implementation
 
 
 class SourceLinks:
@@ -90,8 +96,8 @@ class SourceLinks:
 
     def link(self, case, label):
         name = processing_function(case)
-        suffix = name.removeprefix('run')
-        for function in (name, 'benchmark'+suffix, 'Test'+suffix):
+        suffix = name[0].upper()+name[1:]
+        for function in (name, 'Benchmark'+suffix, 'Test'+suffix):
             if function not in self.locations:
                 raise ValueError(f'missing processing function or entry: {function}')
         self.used.add(name)

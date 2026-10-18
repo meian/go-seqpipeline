@@ -2,30 +2,12 @@ package benchmarks
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func channelUnitCases(values []int) []unitCase {
-	source := seq.FromSlice(values)
-	var total int64
-	for _, v := range values {
-		total += int64(v)
-	}
-	data := &unitInput{
-		values: values,
-		source: source,
-	}
-	return []unitCase{
-		{"FromChannel", "Evaluate", unitRun{data, runUnitFromChannelEvaluateLibrary}, total},
-		{"ToChannel", "Evaluate", unitRun{data, runUnitToChannelEvaluateLibrary}, total},
-	}
-}
-
-// producer は送信専用の 1 goroutine。close 後、呼び出し元が終了を join する。
 func producer(values []int, capacity int) (<-chan int, <-chan struct{}) {
 	ch := make(chan int, capacity)
 	done := make(chan struct{})
@@ -43,7 +25,7 @@ func channelTransform(source seq.Seq[int]) seq.Seq[int] {
 	return source.Pipe(seq.Map(mapValue)).Pipe(seq.Filter(keepValue))
 }
 
-func runScenarioChannelSeq(values []int, capacity int) []pair {
+func scenarioChannelSeq(values []int, capacity int) []pair {
 	var out []pair
 	for v := range channelTransform(seq.FromSlice(values)) {
 		out = append(out, pair{value: v})
@@ -51,7 +33,97 @@ func runScenarioChannelSeq(values []int, capacity int) []pair {
 	return out
 }
 
-func runScenarioChannelToChannel(values []int, capacity int) []pair {
+func BenchmarkScenarioChannelSeq(b *testing.B) {
+	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=Seq", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelSeq(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=Seq", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelSeq(values, 0)
+		}
+	})
+}
+
+func TestScenarioChannelSeq(t *testing.T) {
+	t.Run("N64Buffer0", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelSeq(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer0", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelSeq(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelSeq(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelSeq(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelSeq(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioChannelToChannel(values []int, capacity int) []pair {
 	var out []pair
 	source := channelTransform(seq.FromSlice(values))
 	for v := range seq.ToChannel(context.Background(), source) {
@@ -60,7 +132,97 @@ func runScenarioChannelToChannel(values []int, capacity int) []pair {
 	return out
 }
 
-func runScenarioChannelDirect(values []int, capacity int) []pair {
+func BenchmarkScenarioChannelToChannel(b *testing.B) {
+	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=ToChannel", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelToChannel(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=ToChannel", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelToChannel(values, 0)
+		}
+	})
+}
+
+func TestScenarioChannelToChannel(t *testing.T) {
+	t.Run("N64Buffer0", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelToChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer0", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelToChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelToChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelToChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelToChannel(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioChannelDirect(values []int, capacity int) []pair {
 	ch, done := producer(values, capacity)
 	var out []pair
 	for v := range ch {
@@ -73,7 +235,139 @@ func runScenarioChannelDirect(values []int, capacity int) []pair {
 	return out
 }
 
-func runScenarioChannelFromChannel(values []int, capacity int) []pair {
+func BenchmarkScenarioChannelDirect(b *testing.B) {
+	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=Direct", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelDirect(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=64/buffer=64/impl=Direct", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelDirect(values, 64)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=Direct", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelDirect(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=64/impl=Direct", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelDirect(values, 64)
+		}
+	})
+}
+
+func TestScenarioChannelDirect(t *testing.T) {
+	t.Run("N64Buffer0", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Buffer64", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer0", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer64", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelDirect(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioChannelFromChannel(values []int, capacity int) []pair {
 	ch, done := producer(values, capacity)
 	var out []pair
 	for v := range channelTransform(seq.FromChannel(context.Background(), ch)) {
@@ -83,7 +377,139 @@ func runScenarioChannelFromChannel(values []int, capacity int) []pair {
 	return out
 }
 
-func runScenarioChannelRoundTrip(values []int, capacity int) []pair {
+func BenchmarkScenarioChannelFromChannel(b *testing.B) {
+	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=FromChannel", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelFromChannel(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=64/buffer=64/impl=FromChannel", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelFromChannel(values, 64)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=FromChannel", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelFromChannel(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=64/impl=FromChannel", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelFromChannel(values, 64)
+		}
+	})
+}
+
+func TestScenarioChannelFromChannel(t *testing.T) {
+	t.Run("N64Buffer0", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Buffer64", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer0", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer64", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelFromChannel(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioChannelRoundTrip(values []int, capacity int) []pair {
 	ch, done := producer(values, capacity)
 	var out []pair
 	source := channelTransform(seq.FromChannel(context.Background(), ch))
@@ -94,170 +520,134 @@ func runScenarioChannelRoundTrip(values []int, capacity int) []pair {
 	return out
 }
 
-func testScenarioChannel(t *testing.T, run func([]int, int) []pair) {
-	t.Helper()
-	for _, n := range []int{0, 1, 64, 4096} {
-		values := input(n)
-		want := pipelineExpected(values, "Seq", 2, 0)
-		for _, capacity := range []int{0, 64} {
-			t.Run(fmt.Sprintf("N%d/B%d", n, capacity), func(t *testing.T) {
-				if got := run(values, capacity); !slices.Equal(got, want) {
-					t.Fatalf("got %v; want %v", got, want)
-				}
-			})
+func BenchmarkScenarioChannelRoundTrip(b *testing.B) {
+	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=RoundTrip", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelRoundTrip(values, 0)
 		}
-	}
+	})
+	b.Run("class=ScenarioChannel/N=64/buffer=64/impl=RoundTrip", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelRoundTrip(values, 64)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=RoundTrip", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelRoundTrip(values, 0)
+		}
+	})
+	b.Run("class=ScenarioChannel/N=4096/buffer=64/impl=RoundTrip", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioChannelRoundTrip(values, 64)
+		}
+	})
 }
 
-func channelUnitReferences(values []int) map[string]unitReference {
-	data := &unitInput{
-		values: values,
-	}
-	return map[string]unitReference{
-		"FromChannel": {"ChannelReceive", unitRun{data, runUnitFromChannelEvaluateGo}},
-		"ToChannel":   {"ChannelSend", unitRun{data, runUnitToChannelEvaluateGo}},
-	}
-}
-
-func benchmarkScenarioChannelSeq(b *testing.B, values []int, capacity int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioChannelSeq(values, capacity)
-	}
-}
-
-func TestScenarioChannelSeq(t *testing.T) { testScenarioChannel(t, runScenarioChannelSeq) }
-
-func benchmarkScenarioChannelToChannel(b *testing.B, values []int, capacity int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioChannelToChannel(values, capacity)
-	}
-}
-
-func TestScenarioChannelToChannel(t *testing.T) { testScenarioChannel(t, runScenarioChannelToChannel) }
-
-func benchmarkScenarioChannelDirect(b *testing.B, values []int, capacity int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioChannelDirect(values, capacity)
-	}
-}
-
-func TestScenarioChannelDirect(t *testing.T) { testScenarioChannel(t, runScenarioChannelDirect) }
-
-func benchmarkScenarioChannelFromChannel(b *testing.B, values []int, capacity int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioChannelFromChannel(values, capacity)
-	}
-}
-
-func TestScenarioChannelFromChannel(t *testing.T) {
-	testScenarioChannel(t, runScenarioChannelFromChannel)
-}
-
-func benchmarkScenarioChannelRoundTrip(b *testing.B, values []int, capacity int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioChannelRoundTrip(values, capacity)
-	}
-}
-
-func TestScenarioChannelRoundTrip(t *testing.T) { testScenarioChannel(t, runScenarioChannelRoundTrip) }
-
-func BenchmarkScenarioChannel(b *testing.B) {
-	for _, n := range []int{64, 4096} {
-		values := input(n)
-		for _, implementation := range []struct {
-			name  string
-			entry func(*testing.B, []int, int)
-		}{
-			{"Seq", benchmarkScenarioChannelSeq},
-			{"ToChannel", benchmarkScenarioChannelToChannel},
-			{"Direct", benchmarkScenarioChannelDirect},
-			{"FromChannel", benchmarkScenarioChannelFromChannel},
-			{"RoundTrip", benchmarkScenarioChannelRoundTrip},
-		} {
-			capacities := []int{0}
-			if implementation.name != "Seq" && implementation.name != "ToChannel" {
-				capacities = []int{0, 64}
-			}
-			for _, capacity := range capacities {
-				b.Run(fmt.Sprintf("N=%d/buffer=%d/impl=%s", n, capacity, implementation.name), func(b *testing.B) { implementation.entry(b, values, capacity) })
+func TestScenarioChannelRoundTrip(t *testing.T) {
+	t.Run("N64Buffer0", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
 			}
 		}
-	}
-}
-
-func runUnitFromChannelEvaluateLibrary(data *unitInput) int64 {
-	ch, done := producer(data.values, 0)
-	sum := sumSeq(seq.FromChannel(context.Background(), ch))
-	<-done
-	return sum
-}
-
-func benchmarkUnitFromChannelEvaluateLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitFromChannelEvaluateLibrary)
-}
-
-func TestUnitFromChannelEvaluateLibrary(t *testing.T) {
-	testUnitOperation(t, "FromChannel", "Evaluate", "Library", runUnitFromChannelEvaluateLibrary)
-}
-
-func runUnitFromChannelEvaluateGo(data *unitInput) int64 {
-	ch, done := producer(data.values, 0)
-	var sum int64
-	for v := range ch {
-		sum += int64(v)
-	}
-	<-done
-	return sum
-}
-
-func benchmarkUnitFromChannelEvaluateGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitFromChannelEvaluateGo)
-}
-
-func TestUnitFromChannelEvaluateGo(t *testing.T) {
-	testUnitOperation(t, "FromChannel", "Evaluate", "Go", runUnitFromChannelEvaluateGo)
-}
-
-func runUnitToChannelEvaluateLibrary(data *unitInput) int64 {
-	var sum int64
-	for v := range seq.ToChannel(context.Background(), data.source) {
-		sum += int64(v)
-	}
-	return sum
-}
-
-func benchmarkUnitToChannelEvaluateLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitToChannelEvaluateLibrary)
-}
-
-func TestUnitToChannelEvaluateLibrary(t *testing.T) {
-	testUnitOperation(t, "ToChannel", "Evaluate", "Library", runUnitToChannelEvaluateLibrary)
-}
-
-func runUnitToChannelEvaluateGo(data *unitInput) int64 {
-	ch := make(chan int)
-	go func() {
-		defer close(ch)
-		for _, v := range data.values {
-			ch <- v
+		got := scenarioChannelRoundTrip(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
 		}
-	}()
-	var sum int64
-	for v := range ch {
-		sum += int64(v)
-	}
-	return sum
-}
-
-func benchmarkUnitToChannelEvaluateGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitToChannelEvaluateGo)
-}
-
-func TestUnitToChannelEvaluateGo(t *testing.T) {
-	testUnitOperation(t, "ToChannel", "Evaluate", "Go", runUnitToChannelEvaluateGo)
+	})
+	t.Run("N64Buffer64", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelRoundTrip(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer0", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelRoundTrip(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Buffer64", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelRoundTrip(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelRoundTrip(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelRoundTrip(values, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 != 0 {
+				want = append(want, pair{value: value})
+			}
+		}
+		got := scenarioChannelRoundTrip(values, 64)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
 }

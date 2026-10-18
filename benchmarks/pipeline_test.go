@@ -1,45 +1,1079 @@
 package benchmarks
 
 import (
-	"fmt"
 	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-// depth は Map の数 + Filter の 1 段。途中終了時はさらに Take を接続する。
-func runScenarioPipelinePipeline(values []int, kind string, depth, limit int) []pair {
+func scenarioPipelineSeqLibrary(values []int, depth, limit int) []pair {
+	s := seq.FromSlice(values)
+	for j := 1; j < depth; j++ {
+		s = s.Pipe(seq.Map(mapValue))
+	}
+	s = s.Pipe(seq.Filter(keepValue))
+	if limit > 0 {
+		s = s.Pipe(seq.Take(limit).Operator)
+	}
 	var out []pair
-	if kind == "Seq" {
-		s := seq.FromSlice(values)
+	for v := range s {
+		out = append(out, pair{value: v})
+	}
+	return out
+}
+
+func BenchmarkScenarioPipelineSeqLibrary(b *testing.B) {
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 6, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLibrary(values, 6, 8)
+		}
+	})
+}
+
+func TestScenarioPipelineSeqLibrary(t *testing.T) {
+	t.Run("N64Depth2All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLibrary(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth2Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLibrary(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLibrary(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLibrary(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLibrary(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLibrary(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLibrary(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLibrary(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLibrary(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLibrary(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLibrary(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioPipelineSeqLoop(values []int, depth, limit int) []pair {
+	var out []pair
+	for _, v := range values {
 		for j := 1; j < depth; j++ {
-			s = s.Pipe(seq.Map(mapValue))
+			v = (v + 1) & 65535
 		}
-		s = s.Pipe(seq.Filter(keepValue))
-		if limit > 0 {
-			s = s.Pipe(seq.Take(limit).Operator)
+		if v%3 == 0 {
+			continue
 		}
-		for v := range s {
-			out = append(out, pair{value: v})
-		}
-	} else {
-		s := seq.FromSeq2(slices.All(values))
-		for j := 1; j < depth; j++ {
-			s = s.Pipe2(seq.Map2(func(k, v int) (int, int) { return k, mapValue(v) }))
-		}
-		s = s.Pipe2(seq.Filter2(func(k, v int) bool { return keepValue(v) }))
-		if limit > 0 {
-			s = s.Pipe2(seq.Take(limit).Operator2)
-		}
-		for k, v := range s {
-			out = append(out, pair{k, v})
+		out = append(out, pair{value: v})
+		if limit > 0 && len(out) == limit {
+			break
 		}
 	}
 	return out
 }
 
-func runScenarioPipelineLoop(values []int, kind string, depth, limit int) []pair {
+func BenchmarkScenarioPipelineSeqLoop(b *testing.B) {
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 6, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqLoop(values, 6, 8)
+		}
+	})
+}
+
+func TestScenarioPipelineSeqLoop(t *testing.T) {
+	t.Run("N64Depth2All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLoop(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth2Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLoop(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLoop(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLoop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLoop(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLoop(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLoop(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLoop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqLoop(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLoop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqLoop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioPipelineSeqFunctions(values []int, depth, limit int) []pair {
+	var out []pair
+	for _, v := range values {
+		for j := 1; j < depth; j++ {
+			v = mapValue(v)
+		}
+		if !keepValue(v) {
+			continue
+		}
+		out = append(out, pair{value: v})
+		if limit > 0 && len(out) == limit {
+			break
+		}
+	}
+	return out
+}
+
+func BenchmarkScenarioPipelineSeqFunctions(b *testing.B) {
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 6, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeqFunctions(values, 6, 8)
+		}
+	})
+}
+
+func TestScenarioPipelineSeqFunctions(t *testing.T) {
+	t.Run("N64Depth2All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqFunctions(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth2Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqFunctions(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqFunctions(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqFunctions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqFunctions(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqFunctions(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqFunctions(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqFunctions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for _, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+
+		}
+		got := scenarioPipelineSeqFunctions(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqFunctions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for _, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{value: value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeqFunctions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioPipelineSeq2Library(values []int, depth, limit int) []pair {
+	s := seq.FromSeq2(slices.All(values))
+	for j := 1; j < depth; j++ {
+		s = s.Pipe2(seq.Map2(func(k, v int) (int, int) { return k, mapValue(v) }))
+	}
+	s = s.Pipe2(seq.Filter2(func(k, v int) bool { return keepValue(v) }))
+	if limit > 0 {
+		s = s.Pipe2(seq.Take(limit).Operator2)
+	}
+	var out []pair
+	for k, v := range s {
+		out = append(out, pair{k, v})
+	}
+	return out
+}
+
+func BenchmarkScenarioPipelineSeq2Library(b *testing.B) {
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 6, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Library(values, 6, 8)
+		}
+	})
+}
+
+func TestScenarioPipelineSeq2Library(t *testing.T) {
+	t.Run("N64Depth2All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Library(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth2Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Library(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Library(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Library(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Library(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Library(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Library(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Library(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Library(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Library(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Library(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioPipelineSeq2Loop(values []int, depth, limit int) []pair {
 	var out []pair
 	for k, v := range values {
 		for j := 1; j < depth; j++ {
@@ -48,9 +1082,6 @@ func runScenarioPipelineLoop(values []int, kind string, depth, limit int) []pair
 		if v%3 == 0 {
 			continue
 		}
-		if kind == "Seq" {
-			k = 0
-		}
 		out = append(out, pair{k, v})
 		if limit > 0 && len(out) == limit {
 			break
@@ -59,8 +1090,257 @@ func runScenarioPipelineLoop(values []int, kind string, depth, limit int) []pair
 	return out
 }
 
-// 要素ごとの変換・判定を通常の関数に分け、インライン化を許す。
-func runScenarioPipelineFunctions(values []int, kind string, depth, limit int) []pair {
+func BenchmarkScenarioPipelineSeq2Loop(b *testing.B) {
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 6, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Loop(values, 6, 8)
+		}
+	})
+}
+
+func TestScenarioPipelineSeq2Loop(t *testing.T) {
+	t.Run("N64Depth2All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Loop(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth2Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Loop(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Loop(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Loop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Loop(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Loop(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Loop(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Loop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Loop(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Loop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Loop(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioPipelineSeq2Functions(values []int, depth, limit int) []pair {
 	var out []pair
 	for k, v := range values {
 		for j := 1; j < depth; j++ {
@@ -69,9 +1349,6 @@ func runScenarioPipelineFunctions(values []int, kind string, depth, limit int) [
 		if !keepValue(v) {
 			continue
 		}
-		if kind == "Seq" {
-			k = 0
-		}
 		out = append(out, pair{k, v})
 		if limit > 0 && len(out) == limit {
 			break
@@ -80,92 +1357,252 @@ func runScenarioPipelineFunctions(values []int, kind string, depth, limit int) [
 	return out
 }
 
-// 変換回数から結果を直接計算し、測定対象の実装とは独立に照合する。
-func pipelineExpected(values []int, kind string, depth, limit int) []pair {
-	var out []pair
-	for k, v := range values {
-		value := (v + depth - 1) & 65535
-		if value%3 == 0 {
-			continue
+func BenchmarkScenarioPipelineSeq2Functions(b *testing.B) {
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 2, 0)
 		}
-		if kind == "Seq" {
-			k = 0
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 2, 8)
 		}
-		out = append(out, pair{k, value})
-		if limit > 0 && len(out) == limit {
-			break
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 6, 0)
 		}
-	}
-	return out
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(64)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 6, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 2, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 2, 8)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 6, 0)
+		}
+	})
+	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
+		values := input(4096)
+		b.ReportAllocs()
+		for b.Loop() {
+			output = scenarioPipelineSeq2Functions(values, 6, 8)
+		}
+	})
 }
 
-func testScenarioPipeline(t *testing.T, run func([]int, string, int, int) []pair) {
-	t.Helper()
-	for _, n := range []int{0, 1, 64, 4096} {
-		for _, kind := range []string{"Seq", "Seq2"} {
-			for _, depth := range []int{2, 6} {
-				for _, limit := range []int{0, 8} {
-					t.Run(fmt.Sprintf("%s/N%d/D%d/L%d", kind, n, depth, limit), func(t *testing.T) {
-						values := input(n)
-						if got, want := run(values, kind, depth, limit), pipelineExpected(values, kind, depth, limit); !slices.Equal(got, want) {
-							t.Fatalf("got %v; want %v", got, want)
-						}
-					})
-				}
+func TestScenarioPipelineSeq2Functions(t *testing.T) {
+	t.Run("N64Depth2All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Functions(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth2Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
 			}
 		}
-	}
-}
+		got := scenarioPipelineSeq2Functions(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6All", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
 
-func TestScenarioPipelineLoop(t *testing.T) { testScenarioPipeline(t, runScenarioPipelineLoop) }
-
-func TestScenarioPipelineFunctions(t *testing.T) {
-	testScenarioPipeline(t, runScenarioPipelineFunctions)
-}
-
-func TestScenarioPipelinePipeline(t *testing.T) { testScenarioPipeline(t, runScenarioPipelinePipeline) }
-
-func benchmarkScenarioPipelineLoop(b *testing.B, values []int, kind string, depth, limit int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioPipelineLoop(values, kind, depth, limit)
-	}
-}
-
-func benchmarkScenarioPipelineFunctions(b *testing.B, values []int, kind string, depth, limit int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioPipelineFunctions(values, kind, depth, limit)
-	}
-}
-
-func benchmarkScenarioPipelinePipeline(b *testing.B, values []int, kind string, depth, limit int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		output = runScenarioPipelinePipeline(values, kind, depth, limit)
-	}
-}
-
-func BenchmarkScenarioPipeline(b *testing.B) {
-	for _, kind := range []string{"Seq", "Seq2"} {
-		for _, n := range []int{64, 4096} {
-			values := input(n)
-			for _, depth := range []int{2, 6} {
-				for _, limit := range []int{0, 8} {
-					mode := "All"
-					if limit > 0 {
-						mode = "Early8"
-					}
-					for _, implementation := range []struct {
-						name  string
-						entry func(*testing.B, []int, string, int, int)
-					}{
-						{"Loop", benchmarkScenarioPipelineLoop}, {"Functions", benchmarkScenarioPipelineFunctions}, {"Pipeline", benchmarkScenarioPipelinePipeline},
-					} {
-						b.Run(fmt.Sprintf("kind=%s/N=%d/depth=%d/mode=%s/impl=%s", kind, n, depth, mode, implementation.name), func(b *testing.B) { implementation.entry(b, values, kind, depth, limit) })
-					}
-				}
+		}
+		got := scenarioPipelineSeq2Functions(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Depth6Early8", func(t *testing.T) {
+		values := input(64)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
 			}
 		}
-	}
+		got := scenarioPipelineSeq2Functions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Functions(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth2Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Functions(values, 2, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6All", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Functions(values, 6, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Depth6Early8", func(t *testing.T) {
+		values := input(4096)
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Functions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want []pair
+		for k, v := range values {
+			value := (v + 1) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+
+		}
+		got := scenarioPipelineSeq2Functions(values, 2, 0)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Functions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want []pair
+		for k, v := range values {
+			value := (v + 5) & 65535
+			if value%3 == 0 {
+				continue
+			}
+			want = append(want, pair{k, value})
+			if len(want) == 8 {
+				break
+			}
+		}
+		got := scenarioPipelineSeq2Functions(values, 6, 8)
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
 }

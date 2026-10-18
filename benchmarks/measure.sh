@@ -28,16 +28,16 @@ compare() {
  name=$1
  filter=$2
  columns=$3
- "$BENCHSTAT" -filter "$filter" -col "$columns" -format=csv - \
+ "$BENCHSTAT" -ignore .name -filter "$filter" -col "$columns" -format=csv - \
    < "$workdir/raw.txt" > "$workdir/$name.csv"
 }
-compare unit '.name:Unit' '/impl@(Go Library)'
-compare pipeline-loop '.name:ScenarioPipeline' '/impl@(Loop Pipeline)'
-compare pipeline-functions '.name:ScenarioPipeline' '/impl@(Functions Pipeline)'
-compare channel-from '.name:ScenarioChannel' '/impl@(Direct FromChannel)'
-compare channel-roundtrip '.name:ScenarioChannel' '/impl@(Direct RoundTrip)'
-compare channel-to '.name:ScenarioChannel' '/impl@(Seq ToChannel)'
-compare cache-reuse '.name:ScenarioCache /phase:Reuse' '/impl@(Uncached Cached)'
+compare unit '/class:Unit' '/impl@(Go Library)'
+compare pipeline-loop '/class:ScenarioPipeline' '/impl@(Loop Pipeline)'
+compare pipeline-functions '/class:ScenarioPipeline' '/impl@(Functions Pipeline)'
+compare channel-from '/class:ScenarioChannel' '/impl@(Direct FromChannel)'
+compare channel-roundtrip '/class:ScenarioChannel' '/impl@(Direct RoundTrip)'
+compare channel-to '/class:ScenarioChannel' '/impl@(Seq ToChannel)'
+compare cache-reuse '/class:ScenarioCache /phase:Reuse' '/impl@(Uncached Cached)'
 "$GO_BINARY" version > "$workdir/go-version.txt"
 "$GO_BINARY" env GOOS GOARCH GOARM64 GOAMD64 GOGC GOMEMLIMIT GOEXPERIMENT > "$workdir/go-env.txt"
 git rev-parse HEAD > "$workdir/commit.txt"

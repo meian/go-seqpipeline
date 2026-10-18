@@ -1,40 +1,730 @@
 package benchmarks
 
 import (
-	"fmt"
-	"iter"
 	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func cacheUnitCases(values []int) []unitCase {
-	source := seq.FromSlice(values)
-	pairs := seq.FromSeq2(slices.All(values))
-	var total, keys int64
-	for k, v := range values {
-		total += int64(v)
-		keys += int64(k)
-	}
-	warm := seq.Cache(source)
-	warm2 := seq.Cache2(pairs)
-	data := &unitInput{
-		values: values,
-		source: source,
-		pairs:  pairs,
-		warm:   warm,
-		warm2:  warm2,
-	}
-	return []unitCase{
-		{"Cache", "Fill", unitRun{data, runUnitCacheFillLibrary}, 0},
-		{"Cache", "Warm", unitRun{data, runUnitCacheWarmLibrary}, total},
-		{"Cache2", "Fill", unitRun{data, runUnitCache2FillLibrary}, 0},
-		{"Cache2", "Warm", unitRun{data, runUnitCache2WarmLibrary}, total + keys},
-	}
+var cacheFillLibraryResult seq.Seq[int]
+
+func cacheFillLibrary(values []int) seq.Seq[int] {
+	return seq.Cache(seq.FromSlice(values))
 }
 
-// 値依存の算術処理を繰り返し、上流の負荷を変える。保持値は常に int。
+func BenchmarkCacheFillLibrary(b *testing.B) {
+	b.Run("class=Unit/api=Cache/phase=Fill/ref=SlicesCollect/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cacheFillLibraryResult = cacheFillLibrary(values)
+		}
+	})
+	b.Run("class=Unit/api=Cache/phase=Fill/ref=SlicesCollect/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cacheFillLibraryResult = cacheFillLibrary(values)
+		}
+	})
+}
+
+func TestCacheFillLibrary(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cacheFillLibrary(values)
+		got := slices.Collect(seq.ToSeq(cached))
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cacheFillLibrary(values)
+		got := slices.Collect(seq.ToSeq(cached))
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cacheFillLibrary(values)
+		got := slices.Collect(seq.ToSeq(cached))
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cacheFillLibrary(values)
+		got := slices.Collect(seq.ToSeq(cached))
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cacheFillLibrary(values)
+		got := slices.Collect(seq.ToSeq(cached))
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cacheFillLibrary(values)
+		got := slices.Collect(seq.ToSeq(cached))
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+}
+
+var cacheFillGoResult []int
+
+func cacheFillGo(values []int) []int {
+	return slices.Collect(slices.Values(values))
+}
+
+func BenchmarkCacheFillGo(b *testing.B) {
+	b.Run("class=Unit/api=Cache/phase=Fill/ref=SlicesCollect/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cacheFillGoResult = cacheFillGo(values)
+		}
+	})
+	b.Run("class=Unit/api=Cache/phase=Fill/ref=SlicesCollect/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cacheFillGoResult = cacheFillGo(values)
+		}
+	})
+}
+
+func TestCacheFillGo(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cacheFillGo(values)
+		got := cached
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cacheFillGo(values)
+		got := cached
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cacheFillGo(values)
+		got := cached
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cacheFillGo(values)
+		got := cached
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cacheFillGo(values)
+		got := cached
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cacheFillGo(values)
+		got := cached
+		if !slices.Equal(got, values) {
+			t.Fatalf("got %v; want %v", got, values)
+		}
+	})
+}
+
+func cacheWarmLibrary(cached seq.Seq[int]) int64 {
+	var sum int64
+	for v := range cached {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func BenchmarkCacheWarmLibrary(b *testing.B) {
+	b.Run("class=Unit/api=Cache/phase=Warm/ref=SliceRange/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		cached := cacheFillLibrary(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cacheWarmLibrary(cached)
+		}
+	})
+	b.Run("class=Unit/api=Cache/phase=Warm/ref=SliceRange/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		cached := cacheFillLibrary(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cacheWarmLibrary(cached)
+		}
+	})
+}
+
+func TestCacheWarmLibrary(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cacheFillLibrary(values)
+		got := cacheWarmLibrary(cached)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cacheFillLibrary(values)
+		got := cacheWarmLibrary(cached)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cacheFillLibrary(values)
+		got := cacheWarmLibrary(cached)
+		const want int64 = 7
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cacheFillLibrary(values)
+		got := cacheWarmLibrary(cached)
+		const want int64 = 60
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cacheFillLibrary(values)
+		got := cacheWarmLibrary(cached)
+		const want int64 = 2016
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cacheFillLibrary(values)
+		got := cacheWarmLibrary(cached)
+		const want int64 = 8386560
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func cacheWarmGo(cached []int) int64 {
+	var sum int64
+	for _, v := range cached {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func BenchmarkCacheWarmGo(b *testing.B) {
+	b.Run("class=Unit/api=Cache/phase=Warm/ref=SliceRange/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		cached := cacheFillGo(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cacheWarmGo(cached)
+		}
+	})
+	b.Run("class=Unit/api=Cache/phase=Warm/ref=SliceRange/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		cached := cacheFillGo(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cacheWarmGo(cached)
+		}
+	})
+}
+
+func TestCacheWarmGo(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cacheFillGo(values)
+		got := cacheWarmGo(cached)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cacheFillGo(values)
+		got := cacheWarmGo(cached)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cacheFillGo(values)
+		got := cacheWarmGo(cached)
+		const want int64 = 7
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cacheFillGo(values)
+		got := cacheWarmGo(cached)
+		const want int64 = 60
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cacheFillGo(values)
+		got := cacheWarmGo(cached)
+		const want int64 = 2016
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cacheFillGo(values)
+		got := cacheWarmGo(cached)
+		const want int64 = 8386560
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+var cache2FillLibraryResult seq.Seq2[int, int]
+
+func cache2FillLibrary(values []int) seq.Seq2[int, int] {
+	return seq.Cache2(seq.FromSeq2(slices.All(values)))
+}
+
+func BenchmarkCache2FillLibrary(b *testing.B) {
+	b.Run("class=Unit/api=Cache2/phase=Fill/ref=PairAppend/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cache2FillLibraryResult = cache2FillLibrary(values)
+		}
+	})
+	b.Run("class=Unit/api=Cache2/phase=Fill/ref=PairAppend/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cache2FillLibraryResult = cache2FillLibrary(values)
+		}
+	})
+}
+
+func TestCache2FillLibrary(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cache2FillLibrary(values)
+		var got []pair
+		for k, v := range cached {
+			got = append(got, pair{k, v})
+		}
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cache2FillLibrary(values)
+		var got []pair
+		for k, v := range cached {
+			got = append(got, pair{k, v})
+		}
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cache2FillLibrary(values)
+		var got []pair
+		for k, v := range cached {
+			got = append(got, pair{k, v})
+		}
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cache2FillLibrary(values)
+		var got []pair
+		for k, v := range cached {
+			got = append(got, pair{k, v})
+		}
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cache2FillLibrary(values)
+		var got []pair
+		for k, v := range cached {
+			got = append(got, pair{k, v})
+		}
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cache2FillLibrary(values)
+		var got []pair
+		for k, v := range cached {
+			got = append(got, pair{k, v})
+		}
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+var cache2FillGoResult []pair
+
+func cache2FillGo(values []int) []pair {
+	var cached []pair
+	for k, v := range slices.All(values) {
+		cached = append(cached, pair{k, v})
+	}
+	return cached
+}
+
+func BenchmarkCache2FillGo(b *testing.B) {
+	b.Run("class=Unit/api=Cache2/phase=Fill/ref=PairAppend/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cache2FillGoResult = cache2FillGo(values)
+		}
+	})
+	b.Run("class=Unit/api=Cache2/phase=Fill/ref=PairAppend/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			cache2FillGoResult = cache2FillGo(values)
+		}
+	})
+}
+
+func TestCache2FillGo(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cache2FillGo(values)
+		got := cached
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cache2FillGo(values)
+		got := cached
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cache2FillGo(values)
+		got := cached
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cache2FillGo(values)
+		got := cached
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cache2FillGo(values)
+		got := cached
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cache2FillGo(values)
+		got := cached
+		var want []pair
+		for k, v := range values {
+			want = append(want, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func cache2WarmLibrary(cached seq.Seq2[int, int]) int64 {
+	var sum int64
+	for k, v := range cached {
+		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func BenchmarkCache2WarmLibrary(b *testing.B) {
+	b.Run("class=Unit/api=Cache2/phase=Warm/ref=PairRange/impl=Library/N=64", func(b *testing.B) {
+		values := input(64)
+
+		cached := cache2FillLibrary(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cache2WarmLibrary(cached)
+		}
+	})
+	b.Run("class=Unit/api=Cache2/phase=Warm/ref=PairRange/impl=Library/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		cached := cache2FillLibrary(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cache2WarmLibrary(cached)
+		}
+	})
+}
+
+func TestCache2WarmLibrary(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cache2FillLibrary(values)
+		got := cache2WarmLibrary(cached)
+		const want int64 = 36
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cache2FillLibrary(values)
+		got := cache2WarmLibrary(cached)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cache2FillLibrary(values)
+		got := cache2WarmLibrary(cached)
+		const want int64 = 7
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cache2FillLibrary(values)
+		got := cache2WarmLibrary(cached)
+		const want int64 = 115
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cache2FillLibrary(values)
+		got := cache2WarmLibrary(cached)
+		const want int64 = 4032
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cache2FillLibrary(values)
+		got := cache2WarmLibrary(cached)
+		const want int64 = 16773120
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func cache2WarmGo(cached []pair) int64 {
+	var sum int64
+	for _, p := range cached {
+		sum += int64(p.key) + int64(p.value)
+	}
+	return sum
+}
+
+func BenchmarkCache2WarmGo(b *testing.B) {
+	b.Run("class=Unit/api=Cache2/phase=Warm/ref=PairRange/impl=Go/N=64", func(b *testing.B) {
+		values := input(64)
+
+		cached := cache2FillGo(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cache2WarmGo(cached)
+		}
+	})
+	b.Run("class=Unit/api=Cache2/phase=Warm/ref=PairRange/impl=Go/N=4096", func(b *testing.B) {
+		values := input(4096)
+
+		cached := cache2FillGo(values)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = cache2WarmGo(cached)
+		}
+	})
+}
+
+func TestCache2WarmGo(t *testing.T) {
+	t.Run("Values", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+		cached := cache2FillGo(values)
+		got := cache2WarmGo(cached)
+		const want int64 = 36
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		cached := cache2FillGo(values)
+		got := cache2WarmGo(cached)
+		const want int64 = 0
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		cached := cache2FillGo(values)
+		got := cache2WarmGo(cached)
+		const want int64 = 7
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		cached := cache2FillGo(values)
+		got := cache2WarmGo(cached)
+		const want int64 = 115
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64", func(t *testing.T) {
+		values := input(64)
+		cached := cache2FillGo(values)
+		got := cache2WarmGo(cached)
+		const want int64 = 4032
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096", func(t *testing.T) {
+		values := input(4096)
+		cached := cache2FillGo(values)
+		got := cache2WarmGo(cached)
+		const want int64 = 16773120
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
 func cacheValue(v, work int) int {
 	for j := 0; j < work; j++ {
 		v = (v*1664525 + 1013904223) & 65535
@@ -50,318 +740,2056 @@ func cacheSeq2(values []int, work int) seq.Seq2[int, int] {
 	return seq.FromSeq2(slices.All(values)).Pipe2(seq.Map2(func(k, v int) (int, int) { return k, cacheValue(v, work) }))
 }
 
-func TestCacheEquivalent(t *testing.T) {
-	for _, kind := range []string{"Seq", "Seq2"} {
-		for _, n := range []int{0, 1, 64, 4096} {
-			for _, work := range []int{0, 32} {
-				t.Run(fmt.Sprintf("%s/N%d/W%d", kind, n, work), func(t *testing.T) {
-					values := input(n)
-					// チェックサムに加え、保存した値・キーの順序も比較する。
-					if got := seq.ToSlice(seq.Cache(cacheSeq(values, work))); !slices.Equal(got, seq.ToSlice(cacheSeq(values, work))) {
-						t.Fatal("Seq cache differs")
-					}
-					var got, wantPairs []pair
-					for k, v := range seq.Cache2(cacheSeq2(values, work)) {
-						got = append(got, pair{k, v})
-					}
-					for k, v := range cacheSeq2(values, work) {
-						wantPairs = append(wantPairs, pair{k, v})
-					}
-					if !slices.Equal(got, wantPairs) {
-						t.Fatal("Seq2 cache differs")
-					}
-				})
-			}
+var scenarioCacheSeqResult seq.Seq[int]
+
+func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
+	return seq.Cache(cacheSeq(values, work))
+}
+
+func BenchmarkScenarioCacheSeqFill(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Fill", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 0)
 		}
-	}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Fill", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 32)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Fill", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 0)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Fill", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 32)
+		}
+	})
 }
 
-type cachedScenario struct {
-	single seq.Seq[int]
-	pairs  seq.Seq2[int, int]
+func TestScenarioCacheSeqFill(t *testing.T) {
+	t.Run("N64Work0", func(t *testing.T) {
+		values := input(64)
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 0)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Work32", func(t *testing.T) {
+		values := input(64)
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 32)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Work0", func(t *testing.T) {
+		values := input(4096)
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 0)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Work32", func(t *testing.T) {
+		values := input(4096)
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 32)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 32)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 32)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want, got []pair
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{value: v})
+		}
+		source := scenarioCacheSeqFill(values, 32)
+		for v := range source {
+			got = append(got, pair{value: v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
 }
 
-var scenarioCachedResult cachedScenario
-
-func runScenarioCacheFill(values []int, kind string, work int) cachedScenario {
-	if kind == "Seq" {
-		return cachedScenario{single: seq.Cache(cacheSeq(values, work))}
-	}
-	return cachedScenario{pairs: seq.Cache2(cacheSeq2(values, work))}
-}
-
-func runScenarioCacheWarm(cached cachedScenario) int64 {
+func scenarioCacheSeqWarm(source seq.Seq[int]) int64 {
 	var sum int64
-	if cached.single != nil {
-		for v := range cached.single {
+	for v := range source {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func BenchmarkScenarioCacheSeqWarm(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Warm", func(b *testing.B) {
+		values := input(64)
+		source := scenarioCacheSeqFill(values, 0)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqWarm(source)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Warm", func(b *testing.B) {
+		values := input(64)
+		source := scenarioCacheSeqFill(values, 32)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqWarm(source)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Warm", func(b *testing.B) {
+		values := input(4096)
+		source := scenarioCacheSeqFill(values, 0)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqWarm(source)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Warm", func(b *testing.B) {
+		values := input(4096)
+		source := scenarioCacheSeqFill(values, 32)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqWarm(source)
+		}
+	})
+}
+
+func TestScenarioCacheSeqWarm(t *testing.T) {
+	t.Run("N64Work0", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 0)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 32)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 0)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 32)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 32)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 32)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeqFill(values, 32)
+		got := scenarioCacheSeqWarm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func scenarioCacheSeqCached(values []int, work int, reuse int) int64 {
+	source := scenarioCacheSeqFill(values, work)
+	var sum int64
+	for r := 0; r < reuse; r++ {
+		for v := range source {
 			sum += int64(v)
 		}
-	} else {
-		for k, v := range cached.pairs {
+	}
+	return sum
+}
+
+func BenchmarkScenarioCacheSeqCached(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 32, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqCached(values, 32, 16)
+		}
+	})
+}
+
+func TestScenarioCacheSeqCached(t *testing.T) {
+	t.Run("N64Work0Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqCached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqCached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqCached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqCached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqCached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqCached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqCached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqCached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqCached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqCached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqCached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqCached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqCached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqCached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqCached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func scenarioCacheSeqUncached(values []int, work int, reuse int) int64 {
+	source := cacheSeq(values, work)
+	var sum int64
+	for r := 0; r < reuse; r++ {
+		for v := range source {
+			sum += int64(v)
+		}
+	}
+	return sum
+}
+
+func BenchmarkScenarioCacheSeqUncached(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 32, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeqUncached(values, 32, 16)
+		}
+	})
+}
+
+func TestScenarioCacheSeqUncached(t *testing.T) {
+	t.Run("N64Work0Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqUncached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqUncached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqUncached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqUncached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqUncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqUncached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqUncached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqUncached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqUncached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeqUncached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqUncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqUncached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqUncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeqUncached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want int64
+		for _, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeqUncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+var scenarioCacheSeq2Result seq.Seq2[int, int]
+
+func scenarioCacheSeq2Fill(values []int, work int) seq.Seq2[int, int] {
+	return seq.Cache2(cacheSeq2(values, work))
+}
+
+func BenchmarkScenarioCacheSeq2Fill(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Fill", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 0)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Fill", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 32)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Fill", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 0)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Fill", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 32)
+		}
+	})
+}
+
+func TestScenarioCacheSeq2Fill(t *testing.T) {
+	t.Run("N64Work0", func(t *testing.T) {
+		values := input(64)
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 0)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N64Work32", func(t *testing.T) {
+		values := input(64)
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 32)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Work0", func(t *testing.T) {
+		values := input(4096)
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 0)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("N4096Work32", func(t *testing.T) {
+		values := input(4096)
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 32)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 32)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 32)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want, got []pair
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want = append(want, pair{k, v})
+		}
+		source := scenarioCacheSeq2Fill(values, 32)
+		for k, v := range source {
+			got = append(got, pair{k, v})
+		}
+		if !slices.Equal(got, want) {
+			t.Fatalf("got %v; want %v", got, want)
+		}
+	})
+}
+
+func scenarioCacheSeq2Warm(source seq.Seq2[int, int]) int64 {
+	var sum int64
+	for k, v := range source {
+		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func BenchmarkScenarioCacheSeq2Warm(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Warm", func(b *testing.B) {
+		values := input(64)
+		source := scenarioCacheSeq2Fill(values, 0)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Warm(source)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Warm", func(b *testing.B) {
+		values := input(64)
+		source := scenarioCacheSeq2Fill(values, 32)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Warm(source)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Warm", func(b *testing.B) {
+		values := input(4096)
+		source := scenarioCacheSeq2Fill(values, 0)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Warm(source)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Warm", func(b *testing.B) {
+		values := input(4096)
+		source := scenarioCacheSeq2Fill(values, 32)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Warm(source)
+		}
+	})
+}
+
+func TestScenarioCacheSeq2Warm(t *testing.T) {
+	t.Run("N64Work0", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 0)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 32)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 0)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 32)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 32)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 32)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+		source := scenarioCacheSeq2Fill(values, 32)
+		got := scenarioCacheSeq2Warm(source)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func scenarioCacheSeq2Cached(values []int, work int, reuse int) int64 {
+	source := scenarioCacheSeq2Fill(values, work)
+	var sum int64
+	for r := 0; r < reuse; r++ {
+		for k, v := range source {
 			sum += int64(k) + int64(v)
 		}
 	}
 	return sum
 }
 
-func runScenarioCacheCached(values []int, kind string, work, reuse int) int64 {
-	cached := runScenarioCacheFill(values, kind, work)
+func BenchmarkScenarioCacheSeq2Cached(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 32, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Cached(values, 32, 16)
+		}
+	})
+}
+
+func TestScenarioCacheSeq2Cached(t *testing.T) {
+	t.Run("N64Work0Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeq2Cached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeq2Cached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeq2Cached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeq2Cached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeq2Cached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeq2Cached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeq2Cached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeq2Cached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeq2Cached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
+
+		got := scenarioCacheSeq2Cached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeq2Cached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeq2Cached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeq2Cached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
+
+		got := scenarioCacheSeq2Cached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
+
+		got := scenarioCacheSeq2Cached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
+func scenarioCacheSeq2Uncached(values []int, work int, reuse int) int64 {
+	source := cacheSeq2(values, work)
 	var sum int64
 	for r := 0; r < reuse; r++ {
-		sum += runScenarioCacheWarm(cached)
-	}
-	return sum
-}
-
-func runScenarioCacheUncached(values []int, kind string, work, reuse int) int64 {
-	var sum int64
-	if kind == "Seq" {
-		source := cacheSeq(values, work)
-		for r := 0; r < reuse; r++ {
-			sum += sumSeq(source)
-		}
-	} else {
-		source := cacheSeq2(values, work)
-		for r := 0; r < reuse; r++ {
-			sum += sumSeq2(source)
+		for k, v := range source {
+			sum += int64(k) + int64(v)
 		}
 	}
 	return sum
 }
 
-func benchmarkScenarioCacheFill(b *testing.B, values []int, kind string, work int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		scenarioCachedResult = runScenarioCacheFill(values, kind, work)
-	}
-}
+func BenchmarkScenarioCacheSeq2Uncached(b *testing.B) {
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(64)
 
-func benchmarkScenarioCacheWarm(b *testing.B, values []int, kind string, work int) {
-	cached := runScenarioCacheFill(values, kind, work)
-	b.ReportAllocs()
-	for b.Loop() {
-		checksum = runScenarioCacheWarm(cached)
-	}
-}
-
-func benchmarkScenarioCacheCached(b *testing.B, values []int, kind string, work, reuse int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		checksum = runScenarioCacheCached(values, kind, work, reuse)
-	}
-}
-
-func benchmarkScenarioCacheUncached(b *testing.B, values []int, kind string, work, reuse int) {
-	b.ReportAllocs()
-	for b.Loop() {
-		checksum = runScenarioCacheUncached(values, kind, work, reuse)
-	}
-}
-
-func testScenarioCache(t *testing.T, run func([]int, string, int, int) int64) {
-	t.Helper()
-	for _, kind := range []string{"Seq", "Seq2"} {
-		for _, n := range []int{0, 1, 64, 4096} {
-			values := input(n)
-			for _, work := range []int{0, 32} {
-				var want int64
-				for k, v := range values {
-					want += int64(cacheValue(v, work))
-					if kind == "Seq2" {
-						want += int64(k)
-					}
-				}
-				for _, reuse := range []int{1, 4, 16} {
-					t.Run(fmt.Sprintf("%s/N%d/W%d/R%d", kind, n, work, reuse), func(t *testing.T) {
-						if got := run(values, kind, work, reuse); got != want*int64(reuse) {
-							t.Fatalf("got %d; want %d", got, want*int64(reuse))
-						}
-					})
-				}
-			}
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 0, 1)
 		}
-	}
-}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(64)
 
-func TestScenarioCacheFill(t *testing.T) {
-	testScenarioCache(t, func(values []int, kind string, work, reuse int) int64 {
-		cached := runScenarioCacheFill(values, kind, work)
-		var sum int64
-		for r := 0; r < reuse; r++ {
-			sum += runScenarioCacheWarm(cached)
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 0, 4)
 		}
-		return sum
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(64)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 32, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 0, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 0, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 0, 16)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 32, 1)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 32, 4)
+		}
+	})
+	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
+		values := input(4096)
+
+		b.ReportAllocs()
+		for b.Loop() {
+			checksum = scenarioCacheSeq2Uncached(values, 32, 16)
+		}
 	})
 }
 
-func TestScenarioCacheWarm(t *testing.T) {
-	testScenarioCache(t, func(values []int, kind string, work, reuse int) int64 {
-		cached := runScenarioCacheFill(values, kind, work)
-		var sum int64
-		for r := 0; r < reuse; r++ {
-			sum += runScenarioCacheWarm(cached)
-		}
-		return sum
-	})
-}
-
-func TestScenarioCacheCached(t *testing.T) { testScenarioCache(t, runScenarioCacheCached) }
-
-func TestScenarioCacheUncached(t *testing.T) { testScenarioCache(t, runScenarioCacheUncached) }
-
-func BenchmarkScenarioCache(b *testing.B) {
-	for _, kind := range []string{"Seq", "Seq2"} {
-		for _, n := range []int{64, 4096} {
-			values := input(n)
-			for _, work := range []int{0, 32} {
-				prefix := fmt.Sprintf("kind=%s/N=%d/work=%d", kind, n, work)
-				b.Run(prefix+"/phase=Warm", func(b *testing.B) { benchmarkScenarioCacheWarm(b, values, kind, work) })
-				b.Run(prefix+"/phase=Fill", func(b *testing.B) { benchmarkScenarioCacheFill(b, values, kind, work) })
-				for _, reuse := range []int{1, 4, 16} {
-					for _, implementation := range []struct {
-						name  string
-						entry func(*testing.B, []int, string, int, int)
-					}{
-						{"Uncached", benchmarkScenarioCacheUncached}, {"Cached", benchmarkScenarioCacheCached},
-					} {
-						b.Run(fmt.Sprintf("%s/phase=Reuse/reuse=%d/impl=%s", prefix, reuse, implementation.name), func(b *testing.B) { implementation.entry(b, values, kind, work, reuse) })
-					}
-				}
+func TestScenarioCacheSeq2Uncached(t *testing.T) {
+	t.Run("N64Work0Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
 			}
+			want += int64(k) + int64(v)
 		}
-	}
-}
+		want *= 1
 
-var cachedConsumer func() int64
+		got := scenarioCacheSeq2Uncached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
 
-func cacheUnitReferences(values []int) map[string]unitReference {
-	standard := slices.Values(values)
-	standardPairs := slices.All(values)
-	warm := slices.Collect(standard)
-	warm2 := collectUnitPairs(standardPairs)
-	data := &unitInput{
-		values:        values,
-		standard:      standard,
-		standardPairs: standardPairs,
-		warmValues:    warm,
-		warmPairs:     warm2,
-	}
-	return map[string]unitReference{
-		"Cache/Fill":  {"SlicesCollect", unitRun{data, runUnitCacheFillGo}},
-		"Cache/Warm":  {"SliceRange", unitRun{data, runUnitCacheWarmGo}},
-		"Cache2/Fill": {"PairAppend", unitRun{data, runUnitCache2FillGo}},
-		"Cache2/Warm": {"PairRange", unitRun{data, runUnitCache2WarmGo}},
-	}
-}
+		got := scenarioCacheSeq2Uncached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work0Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
 
-func collectUnitPairs(source iter.Seq2[int, int]) []pair {
-	var cached []pair
-	for k, v := range source {
-		cached = append(cached, pair{k, v})
-	}
-	return cached
-}
+		got := scenarioCacheSeq2Uncached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse1", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
 
-func sumUnitPairs(cached []pair) int64 {
-	var sum int64
-	for _, p := range cached {
-		sum += int64(p.key) + int64(p.value)
-	}
-	return sum
-}
+		got := scenarioCacheSeq2Uncached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse4", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
 
-func runUnitCacheFillLibrary(data *unitInput) int64 {
-	s := seq.Cache(data.source)
-	cachedConsumer = func() int64 { return sumSeq(s) }
-	return 0
-}
+		got := scenarioCacheSeq2Uncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N64Work32Reuse16", func(t *testing.T) {
+		values := input(64)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
 
-func benchmarkUnitCacheFillLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCacheFillLibrary)
-}
+		got := scenarioCacheSeq2Uncached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
 
-func TestUnitCacheFillLibrary(t *testing.T) {
-	testUnitOperation(t, "Cache", "Fill", "Library", runUnitCacheFillLibrary)
-}
+		got := scenarioCacheSeq2Uncached(values, 0, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
 
-func runUnitCacheFillGo(data *unitInput) int64 {
-	cached := slices.Collect(data.standard)
-	cachedConsumer = func() int64 { return rangeValues(cached) }
-	return 0
-}
+		got := scenarioCacheSeq2Uncached(values, 0, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work0Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 0; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
 
-func benchmarkUnitCacheFillGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCacheFillGo)
-}
+		got := scenarioCacheSeq2Uncached(values, 0, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse1", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 1
 
-func TestUnitCacheFillGo(t *testing.T) {
-	testUnitOperation(t, "Cache", "Fill", "Go", runUnitCacheFillGo)
-}
+		got := scenarioCacheSeq2Uncached(values, 32, 1)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse4", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
 
-func runUnitCacheWarmLibrary(data *unitInput) int64 { return sumSeq(data.warm) }
+		got := scenarioCacheSeq2Uncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("N4096Work32Reuse16", func(t *testing.T) {
+		values := input(4096)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
 
-func benchmarkUnitCacheWarmLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCacheWarmLibrary)
-}
+		got := scenarioCacheSeq2Uncached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Empty", func(t *testing.T) {
+		values := []int(nil)
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
 
-func TestUnitCacheWarmLibrary(t *testing.T) {
-	testUnitOperation(t, "Cache", "Warm", "Library", runUnitCacheWarmLibrary)
-}
+		got := scenarioCacheSeq2Uncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Single", func(t *testing.T) {
+		values := []int{7}
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 16
 
-func runUnitCacheWarmGo(data *unitInput) int64 { return rangeValues(data.warmValues) }
+		got := scenarioCacheSeq2Uncached(values, 32, 16)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Mixed", func(t *testing.T) {
+		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
+		var want int64
+		for k, v := range values {
+			for j := 0; j < 32; j++ {
+				v = (v*1664525 + 1013904223) & 65535
+			}
+			want += int64(k) + int64(v)
+		}
+		want *= 4
 
-func benchmarkUnitCacheWarmGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCacheWarmGo)
-}
-
-func TestUnitCacheWarmGo(t *testing.T) {
-	testUnitOperation(t, "Cache", "Warm", "Go", runUnitCacheWarmGo)
-}
-
-func runUnitCache2FillLibrary(data *unitInput) int64 {
-	s := seq.Cache2(data.pairs)
-	cachedConsumer = func() int64 { return sumSeq2(s) }
-	return 0
-}
-
-func benchmarkUnitCache2FillLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCache2FillLibrary)
-}
-
-func TestUnitCache2FillLibrary(t *testing.T) {
-	testUnitOperation(t, "Cache2", "Fill", "Library", runUnitCache2FillLibrary)
-}
-
-func runUnitCache2FillGo(data *unitInput) int64 {
-	cached := collectUnitPairs(data.standardPairs)
-	cachedConsumer = func() int64 { return sumUnitPairs(cached) }
-	return 0
-}
-
-func benchmarkUnitCache2FillGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCache2FillGo)
-}
-
-func TestUnitCache2FillGo(t *testing.T) {
-	testUnitOperation(t, "Cache2", "Fill", "Go", runUnitCache2FillGo)
-}
-
-func runUnitCache2WarmLibrary(data *unitInput) int64 { return sumSeq2(data.warm2) }
-
-func benchmarkUnitCache2WarmLibrary(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCache2WarmLibrary)
-}
-
-func TestUnitCache2WarmLibrary(t *testing.T) {
-	testUnitOperation(t, "Cache2", "Warm", "Library", runUnitCache2WarmLibrary)
-}
-
-func runUnitCache2WarmGo(data *unitInput) int64 { return sumUnitPairs(data.warmPairs) }
-
-func benchmarkUnitCache2WarmGo(b *testing.B, data *unitInput) {
-	benchmarkUnitOperation(b, data, runUnitCache2WarmGo)
-}
-
-func TestUnitCache2WarmGo(t *testing.T) {
-	testUnitOperation(t, "Cache2", "Warm", "Go", runUnitCache2WarmGo)
+		got := scenarioCacheSeq2Uncached(values, 32, 4)
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
