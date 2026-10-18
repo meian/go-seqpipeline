@@ -220,7 +220,6 @@ For operations whose factory arguments carry no type information, provide a conf
 ### Executable examples
 
 [Go Examples](seq/example_test.go) demonstrate each operator with expected output.  
-Regular tests cover boundary values, nil, lazy evaluation, early termination, and re-evaluation.  
 
 | Example | Seq | Seq2 |
 | --- | --- | --- |

@@ -186,8 +186,14 @@ def render_unit(snapshot):
         cases.sort(key=lambda case: (dict(case[1])['api'], dict(case[1]).get('phase', ''),
                                      int(dict(case[1]).get('N', 0))))
         text += f'## {group}\n\n'
-        rows = [[dict(case[1])['api'], condition(case),
-                 *(snapshot.cell(case, metric) for metric in METRICS)] for case in cases]
+        rows = []
+        for case in cases:
+            api = dict(case[1])['api']
+            detail = condition(case)
+            if api.startswith('ZipKey.'):
+                api = api.replace('ZipKey.', 'Zip.', 1)
+                detail += ' / キー既定値あり'
+            rows.append([api, detail, *(snapshot.cell(case, metric) for metric in METRICS)])
         text += table(['API', '測定条件', 'ns/op', 'B/op', 'allocs/op'], rows)
     return text.rstrip('\n')+'\n'
 
@@ -203,7 +209,9 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
     for case in snapshot.cases:
         if case[0] != 'Unit':
             groups.setdefault(case[0], []).append(case)
-    for group, cases in groups.items():
+    order = {'ScenarioPipeline': 0, 'ScenarioChannel': 1, 'ScenarioCache': 2}
+    for group in sorted(groups, key=lambda name: (order.get(name, 3), name)):
+        cases = groups[group]
         text += f'## {group.removeprefix("Scenario")}\n\n'
         pairs = [c for c in snapshot.comparisons if c.base[0] == group]
         by_implementations = {}
