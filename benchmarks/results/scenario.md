@@ -2,6 +2,7 @@
 
 [性能概要](../REPORT.md) / [測定条件](../METHOD.md) / [実行環境](environment.md)。  
 値は中央値（`±` は 95% 信頼区間）で、割り当て量は保持メモリ量とは異なる。  
+実装名・時間の列名から、測定した処理のコードを開ける。  
 
 倍率は各表の右側の実装の時間 / 左側の実装の時間で、1 を超えると右側が遅い。  
 検定の `~` は差が不明確で、増減率の正値は右側の時間・割り当ての増加を表す。  
@@ -13,28 +14,28 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 #### 時間：Functions と Pipeline
 
-| N | 段数 | Functions ns/op | Pipeline ns/op | 倍率 |
+| N | 段数 | [Functions ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | 243.5 ±3% | 543.35 ±6% | 2.231× |
-| 64 | 6 | 320.5 ±5% | 1,138.5 ±1% | 3.552× |
-| 4096 | 2 | 13,308.5 ±3% | 25,875.5 ±3% | 1.944× |
-| 4096 | 6 | 19,194.5 ±4% | 55,981.5 ±1% | 2.917× |
+| 64 | 2 | 248.75 ±4% | 546.05 ±4% | 2.195× |
+| 64 | 6 | 338.85 ±3% | 1,137.5 ±2% | 3.357× |
+| 4096 | 2 | 13,801.5 ±2% | 26,466.5 ±1% | 1.918× |
+| 4096 | 6 | 20,406.5 ±6% | 57,750 ±3% | 2.830× |
 
 <details>
 <summary>検定：Functions と Pipeline</summary>
 
 | N | 段数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +123.14% | p=0.000 n=10 |
+| 64 | 2 | sec/op | +119.52% | p=0.000 n=10 |
 | 64 | 2 | B/op | +14.62% | p=0.000 n=10 |
 | 64 | 2 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +255.23% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +235.69% | p=0.000 n=10 |
 | 64 | 6 | B/op | +33.53% | p=0.000 n=10 |
 | 64 | 6 | allocs/op | +383.33% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +94.43% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +91.77% | p=0.000 n=10 |
 | 4096 | 2 | B/op | +0.17% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +72.41% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +191.65% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +66.67% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +183.00% | p=0.000 n=10 |
 | 4096 | 6 | B/op | +0.38% | p=0.000 n=10 |
 | 4096 | 6 | allocs/op | +155.17% | p=0.000 n=10 |
 
@@ -42,12 +43,12 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 #### 時間：Loop と Pipeline
 
-| N | 段数 | Loop ns/op | Pipeline ns/op | 倍率 |
+| N | 段数 | [Loop ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | 242.05 ±3% | 543.35 ±6% | 2.245× |
-| 64 | 6 | 310.9 ±3% | 1,138.5 ±1% | 3.662× |
-| 4096 | 2 | 13,265 ±3% | 25,875.5 ±3% | 1.951× |
-| 4096 | 6 | 17,986 ±4% | 55,981.5 ±1% | 3.113× |
+| 64 | 2 | 243.25 ±5% | 546.05 ±4% | 2.245× |
+| 64 | 6 | 308.55 ±2% | 1,137.5 ±2% | 3.687× |
+| 4096 | 2 | 13,779 ±7% | 26,466.5 ±1% | 1.921× |
+| 4096 | 6 | 17,838 ±6% | 57,750 ±3% | 3.237× |
 
 <details>
 <summary>検定：Loop と Pipeline</summary>
@@ -57,13 +58,167 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 | 64 | 2 | sec/op | +124.48% | p=0.000 n=10 |
 | 64 | 2 | B/op | +14.62% | p=0.000 n=10 |
 | 64 | 2 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +266.19% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +268.66% | p=0.000 n=10 |
 | 64 | 6 | B/op | +33.53% | p=0.000 n=10 |
 | 64 | 6 | allocs/op | +383.33% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +95.07% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +92.08% | p=0.000 n=10 |
 | 4096 | 2 | B/op | +0.17% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +72.41% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +211.25% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +66.67% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +223.75% | p=0.000 n=10 |
+| 4096 | 6 | B/op | +0.38% | p=0.000 n=10 |
+| 4096 | 6 | allocs/op | +155.17% | p=0.000 n=10 |
+
+</details>
+
+#### メモリ割り当て
+
+| N | 段数 | 実装 | B/op | allocs/op |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 2,031 ±0% | 6 ±17% |
+| 64 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 2,031 ±0% | 6 ±17% |
+| 64 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 2,328 ±0% | 17 ±0% |
+| 64 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 2,031 ±0% | 6 ±17% |
+| 64 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 2,031 ±0% | 6 ±17% |
+| 64 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 2,712 ±0% | 29 ±0% |
+| 4096 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 177,392 ±0% | 15 ±7% |
+| 4096 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 177,392 ±0% | 15 ±7% |
+| 4096 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 177,688 ±0% | 25 ±0% |
+| 4096 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 177,391.5 ±0% | 14.5 ±3% |
+| 4096 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 177,391.5 ±0% | 14.5 ±3% |
+| 4096 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 178,072 ±0% | 37 ±0% |
+
+### Seq / 先頭8件
+
+#### 時間：Functions と Pipeline
+
+| N | 段数 | [Functions ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | 57.655 ±2% | 197.8 ±3% | 3.431× |
+| 64 | 6 | 80.38 ±2% | 382.85 ±3% | 4.763× |
+| 4096 | 2 | 57.195 ±1% | 198.15 ±6% | 3.464× |
+| 4096 | 6 | 81.135 ±2% | 383.6 ±2% | 4.728× |
+
+<details>
+<summary>検定：Functions と Pipeline</summary>
+
+| N | 段数 | 指標 | 増減率 | 検定 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | sec/op | +243.08% | p=0.000 n=10 |
+| 64 | 2 | B/op | +167.78% | p=0.000 n=10 |
+| 64 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +376.30% | p=0.000 n=10 |
+| 64 | 6 | B/op | +328.45% | p=0.000 n=10 |
+| 64 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +246.45% | p=0.000 n=10 |
+| 4096 | 2 | B/op | +167.78% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +372.79% | p=0.000 n=10 |
+| 4096 | 6 | B/op | +328.45% | p=0.000 n=10 |
+| 4096 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
+
+</details>
+
+#### 時間：Loop と Pipeline
+
+| N | 段数 | [Loop ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | 58.935 ±2% | 197.8 ±3% | 3.356× |
+| 64 | 6 | 75.445 ±3% | 382.85 ±3% | 5.075× |
+| 4096 | 2 | 59.845 ±4% | 198.15 ±6% | 3.311× |
+| 4096 | 6 | 75.51 ±2% | 383.6 ±2% | 5.080× |
+
+<details>
+<summary>検定：Loop と Pipeline</summary>
+
+| N | 段数 | 指標 | 増減率 | 検定 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | sec/op | +235.62% | p=0.000 n=10 |
+| 64 | 2 | B/op | +167.78% | p=0.000 n=10 |
+| 64 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +407.46% | p=0.000 n=10 |
+| 64 | 6 | B/op | +328.45% | p=0.000 n=10 |
+| 64 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +231.11% | p=0.000 n=10 |
+| 4096 | 2 | B/op | +167.78% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +408.01% | p=0.000 n=10 |
+| 4096 | 6 | B/op | +328.45% | p=0.000 n=10 |
+| 4096 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
+
+</details>
+
+#### メモリ割り当て
+
+| N | 段数 | 実装 | B/op | allocs/op |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±33% |
+| 64 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 64 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 640 ±0% | 18 ±0% |
+| 64 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±0% |
+| 64 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 64 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 1,024 ±0% | 30 ±0% |
+| 4096 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±33% |
+| 4096 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 4096 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 640 ±0% | 18 ±0% |
+| 4096 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±0% |
+| 4096 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 4096 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 1,024 ±0% | 30 ±0% |
+
+### Seq2 / 全件
+
+#### 時間：Functions と Pipeline
+
+| N | 段数 | [Functions ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | 250.7 ±6% | 556 ±5% | 2.218× |
+| 64 | 6 | 341.4 ±3% | 1,139 ±2% | 3.336× |
+| 4096 | 2 | 14,376.5 ±5% | 26,798 ±1% | 1.864× |
+| 4096 | 6 | 20,709 ±6% | 60,239 ±1% | 2.909× |
+
+<details>
+<summary>検定：Functions と Pipeline</summary>
+
+| N | 段数 | 指標 | 増減率 | 検定 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | sec/op | +121.78% | p=0.000 n=10 |
+| 64 | 2 | B/op | +14.62% | p=0.000 n=10 |
+| 64 | 2 | allocs/op | +183.33% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +233.63% | p=0.000 n=10 |
+| 64 | 6 | B/op | +33.53% | p=0.000 n=10 |
+| 64 | 6 | allocs/op | +383.33% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +86.40% | p=0.000 n=10 |
+| 4096 | 2 | B/op | +0.17% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +66.67% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +190.88% | p=0.000 n=10 |
+| 4096 | 6 | B/op | +0.38% | p=0.000 n=10 |
+| 4096 | 6 | allocs/op | +164.29% | p=0.000 n=10 |
+
+</details>
+
+#### 時間：Loop と Pipeline
+
+| N | 段数 | [Loop ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | 243.65 ±2% | 556 ±5% | 2.282× |
+| 64 | 6 | 317 ±2% | 1,139 ±2% | 3.593× |
+| 4096 | 2 | 14,443 ±7% | 26,798 ±1% | 1.855× |
+| 4096 | 6 | 18,238 ±6% | 60,239 ±1% | 3.303× |
+
+<details>
+<summary>検定：Loop と Pipeline</summary>
+
+| N | 段数 | 指標 | 増減率 | 検定 |
+| --- | --- | --- | --- | --- |
+| 64 | 2 | sec/op | +128.20% | p=0.000 n=10 |
+| 64 | 2 | B/op | +14.62% | p=0.000 n=10 |
+| 64 | 2 | allocs/op | +183.33% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +259.31% | p=0.000 n=10 |
+| 64 | 6 | B/op | +33.53% | p=0.000 n=10 |
+| 64 | 6 | allocs/op | +383.33% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +85.54% | p=0.000 n=10 |
+| 4096 | 2 | B/op | +0.17% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +78.57% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +230.29% | p=0.000 n=10 |
 | 4096 | 6 | B/op | +0.38% | p=0.000 n=10 |
 | 4096 | 6 | allocs/op | +164.29% | p=0.000 n=10 |
 
@@ -73,199 +228,45 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 段数 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | Functions | 2,031 ±0% | 6 ±17% |
-| 64 | 2 | Loop | 2,031 ±0% | 6 ±17% |
-| 64 | 2 | Pipeline | 2,328 ±0% | 17 ±0% |
-| 64 | 6 | Functions | 2,031 ±0% | 6 ±17% |
-| 64 | 6 | Loop | 2,031 ±0% | 6 ±17% |
-| 64 | 6 | Pipeline | 2,712 ±0% | 29 ±0% |
-| 4096 | 2 | Functions | 177,391.5 ±0% | 14.5 ±3% |
-| 4096 | 2 | Loop | 177,391.5 ±0% | 14.5 ±3% |
-| 4096 | 2 | Pipeline | 177,688 ±0% | 25 ±0% |
-| 4096 | 6 | Functions | 177,391.5 ±0% | 14.5 ±3% |
-| 4096 | 6 | Loop | 177,391 ±0% | 14 ±7% |
-| 4096 | 6 | Pipeline | 178,072 ±0% | 37 ±0% |
-
-### Seq / 先頭8件
-
-#### 時間：Functions と Pipeline
-
-| N | 段数 | Functions ns/op | Pipeline ns/op | 倍率 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | 58.105 ±6% | 198.25 ±5% | 3.412× |
-| 64 | 6 | 78.775 ±2% | 383.9 ±2% | 4.873× |
-| 4096 | 2 | 57.875 ±2% | 200.25 ±2% | 3.460× |
-| 4096 | 6 | 78.075 ±2% | 382.9 ±2% | 4.904× |
-
-<details>
-<summary>検定：Functions と Pipeline</summary>
-
-| N | 段数 | 指標 | 増減率 | 検定 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +241.19% | p=0.000 n=10 |
-| 64 | 2 | B/op | +167.78% | p=0.000 n=10 |
-| 64 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +387.34% | p=0.000 n=10 |
-| 64 | 6 | B/op | +328.45% | p=0.000 n=10 |
-| 64 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +246.00% | p=0.000 n=10 |
-| 4096 | 2 | B/op | +167.78% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +390.43% | p=0.000 n=10 |
-| 4096 | 6 | B/op | +328.45% | p=0.000 n=10 |
-| 4096 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
-
-</details>
-
-#### 時間：Loop と Pipeline
-
-| N | 段数 | Loop ns/op | Pipeline ns/op | 倍率 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | 59.655 ±6% | 198.25 ±5% | 3.323× |
-| 64 | 6 | 77.055 ±3% | 383.9 ±2% | 4.982× |
-| 4096 | 2 | 61.575 ±3% | 200.25 ±2% | 3.252× |
-| 4096 | 6 | 77.505 ±2% | 382.9 ±2% | 4.940× |
-
-<details>
-<summary>検定：Loop と Pipeline</summary>
-
-| N | 段数 | 指標 | 増減率 | 検定 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +232.33% | p=0.000 n=10 |
-| 64 | 2 | B/op | +167.78% | p=0.000 n=10 |
-| 64 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +398.22% | p=0.000 n=10 |
-| 64 | 6 | B/op | +328.45% | p=0.000 n=10 |
-| 64 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +225.21% | p=0.000 n=10 |
-| 4096 | 2 | B/op | +167.78% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +394.03% | p=0.000 n=10 |
-| 4096 | 6 | B/op | +328.45% | p=0.000 n=10 |
-| 4096 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
-
-</details>
-
-#### メモリ割り当て
-
-| N | 段数 | 実装 | B/op | allocs/op |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | Functions | 239 ±0% | 3 ±0% |
-| 64 | 2 | Loop | 239 ±0% | 3 ±0% |
-| 64 | 2 | Pipeline | 640 ±0% | 18 ±0% |
-| 64 | 6 | Functions | 239 ±0% | 3 ±0% |
-| 64 | 6 | Loop | 239 ±0% | 3 ±0% |
-| 64 | 6 | Pipeline | 1,024 ±0% | 30 ±0% |
-| 4096 | 2 | Functions | 239 ±0% | 3 ±0% |
-| 4096 | 2 | Loop | 239 ±0% | 3 ±33% |
-| 4096 | 2 | Pipeline | 640 ±0% | 18 ±0% |
-| 4096 | 6 | Functions | 239 ±0% | 3 ±0% |
-| 4096 | 6 | Loop | 239 ±0% | 3 ±33% |
-| 4096 | 6 | Pipeline | 1,024 ±0% | 30 ±0% |
-
-### Seq2 / 全件
-
-#### 時間：Functions と Pipeline
-
-| N | 段数 | Functions ns/op | Pipeline ns/op | 倍率 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | 244.35 ±6% | 566.55 ±2% | 2.319× |
-| 64 | 6 | 330.1 ±2% | 1,191 ±1% | 3.608× |
-| 4096 | 2 | 13,557.5 ±5% | 26,092.5 ±3% | 1.925× |
-| 4096 | 6 | 19,158.5 ±7% | 57,103.5 ±5% | 2.981× |
-
-<details>
-<summary>検定：Functions と Pipeline</summary>
-
-| N | 段数 | 指標 | 増減率 | 検定 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +131.86% | p=0.000 n=10 |
-| 64 | 2 | B/op | +14.60% | p=0.000 n=10 |
-| 64 | 2 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +260.80% | p=0.000 n=10 |
-| 64 | 6 | B/op | +33.46% | p=0.000 n=10 |
-| 64 | 6 | allocs/op | +383.33% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +92.46% | p=0.000 n=10 |
-| 4096 | 2 | B/op | +0.17% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +66.67% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +198.06% | p=0.000 n=10 |
-| 4096 | 6 | B/op | +0.38% | p=0.000 n=10 |
-| 4096 | 6 | allocs/op | +146.67% | p=0.000 n=10 |
-
-</details>
-
-#### 時間：Loop と Pipeline
-
-| N | 段数 | Loop ns/op | Pipeline ns/op | 倍率 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | 253.6 ±3% | 566.55 ±2% | 2.234× |
-| 64 | 6 | 316.2 ±5% | 1,191 ±1% | 3.767× |
-| 4096 | 2 | 13,643.5 ±2% | 26,092.5 ±3% | 1.912× |
-| 4096 | 6 | 18,304.5 ±5% | 57,103.5 ±5% | 3.120× |
-
-<details>
-<summary>検定：Loop と Pipeline</summary>
-
-| N | 段数 | 指標 | 増減率 | 検定 |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +123.40% | p=0.000 n=10 |
-| 64 | 2 | B/op | +14.62% | p=0.000 n=10 |
-| 64 | 2 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +276.66% | p=0.000 n=10 |
-| 64 | 6 | B/op | +33.50% | p=0.000 n=10 |
-| 64 | 6 | allocs/op | +346.15% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +91.24% | p=0.000 n=10 |
-| 4096 | 2 | B/op | +0.17% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +66.67% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +211.96% | p=0.000 n=10 |
-| 4096 | 6 | B/op | +0.38% | p=0.000 n=10 |
-| 4096 | 6 | allocs/op | +146.67% | p=0.000 n=10 |
-
-</details>
-
-#### メモリ割り当て
-
-| N | 段数 | 実装 | B/op | allocs/op |
-| --- | --- | --- | --- | --- |
-| 64 | 2 | Functions | 2,031.5 ±0% | 6 ±17% |
-| 64 | 2 | Loop | 2,031 ±0% | 6 ±17% |
-| 64 | 2 | Pipeline | 2,328 ±0% | 17 ±0% |
-| 64 | 6 | Functions | 2,032 ±0% | 6 ±17% |
-| 64 | 6 | Loop | 2,031.5 ±0% | 6.5 ±8% |
-| 64 | 6 | Pipeline | 2,712 ±0% | 29 ±0% |
-| 4096 | 2 | Functions | 177,392 ±0% | 15 ±7% |
-| 4096 | 2 | Loop | 177,392 ±0% | 15 ±7% |
-| 4096 | 2 | Pipeline | 177,688 ±0% | 25 ±0% |
-| 4096 | 6 | Functions | 177,392 ±0% | 15 ±7% |
-| 4096 | 6 | Loop | 177,392 ±0% | 15 ±7% |
-| 4096 | 6 | Pipeline | 178,072 ±0% | 37 ±0% |
+| 64 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 2,031 ±0% | 6 ±17% |
+| 64 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 2,031 ±0% | 6 ±17% |
+| 64 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 2,328 ±0% | 17 ±0% |
+| 64 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 2,031 ±0% | 6 ±17% |
+| 64 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 2,031 ±0% | 6 ±17% |
+| 64 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 2,712 ±0% | 29 ±0% |
+| 4096 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 177,392 ±0% | 15 ±7% |
+| 4096 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 177,391.5 ±0% | 14 ±7% |
+| 4096 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 177,688 ±0% | 25 ±0% |
+| 4096 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 177,391 ±0% | 14 ±7% |
+| 4096 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 177,391 ±0% | 14 ±7% |
+| 4096 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 178,072 ±0% | 37 ±0% |
 
 ### Seq2 / 先頭8件
 
 #### 時間：Functions と Pipeline
 
-| N | 段数 | Functions ns/op | Pipeline ns/op | 倍率 |
+| N | 段数 | [Functions ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | 58.325 ±1% | 200.8 ±3% | 3.443× |
-| 64 | 6 | 77.08 ±2% | 379.35 ±2% | 4.922× |
-| 4096 | 2 | 58.495 ±3% | 199.85 ±3% | 3.417× |
-| 4096 | 6 | 76.955 ±1% | 379.85 ±2% | 4.936× |
+| 64 | 2 | 58.29 ±1% | 199.05 ±3% | 3.415× |
+| 64 | 6 | 78.445 ±3% | 377.4 ±4% | 4.811× |
+| 4096 | 2 | 59.095 ±6% | 198.95 ±4% | 3.367× |
+| 4096 | 6 | 79.455 ±2% | 380.4 ±2% | 4.788× |
 
 <details>
 <summary>検定：Functions と Pipeline</summary>
 
 | N | 段数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +244.28% | p=0.000 n=10 |
+| 64 | 2 | sec/op | +241.48% | p=0.000 n=10 |
 | 64 | 2 | B/op | +167.78% | p=0.000 n=10 |
 | 64 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +392.15% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +381.10% | p=0.000 n=10 |
 | 64 | 6 | B/op | +328.45% | p=0.000 n=10 |
 | 64 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +241.65% | p=0.000 n=10 |
-| 4096 | 2 | B/op | +167.22% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +236.66% | p=0.000 n=10 |
+| 4096 | 2 | B/op | +167.78% | p=0.000 n=10 |
 | 4096 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +393.60% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +378.76% | p=0.000 n=10 |
 | 4096 | 6 | B/op | +328.45% | p=0.000 n=10 |
 | 4096 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
 
@@ -273,28 +274,28 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 #### 時間：Loop と Pipeline
 
-| N | 段数 | Loop ns/op | Pipeline ns/op | 倍率 |
+| N | 段数 | [Loop ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | [Pipeline ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | 60.16 ±4% | 200.8 ±3% | 3.338× |
-| 64 | 6 | 75.11 ±5% | 379.35 ±2% | 5.051× |
-| 4096 | 2 | 60.56 ±2% | 199.85 ±3% | 3.300× |
-| 4096 | 6 | 75.39 ±1% | 379.85 ±2% | 5.038× |
+| 64 | 2 | 59.405 ±2% | 199.05 ±3% | 3.351× |
+| 64 | 6 | 74.59 ±3% | 377.4 ±4% | 5.060× |
+| 4096 | 2 | 60.6 ±6% | 198.95 ±4% | 3.283× |
+| 4096 | 6 | 75.525 ±2% | 380.4 ±2% | 5.037× |
 
 <details>
 <summary>検定：Loop と Pipeline</summary>
 
 | N | 段数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | sec/op | +233.78% | p=0.000 n=10 |
+| 64 | 2 | sec/op | +235.07% | p=0.000 n=10 |
 | 64 | 2 | B/op | +167.78% | p=0.000 n=10 |
 | 64 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
-| 64 | 6 | sec/op | +405.06% | p=0.000 n=10 |
+| 64 | 6 | sec/op | +405.97% | p=0.000 n=10 |
 | 64 | 6 | B/op | +328.45% | p=0.000 n=10 |
 | 64 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
-| 4096 | 2 | sec/op | +230.00% | p=0.000 n=10 |
-| 4096 | 2 | B/op | +166.67% | p=0.000 n=10 |
-| 4096 | 2 | allocs/op | +350.00% | p=0.000 n=10 |
-| 4096 | 6 | sec/op | +403.85% | p=0.000 n=10 |
+| 4096 | 2 | sec/op | +228.30% | p=0.000 n=10 |
+| 4096 | 2 | B/op | +167.78% | p=0.000 n=10 |
+| 4096 | 2 | allocs/op | +500.00% | p=0.000 n=10 |
+| 4096 | 6 | sec/op | +403.67% | p=0.000 n=10 |
 | 4096 | 6 | B/op | +328.45% | p=0.000 n=10 |
 | 4096 | 6 | allocs/op | +900.00% | p=0.000 n=10 |
 
@@ -304,18 +305,18 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 段数 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 2 | Functions | 239 ±0% | 3 ±33% |
-| 64 | 2 | Loop | 239 ±0% | 3 ±33% |
-| 64 | 2 | Pipeline | 640 ±0% | 18 ±0% |
-| 64 | 6 | Functions | 239 ±0% | 3 ±33% |
-| 64 | 6 | Loop | 239 ±0% | 3 ±0% |
-| 64 | 6 | Pipeline | 1,024 ±0% | 30 ±0% |
-| 4096 | 2 | Functions | 239.5 ±0% | 3 ±33% |
-| 4096 | 2 | Loop | 240 ±0% | 4 ±25% |
-| 4096 | 2 | Pipeline | 640 ±0% | 18 ±0% |
-| 4096 | 6 | Functions | 239 ±0% | 3 ±33% |
-| 4096 | 6 | Loop | 239 ±0% | 3 ±0% |
-| 4096 | 6 | Pipeline | 1,024 ±0% | 30 ±0% |
+| 64 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±33% |
+| 64 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 64 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 640 ±0% | 18 ±0% |
+| 64 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±0% |
+| 64 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±0% |
+| 64 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 1,024 ±0% | 30 ±0% |
+| 4096 | 2 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±33% |
+| 4096 | 2 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 4096 | 2 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 640 ±0% | 18 ±0% |
+| 4096 | 6 | [Functions](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L63) | 239 ±0% | 3 ±33% |
+| 4096 | 6 | [Loop](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L42) | 239 ±0% | 3 ±33% |
+| 4096 | 6 | [Pipeline](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/pipeline_test.go#L12) | 1,024 ±0% | 30 ±0% |
 
 ## Channel
 
@@ -323,80 +324,80 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 #### 時間：Direct と FromChannel
 
-| N | 入力容量 | Direct ns/op | FromChannel ns/op | 倍率 |
+| N | 入力容量 | [Direct ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L63) | [FromChannel ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L76) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | 6,318.5 ±1% | 7,492.5 ±1% | 1.186× |
-| 64 | 64 | 2,273.5 ±4% | 3,282.5 ±3% | 1.444× |
-| 4096 | 0 | 383,436.5 ±1% | 450,232 ±1% | 1.174× |
-| 4096 | 64 | 110,526.5 ±2% | 183,189 ±1% | 1.657× |
+| 64 | 0 | 6,335 ±1% | 7,530 ±1% | 1.189× |
+| 64 | 64 | 2,251.5 ±3% | 3,288 ±3% | 1.460× |
+| 4096 | 0 | 389,577.5 ±2% | 454,514.5 ±1% | 1.167× |
+| 4096 | 64 | 109,611 ±3% | 182,735.5 ±1% | 1.667× |
 
 <details>
 <summary>検定：Direct と FromChannel</summary>
 
 | N | 入力容量 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | sec/op | +18.58% | p=0.000 n=10 |
-| 64 | 0 | B/op | +8.87% | p=0.000 n=10 |
-| 64 | 0 | allocs/op | +58.33% | p=0.000 n=10 |
-| 64 | 64 | sec/op | +44.38% | p=0.000 n=10 |
-| 64 | 64 | B/op | +7.24% | p=0.000 n=10 |
-| 64 | 64 | allocs/op | +58.33% | p=0.000 n=10 |
-| 4096 | 0 | sec/op | +17.42% | p=0.000 n=10 |
-| 4096 | 0 | B/op | +0.12% | p=0.000 n=10 |
-| 4096 | 0 | allocs/op | +35.00% | p=0.000 n=10 |
-| 4096 | 64 | sec/op | +65.74% | p=0.000 n=10 |
-| 4096 | 64 | B/op | +0.12% | p=0.000 n=10 |
-| 4096 | 64 | allocs/op | +35.00% | p=0.000 n=10 |
+| 64 | 0 | sec/op | +18.86% | p=0.000 n=10 |
+| 64 | 0 | B/op | +15.25% | p=0.000 n=10 |
+| 64 | 0 | allocs/op | +150.00% | p=0.000 n=10 |
+| 64 | 64 | sec/op | +46.04% | p=0.000 n=10 |
+| 64 | 64 | B/op | +12.36% | p=0.000 n=10 |
+| 64 | 64 | allocs/op | +150.00% | p=0.000 n=10 |
+| 4096 | 0 | sec/op | +16.67% | p=0.000 n=10 |
+| 4096 | 0 | B/op | +0.19% | p=0.000 n=10 |
+| 4096 | 0 | allocs/op | +75.00% | p=0.000 n=10 |
+| 4096 | 64 | sec/op | +66.71% | p=0.000 n=10 |
+| 4096 | 64 | B/op | +0.19% | p=0.000 n=10 |
+| 4096 | 64 | allocs/op | +75.00% | p=0.000 n=10 |
 
 </details>
 
 #### 時間：Direct と RoundTrip
 
-| N | 入力容量 | Direct ns/op | RoundTrip ns/op | 倍率 |
+| N | 入力容量 | [Direct ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L63) | [RoundTrip ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L86) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | 6,318.5 ±1% | 13,891 ±1% | 2.198× |
-| 64 | 64 | 2,273.5 ±4% | 8,610.5 ±2% | 3.787× |
-| 4096 | 0 | 383,436.5 ±1% | 767,811.5 ±1% | 2.002× |
-| 4096 | 64 | 110,526.5 ±2% | 647,986 ±5% | 5.863× |
+| 64 | 0 | 6,335 ±1% | 13,881 ±1% | 2.191× |
+| 64 | 64 | 2,251.5 ±3% | 8,477 ±1% | 3.765× |
+| 4096 | 0 | 389,577.5 ±2% | 776,972.5 ±1% | 1.994× |
+| 4096 | 64 | 109,611 ±3% | 663,434.5 ±5% | 6.053× |
 
 <details>
 <summary>検定：Direct と RoundTrip</summary>
 
 | N | 入力容量 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | sec/op | +119.85% | p=0.000 n=10 |
-| 64 | 0 | B/op | +21.16% | p=0.000 n=10 |
-| 64 | 0 | allocs/op | +91.67% | p=0.000 n=10 |
-| 64 | 64 | sec/op | +278.73% | p=0.000 n=10 |
-| 64 | 64 | B/op | +17.27% | p=0.000 n=10 |
-| 64 | 64 | allocs/op | +91.67% | p=0.000 n=10 |
-| 4096 | 0 | sec/op | +100.24% | p=0.000 n=10 |
+| 64 | 0 | sec/op | +119.12% | p=0.000 n=10 |
+| 64 | 0 | B/op | +21.99% | p=0.000 n=10 |
+| 64 | 0 | allocs/op | +137.50% | p=0.000 n=10 |
+| 64 | 64 | sec/op | +276.50% | p=0.000 n=10 |
+| 64 | 64 | B/op | +17.82% | p=0.000 n=10 |
+| 64 | 64 | allocs/op | +137.50% | p=0.000 n=10 |
+| 4096 | 0 | sec/op | +99.44% | p=0.000 n=10 |
 | 4096 | 0 | B/op | +0.28% | p=0.000 n=10 |
-| 4096 | 0 | allocs/op | +55.00% | p=0.000 n=10 |
-| 4096 | 64 | sec/op | +486.27% | p=0.000 n=10 |
+| 4096 | 0 | allocs/op | +68.75% | p=0.000 n=10 |
+| 4096 | 64 | sec/op | +505.26% | p=0.000 n=10 |
 | 4096 | 64 | B/op | +0.28% | p=0.000 n=10 |
-| 4096 | 64 | allocs/op | +55.00% | p=0.000 n=10 |
+| 4096 | 64 | allocs/op | +68.75% | p=0.000 n=10 |
 
 </details>
 
 #### 時間：Seq と ToChannel
 
-| N | 入力容量 | Seq ns/op | ToChannel ns/op | 倍率 |
+| N | 入力容量 | [Seq ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L46) | [ToChannel ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L54) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | 238.2 ±2% | 6,726.5 ±1% | 28.239× |
-| 4096 | 0 | 14,536 ±4% | 336,540.5 ±1% | 23.152× |
+| 64 | 0 | 535.8 ±2% | 6,561.5 ±0% | 12.246× |
+| 4096 | 0 | 26,010.5 ±2% | 335,918 ±1% | 12.915× |
 
 <details>
 <summary>検定：Seq と ToChannel</summary>
 
 | N | 入力容量 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | sec/op | +2723.89% | p=0.000 n=10 |
-| 64 | 0 | B/op | +17.76% | p=0.000 n=10 |
-| 64 | 0 | allocs/op | +77.78% | p=0.000 n=10 |
-| 4096 | 0 | sec/op | +2215.22% | p=0.000 n=10 |
-| 4096 | 0 | B/op | +0.21% | p=0.000 n=10 |
-| 4096 | 0 | allocs/op | +41.18% | p=0.000 n=10 |
+| 64 | 0 | sec/op | +1124.62% | p=0.000 n=10 |
+| 64 | 0 | B/op | +6.53% | p=0.000 n=10 |
+| 64 | 0 | allocs/op | -5.88% | p=0.000 n=10 |
+| 4096 | 0 | sec/op | +1191.47% | p=0.000 n=10 |
+| 4096 | 0 | B/op | +0.09% | p=0.000 n=10 |
+| 4096 | 0 | allocs/op | -4.00% | p=0.000 n=10 |
 
 </details>
 
@@ -404,22 +405,22 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 入力容量 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 0 | Direct | 2,344 ±0% | 12 ±0% |
-| 64 | 0 | FromChannel | 2,552 ±0% | 19 ±0% |
-| 64 | 0 | RoundTrip | 2,840 ±0% | 23 ±0% |
-| 64 | 0 | Seq | 2,072 ±0% | 9 ±0% |
-| 64 | 0 | ToChannel | 2,440 ±0% | 16 ±0% |
-| 64 | 64 | Direct | 2,872 ±0% | 12 ±0% |
-| 64 | 64 | FromChannel | 3,080 ±0% | 19 ±0% |
-| 64 | 64 | RoundTrip | 3,368 ±0% | 23 ±0% |
-| 4096 | 0 | Direct | 177,704 ±0% | 20 ±0% |
-| 4096 | 0 | FromChannel | 177,912 ±0% | 27 ±0% |
-| 4096 | 0 | RoundTrip | 178,200 ±0% | 31 ±0% |
-| 4096 | 0 | Seq | 177,432 ±0% | 17 ±0% |
-| 4096 | 0 | ToChannel | 177,800 ±0% | 24 ±0% |
-| 4096 | 64 | Direct | 178,232 ±0% | 20 ±0% |
-| 4096 | 64 | FromChannel | 178,440 ±0% | 27 ±0% |
-| 4096 | 64 | RoundTrip | 178,728 ±0% | 31 ±0% |
+| 64 | 0 | [Direct](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L63) | 2,256 ±0% | 8 ±0% |
+| 64 | 0 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L76) | 2,600 ±0% | 20 ±0% |
+| 64 | 0 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L86) | 2,752 ±0% | 19 ±0% |
+| 64 | 0 | [Seq](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L46) | 2,328 ±0% | 17 ±0% |
+| 64 | 0 | [ToChannel](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L54) | 2,480 ±0% | 16 ±0% |
+| 64 | 64 | [Direct](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L63) | 2,784 ±0% | 8 ±0% |
+| 64 | 64 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L76) | 3,128 ±0% | 20 ±0% |
+| 64 | 64 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L86) | 3,280 ±0% | 19 ±0% |
+| 4096 | 0 | [Direct](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L63) | 177,616 ±0% | 16 ±0% |
+| 4096 | 0 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L76) | 177,960 ±0% | 28 ±0% |
+| 4096 | 0 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L86) | 178,112 ±0% | 27 ±0% |
+| 4096 | 0 | [Seq](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L46) | 177,688 ±0% | 25 ±0% |
+| 4096 | 0 | [ToChannel](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L54) | 177,840 ±0% | 24 ±0% |
+| 4096 | 64 | [Direct](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L63) | 178,144 ±0% | 16 ±0% |
+| 4096 | 64 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L76) | 178,488 ±0% | 28 ±0% |
+| 4096 | 64 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/channel_test.go#L86) | 178,642 ±0% | 27 ±0% |
 
 ## Cache
 
@@ -429,15 +430,15 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 94.205 ±1% |
-| 4096 | — | 4,743.5 ±0% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 99.35 ±2% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 4,743.5 ±2% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 40 ±0% | 2 ±0% |
-| 4096 | — | 40 ±0% | 2 ±0% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
 
 ### Seq / 負荷=0 / 初回保存 Fill
 
@@ -445,52 +446,52 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 355.4 ±5% |
-| 4096 | — | 18,726.5 ±2% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 355.2 ±3% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 18,961.5 ±1% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 1,216 ±0% | 15 ±0% |
-| 4096 | — | 128,448 ±0% | 24 ±0% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 1,200 ±0% | 14 ±0% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 128,432 ±0% | 23 ±0% |
 
 ### Seq / 負荷=0 / 保存費用込み Reuse
 
 #### 時間：Uncached と Cached
 
-| N | 利用回数 | Uncached ns/op | Cached ns/op | 倍率 |
+| N | 利用回数 | [Uncached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | [Cached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | 216.7 ±1% | 454.65 ±2% | 2.098× |
-| 64 | 4 | 776.1 ±1% | 740.1 ±1% | 0.954× |
-| 64 | 16 | 2,999 ±1% | 1,867.5 ±2% | 0.623× |
-| 4096 | 1 | 11,110 ±2% | 23,713.5 ±2% | 2.134× |
-| 4096 | 4 | 44,292.5 ±1% | 37,723 ±3% | 0.852× |
-| 4096 | 16 | 176,832 ±1% | 94,954.5 ±9% | 0.537× |
+| 64 | 1 | 208.5 ±1% | 460.75 ±1% | 2.210× |
+| 64 | 4 | 764.55 ±1% | 760.8 ±2% | 0.995× |
+| 64 | 16 | 2,976.5 ±1% | 1,941 ±1% | 0.652× |
+| 4096 | 1 | 11,332 ±3% | 23,783 ±1% | 2.099× |
+| 4096 | 4 | 45,193.5 ±3% | 37,499.5 ±1% | 0.830× |
+| 4096 | 16 | 180,656 ±3% | 94,495.5 ±1% | 0.523× |
 
 <details>
 <summary>検定：Uncached と Cached</summary>
 
 | N | 利用回数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | sec/op | +109.81% | p=0.000 n=10 |
-| 64 | 1 | B/op | +726.32% | p=0.000 n=10 |
-| 64 | 1 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 4 | sec/op | -4.64% | p=0.000 n=10 |
-| 64 | 4 | B/op | +405.88% | p=0.000 n=10 |
-| 64 | 4 | allocs/op | +91.67% | p=0.000 n=10 |
-| 64 | 16 | sec/op | -37.73% | p=0.000 n=10 |
-| 64 | 16 | B/op | +146.81% | p=0.000 n=10 |
-| 64 | 16 | allocs/op | +30.56% | p=0.000 n=10 |
-| 4096 | 1 | sec/op | +113.44% | p=0.000 n=10 |
-| 4096 | 1 | B/op | +84431.58% | p=0.000 n=10 |
-| 4096 | 1 | allocs/op | +333.33% | p=0.000 n=10 |
-| 4096 | 4 | sec/op | -14.83% | p=0.000 n=10 |
-| 4096 | 4 | B/op | +47182.35% | p=0.000 n=10 |
-| 4096 | 4 | allocs/op | +166.67% | p=0.000 n=10 |
-| 4096 | 16 | sec/op | -46.30% | p=0.000 n=10 |
-| 4096 | 16 | B/op | +17065.96% | p=0.000 n=10 |
-| 4096 | 16 | allocs/op | +55.56% | p=0.000 n=10 |
+| 64 | 1 | sec/op | +120.98% | p=0.000 n=10 |
+| 64 | 1 | B/op | +811.76% | p=0.000 n=10 |
+| 64 | 1 | allocs/op | +240.00% | p=0.000 n=10 |
+| 64 | 4 | sec/op | ~ | p=0.123 n=10 |
+| 64 | 4 | B/op | +431.25% | p=0.000 n=10 |
+| 64 | 4 | allocs/op | +136.36% | p=0.000 n=10 |
+| 64 | 16 | sec/op | -34.79% | p=0.000 n=10 |
+| 64 | 16 | B/op | +150.00% | p=0.000 n=10 |
+| 64 | 16 | allocs/op | +77.14% | p=0.000 n=10 |
+| 4096 | 1 | sec/op | +109.87% | p=0.000 n=10 |
+| 4096 | 1 | B/op | +94364.71% | p=0.000 n=10 |
+| 4096 | 1 | allocs/op | +420.00% | p=0.000 n=10 |
+| 4096 | 4 | sec/op | -17.02% | p=0.000 n=10 |
+| 4096 | 4 | B/op | +50131.25% | p=0.000 n=10 |
+| 4096 | 4 | allocs/op | +218.18% | p=0.000 n=10 |
+| 4096 | 16 | sec/op | -47.69% | p=0.000 n=10 |
+| 4096 | 16 | B/op | +17436.96% | p=0.000 n=10 |
+| 4096 | 16 | allocs/op | +102.86% | p=0.000 n=10 |
 
 </details>
 
@@ -498,18 +499,18 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 利用回数 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | Cached | 1,256 ±0% | 17 ±0% |
-| 64 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 64 | 4 | Cached | 1,376 ±0% | 23 ±0% |
-| 64 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 64 | 16 | Cached | 1,856 ±0% | 47 ±0% |
-| 64 | 16 | Uncached | 752 ±0% | 36 ±0% |
-| 4096 | 1 | Cached | 128,488 ±0% | 26 ±0% |
-| 4096 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 4096 | 4 | Cached | 128,608 ±0% | 32 ±0% |
-| 4096 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 4096 | 16 | Cached | 129,088 ±0% | 56 ±0% |
-| 4096 | 16 | Uncached | 752 ±0% | 36 ±0% |
+| 64 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 1,240 ±0% | 17 ±0% |
+| 64 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 64 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 1,360 ±0% | 26 ±0% |
+| 64 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 64 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 1,840 ±0% | 62 ±0% |
+| 64 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
+| 4096 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 128,472 ±0% | 26 ±0% |
+| 4096 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 4096 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 128,592 ±0% | 35 ±0% |
+| 4096 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 4096 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 129,072 ±0% | 71 ±0% |
+| 4096 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
 
 ### Seq / 負荷=32 / 保存済み反復 Warm
 
@@ -517,15 +518,15 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 93.415 ±2% |
-| 4096 | — | 4,732.5 ±2% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 98.4 ±1% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 4,736.5 ±0% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 40 ±0% | 2 ±0% |
-| 4096 | — | 40 ±0% | 2 ±0% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
 
 ### Seq / 負荷=32 / 初回保存 Fill
 
@@ -533,52 +534,52 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 1,349.5 ±2% |
-| 4096 | — | 79,731.5 ±2% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 1,346 ±2% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 80,630 ±3% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 1,216 ±0% | 15 ±0% |
-| 4096 | — | 128,448 ±0% | 24 ±0% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 1,200 ±0% | 14 ±0% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 128,432 ±0% | 23 ±0% |
 
 ### Seq / 負荷=32 / 保存費用込み Reuse
 
 #### 時間：Uncached と Cached
 
-| N | 利用回数 | Uncached ns/op | Cached ns/op | 倍率 |
+| N | 利用回数 | [Uncached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | [Cached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | 1,254.5 ±3% | 1,457 ±3% | 1.161× |
-| 64 | 4 | 4,945.5 ±3% | 1,737 ±2% | 0.351× |
-| 64 | 16 | 19,631.5 ±3% | 2,834 ±2% | 0.144× |
-| 4096 | 1 | 77,103.5 ±2% | 84,879.5 ±3% | 1.101× |
-| 4096 | 4 | 308,443.5 ±3% | 99,480 ±2% | 0.323× |
-| 4096 | 16 | 1,232,818.5 ±1% | 156,734.5 ±4% | 0.127× |
+| 64 | 1 | 1,243.5 ±1% | 1,454 ±2% | 1.169× |
+| 64 | 4 | 4,870 ±1% | 1,761.5 ±2% | 0.362× |
+| 64 | 16 | 19,468.5 ±3% | 2,914.5 ±2% | 0.150× |
+| 4096 | 1 | 77,027 ±2% | 84,532.5 ±2% | 1.097× |
+| 4096 | 4 | 307,426.5 ±2% | 100,147 ±3% | 0.326× |
+| 4096 | 16 | 1,220,541.5 ±3% | 156,348.5 ±3% | 0.128× |
 
 <details>
 <summary>検定：Uncached と Cached</summary>
 
 | N | 利用回数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | sec/op | +16.14% | p=0.000 n=10 |
-| 64 | 1 | B/op | +726.32% | p=0.000 n=10 |
-| 64 | 1 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 4 | sec/op | -64.88% | p=0.000 n=10 |
-| 64 | 4 | B/op | +405.88% | p=0.000 n=10 |
-| 64 | 4 | allocs/op | +91.67% | p=0.000 n=10 |
-| 64 | 16 | sec/op | -85.56% | p=0.000 n=10 |
-| 64 | 16 | B/op | +146.81% | p=0.000 n=10 |
-| 64 | 16 | allocs/op | +30.56% | p=0.000 n=10 |
-| 4096 | 1 | sec/op | +10.09% | p=0.000 n=10 |
-| 4096 | 1 | B/op | +84431.58% | p=0.000 n=10 |
-| 4096 | 1 | allocs/op | +333.33% | p=0.000 n=10 |
-| 4096 | 4 | sec/op | -67.75% | p=0.000 n=10 |
-| 4096 | 4 | B/op | +47182.35% | p=0.000 n=10 |
-| 4096 | 4 | allocs/op | +166.67% | p=0.000 n=10 |
-| 4096 | 16 | sec/op | -87.29% | p=0.000 n=10 |
-| 4096 | 16 | B/op | +17065.96% | p=0.000 n=10 |
-| 4096 | 16 | allocs/op | +55.56% | p=0.000 n=10 |
+| 64 | 1 | sec/op | +16.93% | p=0.000 n=10 |
+| 64 | 1 | B/op | +811.76% | p=0.000 n=10 |
+| 64 | 1 | allocs/op | +240.00% | p=0.000 n=10 |
+| 64 | 4 | sec/op | -63.83% | p=0.000 n=10 |
+| 64 | 4 | B/op | +431.25% | p=0.000 n=10 |
+| 64 | 4 | allocs/op | +136.36% | p=0.000 n=10 |
+| 64 | 16 | sec/op | -85.03% | p=0.000 n=10 |
+| 64 | 16 | B/op | +150.00% | p=0.000 n=10 |
+| 64 | 16 | allocs/op | +77.14% | p=0.000 n=10 |
+| 4096 | 1 | sec/op | +9.74% | p=0.000 n=10 |
+| 4096 | 1 | B/op | +94364.71% | p=0.000 n=10 |
+| 4096 | 1 | allocs/op | +420.00% | p=0.000 n=10 |
+| 4096 | 4 | sec/op | -67.42% | p=0.000 n=10 |
+| 4096 | 4 | B/op | +50131.25% | p=0.000 n=10 |
+| 4096 | 4 | allocs/op | +218.18% | p=0.000 n=10 |
+| 4096 | 16 | sec/op | -87.19% | p=0.000 n=10 |
+| 4096 | 16 | B/op | +17436.96% | p=0.000 n=10 |
+| 4096 | 16 | allocs/op | +102.86% | p=0.000 n=10 |
 
 </details>
 
@@ -586,18 +587,18 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 利用回数 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | Cached | 1,256 ±0% | 17 ±0% |
-| 64 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 64 | 4 | Cached | 1,376 ±0% | 23 ±0% |
-| 64 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 64 | 16 | Cached | 1,856 ±0% | 47 ±0% |
-| 64 | 16 | Uncached | 752 ±0% | 36 ±0% |
-| 4096 | 1 | Cached | 128,488 ±0% | 26 ±0% |
-| 4096 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 4096 | 4 | Cached | 128,608 ±0% | 32 ±0% |
-| 4096 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 4096 | 16 | Cached | 129,088 ±0% | 56 ±0% |
-| 4096 | 16 | Uncached | 752 ±0% | 36 ±0% |
+| 64 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 1,240 ±0% | 17 ±0% |
+| 64 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 64 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 1,360 ±0% | 26 ±0% |
+| 64 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 64 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 1,840 ±0% | 62 ±0% |
+| 64 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
+| 4096 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 128,472 ±0% | 26 ±0% |
+| 4096 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 4096 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 128,592 ±0% | 35 ±0% |
+| 4096 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 4096 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 129,072 ±0% | 71 ±0% |
+| 4096 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
 
 ### Seq2 / 負荷=0 / 保存済み反復 Warm
 
@@ -605,15 +606,15 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 95.255 ±1% |
-| 4096 | — | 5,402.5 ±1% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 101.2 ±1% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 5,438 ±2% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 40 ±0% | 2 ±0% |
-| 4096 | — | 40 ±0% | 2 ±0% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
 
 ### Seq2 / 負荷=0 / 初回保存 Fill
 
@@ -621,52 +622,52 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 425.55 ±2% |
-| 4096 | — | 25,859.5 ±3% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 420.6 ±2% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 26,574.5 ±4% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 2,232 ±0% | 15 ±0% |
-| 4096 | — | 259,513 ±0% | 24 ±0% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 2,216 ±0% | 14 ±0% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 259,497 ±0% | 23 ±0% |
 
 ### Seq2 / 負荷=0 / 保存費用込み Reuse
 
 #### 時間：Uncached と Cached
 
-| N | 利用回数 | Uncached ns/op | Cached ns/op | 倍率 |
+| N | 利用回数 | [Uncached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | [Cached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | 216.7 ±1% | 526.3 ±1% | 2.429× |
-| 64 | 4 | 779 ±1% | 824.25 ±2% | 1.058× |
-| 64 | 16 | 3,012 ±1% | 1,977 ±2% | 0.656× |
-| 4096 | 1 | 10,998 ±0% | 31,197 ±2% | 2.837× |
-| 4096 | 4 | 43,873 ±0% | 46,680.5 ±1% | 1.064× |
-| 4096 | 16 | 175,146 ±0% | 111,292 ±2% | 0.635× |
+| 64 | 1 | 208.75 ±1% | 525.4 ±1% | 2.517× |
+| 64 | 4 | 761.9 ±1% | 835.25 ±1% | 1.096× |
+| 64 | 16 | 2,967.5 ±0% | 2,055 ±1% | 0.693× |
+| 4096 | 1 | 11,242 ±0% | 31,322.5 ±3% | 2.786× |
+| 4096 | 4 | 44,739 ±0% | 46,746.5 ±1% | 1.045× |
+| 4096 | 16 | 178,560.5 ±0% | 111,429 ±2% | 0.624× |
 
 <details>
 <summary>検定：Uncached と Cached</summary>
 
 | N | 利用回数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | sec/op | +142.87% | p=0.000 n=10 |
-| 64 | 1 | B/op | +1394.74% | p=0.000 n=10 |
-| 64 | 1 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 4 | sec/op | +5.81% | p=0.000 n=10 |
-| 64 | 4 | B/op | +779.41% | p=0.000 n=10 |
-| 64 | 4 | allocs/op | +91.67% | p=0.000 n=10 |
-| 64 | 16 | sec/op | -34.36% | p=0.000 n=10 |
-| 64 | 16 | B/op | +281.91% | p=0.000 n=10 |
-| 64 | 16 | allocs/op | +30.56% | p=0.000 n=10 |
-| 4096 | 1 | sec/op | +183.66% | p=0.000 n=10 |
-| 4096 | 1 | B/op | +170658.55% | p=0.000 n=10 |
-| 4096 | 1 | allocs/op | +333.33% | p=0.000 n=10 |
-| 4096 | 4 | sec/op | +6.40% | p=0.000 n=10 |
-| 4096 | 4 | B/op | +95367.83% | p=0.000 n=10 |
-| 4096 | 4 | allocs/op | +166.67% | p=0.000 n=10 |
-| 4096 | 16 | sec/op | -36.46% | p=0.000 n=10 |
-| 4096 | 16 | B/op | +34494.68% | p=0.000 n=10 |
-| 4096 | 16 | allocs/op | +55.56% | p=0.000 n=10 |
+| 64 | 1 | sec/op | +151.69% | p=0.000 n=10 |
+| 64 | 1 | B/op | +1558.82% | p=0.000 n=10 |
+| 64 | 1 | allocs/op | +240.00% | p=0.000 n=10 |
+| 64 | 4 | sec/op | +9.63% | p=0.000 n=10 |
+| 64 | 4 | B/op | +828.12% | p=0.000 n=10 |
+| 64 | 4 | allocs/op | +136.36% | p=0.000 n=10 |
+| 64 | 16 | sec/op | -30.75% | p=0.000 n=10 |
+| 64 | 16 | B/op | +288.04% | p=0.000 n=10 |
+| 64 | 16 | allocs/op | +77.14% | p=0.000 n=10 |
+| 4096 | 1 | sec/op | +178.62% | p=0.000 n=10 |
+| 4096 | 1 | B/op | +190736.03% | p=0.000 n=10 |
+| 4096 | 1 | allocs/op | +420.00% | p=0.000 n=10 |
+| 4096 | 4 | sec/op | +4.49% | p=0.000 n=10 |
+| 4096 | 4 | B/op | +101328.32% | p=0.000 n=10 |
+| 4096 | 4 | allocs/op | +218.18% | p=0.000 n=10 |
+| 4096 | 16 | sec/op | -37.60% | p=0.000 n=10 |
+| 4096 | 16 | B/op | +35244.57% | p=0.000 n=10 |
+| 4096 | 16 | allocs/op | +102.86% | p=0.000 n=10 |
 
 </details>
 
@@ -674,18 +675,18 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 利用回数 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | Cached | 2,272 ±0% | 17 ±0% |
-| 64 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 64 | 4 | Cached | 2,392 ±0% | 23 ±0% |
-| 64 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 64 | 16 | Cached | 2,872 ±0% | 47 ±0% |
-| 64 | 16 | Uncached | 752 ±0% | 36 ±0% |
-| 4096 | 1 | Cached | 259,553 ±0% | 26 ±0% |
-| 4096 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 4096 | 4 | Cached | 259,672.5 ±0% | 32 ±0% |
-| 4096 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 4096 | 16 | Cached | 260,152 ±0% | 56 ±0% |
-| 4096 | 16 | Uncached | 752 ±0% | 36 ±0% |
+| 64 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 2,256 ±0% | 17 ±0% |
+| 64 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 64 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 2,376 ±0% | 26 ±0% |
+| 64 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 64 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 2,856 ±0% | 62 ±0% |
+| 64 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
+| 4096 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 259,537 ±0% | 26 ±0% |
+| 4096 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 4096 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 259,656.5 ±0% | 35 ±0% |
+| 4096 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 4096 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 260,136 ±0% | 71 ±0% |
+| 4096 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
 
 ### Seq2 / 負荷=32 / 保存済み反復 Warm
 
@@ -693,15 +694,15 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 95.56 ±1% |
-| 4096 | — | 5,388.5 ±1% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 101.05 ±2% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 5,483 ±2% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 40 ±0% | 2 ±0% |
-| 4096 | — | 40 ±0% | 2 ±0% |
+| 64 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
+| 4096 | [Warm](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L93) | 40 ±0% | 3 ±0% |
 
 ### Seq2 / 負荷=32 / 初回保存 Fill
 
@@ -709,52 +710,52 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 実装 | ns/op |
 | --- | --- | --- |
-| 64 | — | 1,388 ±2% |
-| 4096 | — | 85,084.5 ±3% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 1,387.5 ±2% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 85,476 ±2% |
 
 #### メモリ割り当て
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | — | 2,232 ±0% | 15 ±0% |
-| 4096 | — | 259,512 ±0% | 24 ±0% |
+| 64 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 2,216 ±0% | 14 ±0% |
+| 4096 | [Fill](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L86) | 259,496 ±0% | 23 ±0% |
 
 ### Seq2 / 負荷=32 / 保存費用込み Reuse
 
 #### 時間：Uncached と Cached
 
-| N | 利用回数 | Uncached ns/op | Cached ns/op | 倍率 |
+| N | 利用回数 | [Uncached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | [Cached ns/op](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 倍率 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | 1,263.5 ±2% | 1,496.5 ±3% | 1.184× |
-| 64 | 4 | 4,951 ±2% | 1,800 ±2% | 0.364× |
-| 64 | 16 | 19,653.5 ±1% | 2,947 ±3% | 0.150× |
-| 4096 | 1 | 77,459.5 ±2% | 90,207.5 ±2% | 1.165× |
-| 4096 | 4 | 308,934 ±1% | 107,457 ±2% | 0.348× |
-| 4096 | 16 | 1,240,589 ±1% | 172,079.5 ±2% | 0.139× |
+| 64 | 1 | 1,252.5 ±2% | 1,495 ±2% | 1.194× |
+| 64 | 4 | 4,934.5 ±2% | 1,818.5 ±3% | 0.369× |
+| 64 | 16 | 19,736 ±2% | 3,012.5 ±1% | 0.153× |
+| 4096 | 1 | 77,590.5 ±2% | 90,320 ±1% | 1.164× |
+| 4096 | 4 | 310,575 ±3% | 106,826 ±2% | 0.344× |
+| 4096 | 16 | 1,242,283.5 ±3% | 170,579 ±2% | 0.137× |
 
 <details>
 <summary>検定：Uncached と Cached</summary>
 
 | N | 利用回数 | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | sec/op | +18.44% | p=0.000 n=10 |
-| 64 | 1 | B/op | +1394.74% | p=0.000 n=10 |
-| 64 | 1 | allocs/op | +183.33% | p=0.000 n=10 |
-| 64 | 4 | sec/op | -63.64% | p=0.000 n=10 |
-| 64 | 4 | B/op | +779.41% | p=0.000 n=10 |
-| 64 | 4 | allocs/op | +91.67% | p=0.000 n=10 |
-| 64 | 16 | sec/op | -85.01% | p=0.000 n=10 |
-| 64 | 16 | B/op | +281.91% | p=0.000 n=10 |
-| 64 | 16 | allocs/op | +30.56% | p=0.000 n=10 |
-| 4096 | 1 | sec/op | +16.46% | p=0.000 n=10 |
-| 4096 | 1 | B/op | +170657.89% | p=0.000 n=10 |
-| 4096 | 1 | allocs/op | +333.33% | p=0.000 n=10 |
-| 4096 | 4 | sec/op | -65.22% | p=0.000 n=10 |
-| 4096 | 4 | B/op | +95367.65% | p=0.000 n=10 |
-| 4096 | 4 | allocs/op | +166.67% | p=0.000 n=10 |
-| 4096 | 16 | sec/op | -86.13% | p=0.000 n=10 |
-| 4096 | 16 | B/op | +34494.68% | p=0.000 n=10 |
-| 4096 | 16 | allocs/op | +55.56% | p=0.000 n=10 |
+| 64 | 1 | sec/op | +19.36% | p=0.000 n=10 |
+| 64 | 1 | B/op | +1558.82% | p=0.000 n=10 |
+| 64 | 1 | allocs/op | +240.00% | p=0.000 n=10 |
+| 64 | 4 | sec/op | -63.15% | p=0.000 n=10 |
+| 64 | 4 | B/op | +828.12% | p=0.000 n=10 |
+| 64 | 4 | allocs/op | +136.36% | p=0.000 n=10 |
+| 64 | 16 | sec/op | -84.74% | p=0.000 n=10 |
+| 64 | 16 | B/op | +288.04% | p=0.000 n=10 |
+| 64 | 16 | allocs/op | +77.14% | p=0.000 n=10 |
+| 4096 | 1 | sec/op | +16.41% | p=0.000 n=10 |
+| 4096 | 1 | B/op | +190735.29% | p=0.000 n=10 |
+| 4096 | 1 | allocs/op | +420.00% | p=0.000 n=10 |
+| 4096 | 4 | sec/op | -65.60% | p=0.000 n=10 |
+| 4096 | 4 | B/op | +101328.12% | p=0.000 n=10 |
+| 4096 | 4 | allocs/op | +218.18% | p=0.000 n=10 |
+| 4096 | 16 | sec/op | -86.27% | p=0.000 n=10 |
+| 4096 | 16 | B/op | +35244.57% | p=0.000 n=10 |
+| 4096 | 16 | allocs/op | +102.86% | p=0.000 n=10 |
 
 </details>
 
@@ -762,15 +763,15 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 | N | 利用回数 | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- | --- |
-| 64 | 1 | Cached | 2,272 ±0% | 17 ±0% |
-| 64 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 64 | 4 | Cached | 2,392 ±0% | 23 ±0% |
-| 64 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 64 | 16 | Cached | 2,872 ±0% | 47 ±0% |
-| 64 | 16 | Uncached | 752 ±0% | 36 ±0% |
-| 4096 | 1 | Cached | 259,552 ±0% | 26 ±0% |
-| 4096 | 1 | Uncached | 152 ±0% | 6 ±0% |
-| 4096 | 4 | Cached | 259,672 ±0% | 32 ±0% |
-| 4096 | 4 | Uncached | 272 ±0% | 12 ±0% |
-| 4096 | 16 | Cached | 260,152 ±0% | 56 ±0% |
-| 4096 | 16 | Uncached | 752 ±0% | 36 ±0% |
+| 64 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 2,256 ±0% | 17 ±0% |
+| 64 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 64 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 2,376 ±0% | 26 ±0% |
+| 64 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 64 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 2,856 ±0% | 62 ±0% |
+| 64 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
+| 4096 | 1 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 259,536 ±0% | 26 ±0% |
+| 4096 | 1 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 136 ±0% | 5 ±0% |
+| 4096 | 4 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 259,656 ±0% | 35 ±0% |
+| 4096 | 4 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 256 ±0% | 11 ±0% |
+| 4096 | 16 | [Cached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L107) | 260,136 ±0% | 71 ±0% |
+| 4096 | 16 | [Uncached](https://github.com/meian/go-seqpipeline/blob/aea977304b759c54fd5fbf16aa1170f75e606e4f/benchmarks/cache_test.go#L116) | 736 ±0% | 35 ±0% |
