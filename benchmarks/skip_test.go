@@ -8,9 +8,10 @@ import (
 )
 
 func skipOperatorLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	source := seq.FromSlice(values).
+		Pipe(seq.Skip(8).Operator)
 	var sum int64
-	for v := range seq.Skip(8).Operator(source) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -48,7 +49,7 @@ func TestSkipOperatorLibrary(t *testing.T) {
 func skipOperatorGo(values []int) int64 {
 	end := min(8, len(values))
 	var sum int64
-	for _, v := range values[end:] {
+	for v := range slices.Values(values[end:]) {
 		sum += int64(v)
 	}
 	return sum
@@ -84,9 +85,10 @@ func TestSkipOperatorGo(t *testing.T) {
 }
 
 func skipOperator2Library(values []int) int64 {
-	pairs := seq.FromSeq2(slices.All(values))
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe2(seq.Skip(8).Operator2)
 	var sum int64
-	for k, v := range seq.Skip(8).Operator2(pairs) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -124,7 +126,7 @@ func TestSkipOperator2Library(t *testing.T) {
 func skipOperator2Go(values []int) int64 {
 	end := min(8, len(values))
 	var sum int64
-	for k, v := range values[end:] {
+	for k, v := range slices.All(values[end:]) {
 		sum += int64(k+end) + int64(v)
 	}
 	return sum

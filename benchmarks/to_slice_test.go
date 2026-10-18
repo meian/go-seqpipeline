@@ -13,7 +13,7 @@ func toSliceLibrary(values []int) int64 {
 	source := seq.FromSlice(values)
 	collectedValues = seq.ToSlice(source)
 	var sum int64
-	for _, v := range collectedValues {
+	for v := range slices.Values(collectedValues) {
 		sum += int64(v)
 	}
 	return sum
@@ -52,7 +52,7 @@ func toSliceGo(values []int) int64 {
 	standard := slices.Values(values)
 	collectedValues = slices.Collect(standard)
 	var sum int64
-	for _, v := range collectedValues {
+	for v := range slices.Values(collectedValues) {
 		sum += int64(v)
 	}
 	return sum

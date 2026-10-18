@@ -8,9 +8,10 @@ import (
 )
 
 func seqPipeLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	source := seq.FromSlice(values).
+		Pipe(seq.Map(func(v int) int { return (v + 1) & 65535 }))
 	var sum int64
-	for v := range source.Pipe(seq.Map(func(v int) int { return (v + 1) & 65535 })) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -47,7 +48,7 @@ func TestSeqPipeLibrary(t *testing.T) {
 
 func seqPipeGo(values []int) int64 {
 	var sum int64
-	for _, v := range values {
+	for v := range slices.Values(values) {
 		sum += int64((v + 1) & 65535)
 	}
 	return sum
@@ -83,9 +84,11 @@ func TestSeqPipeGo(t *testing.T) {
 }
 
 func seqPipe2Library(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
+	source := inputSeq.
+		Pipe2(seq.Zip(inputSeq).Operator)
 	var sum int64
-	for k, v := range source.Pipe2(seq.Zip(source).Operator) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -122,7 +125,7 @@ func TestSeqPipe2Library(t *testing.T) {
 
 func seqPipe2Go(values []int) int64 {
 	var sum int64
-	for i, k := range values {
+	for i, k := range slices.All(values) {
 		sum += int64(k) + int64(values[i])
 	}
 	return sum
@@ -158,9 +161,10 @@ func TestSeqPipe2Go(t *testing.T) {
 }
 
 func seq2PipeLibrary(values []int) int64 {
-	pairs := seq.FromSeq2(slices.All(values))
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe(seq.Values)
 	var sum int64
-	for v := range pairs.Pipe(seq.Values) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -197,7 +201,7 @@ func TestSeq2PipeLibrary(t *testing.T) {
 
 func seq2PipeGo(values []int) int64 {
 	var sum int64
-	for _, v := range values {
+	for v := range slices.Values(values) {
 		sum += int64(v)
 	}
 	return sum
@@ -233,9 +237,10 @@ func TestSeq2PipeGo(t *testing.T) {
 }
 
 func seq2Pipe2Library(values []int) int64 {
-	pairs := seq.FromSeq2(slices.All(values))
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe2(seq.Map2(func(k, v int) (int, int) { return k, (v + 1) & 65535 }))
 	var sum int64
-	for k, v := range pairs.Pipe2(seq.Map2(func(k, v int) (int, int) { return k, (v + 1) & 65535 })) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -272,7 +277,7 @@ func TestSeq2Pipe2Library(t *testing.T) {
 
 func seq2Pipe2Go(values []int) int64 {
 	var sum int64
-	for k, v := range values {
+	for k, v := range slices.All(values) {
 		sum += int64(k) + int64((v+1)&65535)
 	}
 	return sum

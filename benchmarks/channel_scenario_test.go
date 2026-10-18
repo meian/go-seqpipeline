@@ -8,26 +8,16 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func producer(values []int, capacity int) (<-chan int, <-chan struct{}) {
-	ch := make(chan int, capacity)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		defer close(ch)
-		for _, v := range values {
-			ch <- v
-		}
-	}()
-	return ch, done
-}
-
 func channelTransform(source seq.Seq[int]) seq.Seq[int] {
-	return source.Pipe(seq.Map(mapValue)).Pipe(seq.Filter(keepValue))
+	return source.
+		Pipe(seq.Map(mapValue)).
+		Pipe(seq.Filter(keepValue))
 }
 
 func scenarioChannelSeq(values []int, capacity int) []pair {
 	var out []pair
-	for v := range channelTransform(seq.FromSlice(values)) {
+	source := channelTransform(seq.FromSlice(values))
+	for v := range source {
 		out = append(out, pair{value: v})
 	}
 	return out
@@ -62,7 +52,8 @@ func TestScenarioChannelSeq(t *testing.T) {
 func scenarioChannelToChannel(values []int, capacity int) []pair {
 	var out []pair
 	source := channelTransform(seq.FromSlice(values))
-	for v := range seq.ToChannel(context.Background(), source) {
+	channel := seq.ToChannel(context.Background(), source)
+	for v := range channel {
 		out = append(out, pair{value: v})
 	}
 	return out
@@ -150,7 +141,8 @@ func TestScenarioChannelDirect(t *testing.T) {
 func scenarioChannelFromChannel(values []int, capacity int) []pair {
 	ch, done := producer(values, capacity)
 	var out []pair
-	for v := range channelTransform(seq.FromChannel(context.Background(), ch)) {
+	source := channelTransform(seq.FromChannel(context.Background(), ch))
+	for v := range source {
 		out = append(out, pair{value: v})
 	}
 	<-done
@@ -201,7 +193,8 @@ func scenarioChannelRoundTrip(values []int, capacity int) []pair {
 	ch, done := producer(values, capacity)
 	var out []pair
 	source := channelTransform(seq.FromChannel(context.Background(), ch))
-	for v := range seq.ToChannel(context.Background(), source) {
+	channel := seq.ToChannel(context.Background(), source)
+	for v := range channel {
 		out = append(out, pair{value: v})
 	}
 	<-done

@@ -8,9 +8,10 @@ import (
 )
 
 func takeOperatorLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	source := seq.FromSlice(values).
+		Pipe(seq.Take(8).Operator)
 	var sum int64
-	for v := range seq.Take(8).Operator(source) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -48,7 +49,7 @@ func TestTakeOperatorLibrary(t *testing.T) {
 func takeOperatorGo(values []int) int64 {
 	end := min(8, len(values))
 	var sum int64
-	for _, v := range values[:end] {
+	for v := range slices.Values(values[:end]) {
 		sum += int64(v)
 	}
 	return sum
@@ -84,9 +85,10 @@ func TestTakeOperatorGo(t *testing.T) {
 }
 
 func takeOperator2Library(values []int) int64 {
-	pairs := seq.FromSeq2(slices.All(values))
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe2(seq.Take(8).Operator2)
 	var sum int64
-	for k, v := range seq.Take(8).Operator2(pairs) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -124,7 +126,7 @@ func TestTakeOperator2Library(t *testing.T) {
 func takeOperator2Go(values []int) int64 {
 	end := min(8, len(values))
 	var sum int64
-	for k, v := range values[:end] {
+	for k, v := range slices.All(values[:end]) {
 		sum += int64(k) + int64(v)
 	}
 	return sum

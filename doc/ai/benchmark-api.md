@@ -3,13 +3,14 @@
 対象コミットは [測定環境](../../benchmarks/results/environment.md) に記録する。  
 `seq` の公開関数 21 件と公開メソッド 16 件、計 37 件を今回のコードから棚卸しした。  
 非公開の設定値型が返す公開メソッドも含む。  
-34 種の API 名・36 種の API/phase を N64 / N4096 の計 72 条件を Go / Library の 144 ケースで比較し、設定値の生成 3 関数は関連する評価ケースで代替する。  
+32 種の API/phase を N64 / N4096 の計 64 条件・Go / Library の 128 ケースで比較する。  
+設定値の生成 3 関数は関連する Unit で、Cache / Cache2 は利用目的に合う Scenario で測定する。  
 この表は今回のスナップショットの対応であり、通常の機能変更時に即時追従を要求する検証ではない。  
 
 | 公開 API | Unit の api キー | 測定範囲・代替理由 |
 | --- | --- | --- |
-| `Cache` | `Cache` | Fill（作成・全件保存） / Warm（保存済みの反復）を分離 |
-| `Cache2` | `Cache2` | Fill（作成・全件保存） / Warm（保存済みの反復）を分離 |
+| `Cache` | — | 標準 API の代替ではないため Unit は設けず、Scenario の Fill / Warm / Reuse で測定 |
+| `Cache2` | — | Cache と同じく Scenario の Fill / Warm / Reuse で測定 |
 | `FromChannel` | `FromChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
 | `ToChannel` | `ToChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
 | `FromSlice` | `FromSlice` | 構築・全件評価・チェックサム |
@@ -66,11 +67,13 @@
 | FromChannel / ToChannel | [from_channel_test.go](../../benchmarks/from_channel_test.go)、[to_channel_test.go](../../benchmarks/to_channel_test.go) |
 | Zip と設定メソッド | [zip_test.go](../../benchmarks/zip_test.go) |
 | Seq / Seq2 の Pipe / Pipe2 | [pipe_test.go](../../benchmarks/pipe_test.go) |
-| Cache / Cache2、Fill / Warm / Reuse | [cache_test.go](../../benchmarks/cache_test.go) |
-| Channel を含むパイプライン | [channel_test.go](../../benchmarks/channel_test.go) |
-| Map / Filter / Take を接続するパイプライン | [pipeline_test.go](../../benchmarks/pipeline_test.go) |
+| Cache / Cache2、Fill / Warm / Reuse | [cache_scenario_test.go](../../benchmarks/cache_scenario_test.go) |
+| Channel を含むパイプライン | [channel_scenario_test.go](../../benchmarks/channel_scenario_test.go) |
+| Map / Filter / Take を接続するパイプライン | [pipeline_scenario_test.go](../../benchmarks/pipeline_scenario_test.go) |
 
 [benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) は入力データの生成、結果保持用の変数、要素の変換・判定だけを共有する。  
+Unit のケースは機能別の `*_test.go`、Scenario のケースは機能別の `*_scenario_test.go` に分離する。  
+共有の送信処理は `channel_helper_test.go` に置き、異なる測定分類のケースを同じファイルへ混在させない。  
 ケースの登録表、共通のベンチマークループ、テストのディスパッチャーは設けない。  
 
 ## 処理と入口
@@ -78,7 +81,7 @@
 各 API・実装の処理全体を `mapLibrary` / `mapGo` のような型付き関数に置く。  
 通常の `BenchmarkMapLibrary` / `TestMapLibrary` は、どちらも `mapLibrary` を直接呼ぶ。  
 Seq の生成・演算子の構築・評価・収集・結果の加算は処理本体に含め、入力データだけを呼び出し元で準備する。  
-Cache / Cache2 は `cacheFillLibrary` / `cacheWarmLibrary` のように段階も名前へ含め、Warm の呼び出し元は Fill で保存済みの入力を用意する。  
+Cache / Cache2 は Scenario のみで扱い、`scenarioCacheSeqFill` / `scenarioCacheSeqWarm` のように段階を分ける。  
 Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のように、種類と実装ごとに分ける。  
 
 ベンチマーク関数内の各 `b.Run` は条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  

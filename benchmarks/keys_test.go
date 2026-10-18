@@ -1,32 +1,33 @@
 package benchmarks
 
 import (
-	"slices"
+	"maps"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func keysLibrary(values []int) int64 {
-	pairs := seq.FromSeq2(slices.All(values))
+func keysLibrary(values map[int]int) int64 {
+	source := seq.FromMap(values).
+		Pipe(seq.Keys)
 	var sum int64
-	for v := range seq.Keys(pairs) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
 }
 
 func BenchmarkKeysLibrary(b *testing.B) {
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=KeyLoop/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Library/N=64", func(b *testing.B) {
+		values := mapInput(64)
 
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = keysLibrary(values)
 		}
 	})
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=KeyLoop/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Library/N=4096", func(b *testing.B) {
+		values := mapInput(4096)
 
 		b.ReportAllocs()
 		for b.Loop() {
@@ -36,7 +37,7 @@ func BenchmarkKeysLibrary(b *testing.B) {
 }
 
 func TestKeysLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+	values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
 
 	got := keysLibrary(values)
 	const want int64 = 15
@@ -45,25 +46,25 @@ func TestKeysLibrary(t *testing.T) {
 	}
 }
 
-func keysGo(values []int) int64 {
+func keysGo(values map[int]int) int64 {
 	var sum int64
-	for k := range values {
+	for k := range maps.All(values) {
 		sum += int64(k)
 	}
 	return sum
 }
 
 func BenchmarkKeysGo(b *testing.B) {
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=KeyLoop/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
+	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Go/N=64", func(b *testing.B) {
+		values := mapInput(64)
 
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = keysGo(values)
 		}
 	})
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=KeyLoop/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
+	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Go/N=4096", func(b *testing.B) {
+		values := mapInput(4096)
 
 		b.ReportAllocs()
 		for b.Loop() {
@@ -73,7 +74,7 @@ func BenchmarkKeysGo(b *testing.B) {
 }
 
 func TestKeysGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+	values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
 
 	got := keysGo(values)
 	const want int64 = 15

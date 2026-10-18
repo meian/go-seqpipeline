@@ -14,7 +14,7 @@ func toMapLibrary(values []int) int64 {
 	pairs := seq.FromSeq2(slices.All(values))
 	collectedMap = seq.ToMap(pairs)
 	var sum int64
-	for k, v := range collectedMap {
+	for k, v := range maps.All(collectedMap) {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -53,7 +53,7 @@ func toMapGo(values []int) int64 {
 	standardPairs := slices.All(values)
 	collectedMap = maps.Collect(standardPairs)
 	var sum int64
-	for k, v := range collectedMap {
+	for k, v := range maps.All(collectedMap) {
 		sum += int64(k) + int64(v)
 	}
 	return sum

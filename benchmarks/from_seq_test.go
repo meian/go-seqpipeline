@@ -9,8 +9,9 @@ import (
 
 func fromSeqLibrary(values []int) int64 {
 	standard := slices.Values(values)
+	source := seq.FromSeq(standard)
 	var sum int64
-	for v := range seq.FromSeq(standard) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -85,8 +86,9 @@ func TestFromSeqGo(t *testing.T) {
 
 func fromSeq2Library(values []int) int64 {
 	standardPairs := slices.All(values)
+	source := seq.FromSeq2(standardPairs)
 	var sum int64
-	for k, v := range seq.FromSeq2(standardPairs) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum

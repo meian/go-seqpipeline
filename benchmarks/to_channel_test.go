@@ -2,15 +2,17 @@ package benchmarks
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func toChannelLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
+	source := seq.ToChannel(context.Background(), inputSeq)
 	var sum int64
-	for v := range seq.ToChannel(context.Background(), source) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -49,7 +51,7 @@ func toChannelGo(values []int) int64 {
 	ch := make(chan int)
 	go func() {
 		defer close(ch)
-		for _, v := range values {
+		for v := range slices.Values(values) {
 			ch <- v
 		}
 	}()

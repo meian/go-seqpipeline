@@ -1,14 +1,16 @@
 package benchmarks
 
 import (
+	"maps"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func fromMapLibrary(values map[int]int) int64 {
+	source := seq.FromMap(values)
 	var sum int64
-	for k, v := range seq.FromMap(values) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -16,24 +18,14 @@ func fromMapLibrary(values map[int]int) int64 {
 
 func BenchmarkFromMapLibrary(b *testing.B) {
 	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
-
-		mapping := make(map[int]int, len(values))
-		for k, v := range values {
-			mapping[k] = v
-		}
+		mapping := mapInput(64)
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = fromMapLibrary(mapping)
 		}
 	})
 	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		mapping := make(map[int]int, len(values))
-		for k, v := range values {
-			mapping[k] = v
-		}
+		mapping := mapInput(4096)
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = fromMapLibrary(mapping)
@@ -56,7 +48,7 @@ func TestFromMapLibrary(t *testing.T) {
 
 func fromMapGo(values map[int]int) int64 {
 	var sum int64
-	for k, v := range values {
+	for k, v := range maps.All(values) {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -64,24 +56,14 @@ func fromMapGo(values map[int]int) int64 {
 
 func BenchmarkFromMapGo(b *testing.B) {
 	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		mapping := make(map[int]int, len(values))
-		for k, v := range values {
-			mapping[k] = v
-		}
+		mapping := mapInput(64)
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = fromMapGo(mapping)
 		}
 	})
 	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		mapping := make(map[int]int, len(values))
-		for k, v := range values {
-			mapping[k] = v
-		}
+		mapping := mapInput(4096)
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = fromMapGo(mapping)

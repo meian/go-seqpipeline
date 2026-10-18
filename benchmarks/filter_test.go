@@ -8,9 +8,10 @@ import (
 )
 
 func filterLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	source := seq.FromSlice(values).
+		Pipe(seq.Filter(func(v int) bool { return v%3 != 0 }))
 	var sum int64
-	for v := range seq.Filter(func(v int) bool { return v%3 != 0 })(source) {
+	for v := range source {
 		sum += int64(v)
 	}
 	return sum
@@ -47,7 +48,7 @@ func TestFilterLibrary(t *testing.T) {
 
 func filterGo(values []int) int64 {
 	var sum int64
-	for _, v := range values {
+	for v := range slices.Values(values) {
 		if v%3 != 0 {
 			sum += int64(v)
 		}
@@ -85,9 +86,10 @@ func TestFilterGo(t *testing.T) {
 }
 
 func filter2Library(values []int) int64 {
-	pairs := seq.FromSeq2(slices.All(values))
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe2(seq.Filter2(func(k, v int) bool { return v%3 != 0 }))
 	var sum int64
-	for k, v := range seq.Filter2(func(k, v int) bool { return v%3 != 0 })(pairs) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -124,7 +126,7 @@ func TestFilter2Library(t *testing.T) {
 
 func filter2Go(values []int) int64 {
 	var sum int64
-	for k, v := range values {
+	for k, v := range slices.All(values) {
 		if v%3 != 0 {
 			sum += int64(k) + int64(v)
 		}

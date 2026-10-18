@@ -1,15 +1,18 @@
 package benchmarks
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func zipOperatorLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
+	source := inputSeq.
+		Pipe2(seq.Zip(inputSeq).Operator)
 	var sum int64
-	for k, v := range seq.Zip(source).Operator(source) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -46,7 +49,7 @@ func TestZipOperatorLibrary(t *testing.T) {
 
 func zipOperatorGo(values []int) int64 {
 	var sum int64
-	for i, k := range values {
+	for i, k := range slices.All(values) {
 		sum += int64(k) + int64(values[i])
 	}
 	return sum
@@ -82,10 +85,11 @@ func TestZipOperatorGo(t *testing.T) {
 }
 
 func zipAlignByLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
+	source := seq.FromSlice(values).
+		Pipe2(seq.Zip(short).AlignBy(seq.AlignLeft).Operator)
 	var sum int64
-	for k, v := range seq.Zip(short).AlignBy(seq.AlignLeft).Operator(source) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -123,7 +127,7 @@ func TestZipAlignByLibrary(t *testing.T) {
 func zipAlignByGo(values []int) int64 {
 	shortValues := values[:len(values)/2]
 	var sum int64
-	for i, k := range values {
+	for i, k := range slices.All(values) {
 		v := 0
 		if i < len(shortValues) {
 			v = shortValues[i]
@@ -163,10 +167,11 @@ func TestZipAlignByGo(t *testing.T) {
 }
 
 func zipWithDefaultValueLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
+	source := seq.FromSlice(values).
+		Pipe2(seq.Zip(short).AlignBy(seq.AlignLeft).WithDefaultValue(7).Operator)
 	var sum int64
-	for k, v := range seq.Zip(short).AlignBy(seq.AlignLeft).WithDefaultValue(7).Operator(source) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -204,7 +209,7 @@ func TestZipWithDefaultValueLibrary(t *testing.T) {
 func zipWithDefaultValueGo(values []int) int64 {
 	shortValues := values[:len(values)/2]
 	var sum int64
-	for i, k := range values {
+	for i, k := range slices.All(values) {
 		v := 7
 		if i < len(shortValues) {
 			v = shortValues[i]
@@ -244,10 +249,12 @@ func TestZipWithDefaultValueGo(t *testing.T) {
 }
 
 func zipWithDefaultKeyLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
+	source := short.
+		Pipe2(seq.Zip(inputSeq).AlignBy(seq.AlignRight).WithDefaultKey(7).Operator)
 	var sum int64
-	for k, v := range seq.Zip(source).AlignBy(seq.AlignRight).WithDefaultKey(7).Operator(short) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -285,7 +292,7 @@ func TestZipWithDefaultKeyLibrary(t *testing.T) {
 func zipWithDefaultKeyGo(values []int) int64 {
 	shortValues := values[:len(values)/2]
 	var sum int64
-	for i, v := range values {
+	for i, v := range slices.All(values) {
 		k := 7
 		if i < len(shortValues) {
 			k = shortValues[i]
@@ -325,9 +332,11 @@ func TestZipWithDefaultKeyGo(t *testing.T) {
 }
 
 func zipKeyOperatorLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
+	source := inputSeq.
+		Pipe2(seq.Zip(inputSeq).WithDefaultKey(7).Operator)
 	var sum int64
-	for k, v := range seq.Zip(source).WithDefaultKey(7).Operator(source) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -364,7 +373,7 @@ func TestZipKeyOperatorLibrary(t *testing.T) {
 
 func zipKeyOperatorGo(values []int) int64 {
 	var sum int64
-	for i, k := range values {
+	for i, k := range slices.All(values) {
 		sum += int64(k) + int64(values[i])
 	}
 	return sum
@@ -400,10 +409,12 @@ func TestZipKeyOperatorGo(t *testing.T) {
 }
 
 func zipKeyAlignByLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
+	source := short.
+		Pipe2(seq.Zip(inputSeq).WithDefaultKey(7).AlignBy(seq.AlignRight).Operator)
 	var sum int64
-	for k, v := range seq.Zip(source).WithDefaultKey(7).AlignBy(seq.AlignRight).Operator(short) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -441,7 +452,7 @@ func TestZipKeyAlignByLibrary(t *testing.T) {
 func zipKeyAlignByGo(values []int) int64 {
 	shortValues := values[:len(values)/2]
 	var sum int64
-	for i, v := range values {
+	for i, v := range slices.All(values) {
 		k := 7
 		if i < len(shortValues) {
 			k = shortValues[i]
@@ -481,10 +492,11 @@ func TestZipKeyAlignByGo(t *testing.T) {
 }
 
 func zipKeyWithDefaultValueLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
+	source := seq.FromSlice(values).
+		Pipe2(seq.Zip(short).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultValue(9).Operator)
 	var sum int64
-	for k, v := range seq.Zip(short).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultValue(9).Operator(source) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -522,7 +534,7 @@ func TestZipKeyWithDefaultValueLibrary(t *testing.T) {
 func zipKeyWithDefaultValueGo(values []int) int64 {
 	shortValues := values[:len(values)/2]
 	var sum int64
-	for i, k := range values {
+	for i, k := range slices.All(values) {
 		v := 9
 		if i < len(shortValues) {
 			v = shortValues[i]
@@ -562,10 +574,12 @@ func TestZipKeyWithDefaultValueGo(t *testing.T) {
 }
 
 func zipKeyWithDefaultKeyLibrary(values []int) int64 {
-	source := seq.FromSlice(values)
+	inputSeq := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
+	source := short.
+		Pipe2(seq.Zip(inputSeq).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultKey(9).Operator)
 	var sum int64
-	for k, v := range seq.Zip(source).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultKey(9).Operator(short) {
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
@@ -603,7 +617,7 @@ func TestZipKeyWithDefaultKeyLibrary(t *testing.T) {
 func zipKeyWithDefaultKeyGo(values []int) int64 {
 	shortValues := values[:len(values)/2]
 	var sum int64
-	for i, v := range values {
+	for i, v := range slices.All(values) {
 		k := 9
 		if i < len(shortValues) {
 			k = shortValues[i]

@@ -62,8 +62,7 @@ def processing_function(case):
     dimensions = dict(entries)
     if kind == 'Unit':
         api = dimensions['api'].replace('.', '')
-        phase = dimensions['phase'] if api in ('Cache', 'Cache2') else ''
-        return api[0].lower()+api[1:]+phase+dimensions['impl']
+        return api[0].lower()+api[1:]+dimensions['impl']
     implementation = dimensions.get('impl', dimensions.get('phase'))
     if kind == 'ScenarioPipeline':
         implementation = 'Library' if implementation == 'Pipeline' else implementation
@@ -216,8 +215,6 @@ def preface(title):
 def unit_category(api):
     if api.startswith(('Zip', 'Take', 'Skip')):
         return '件数制御・結合'
-    if api in ('Cache', 'Cache2'):
-        return 'キャッシュ'
     if 'Channel' in api:
         return 'Channel'
     if api.startswith(('From', 'To')):
@@ -243,21 +240,22 @@ def condition_groups(cases):
 
 
 REFERENCE_DESCRIPTIONS = {
-    'SliceRange': 'スライスを `for range`',
+    'SliceRange': '`slices.Values` を反復',
     'IteratorRange': '標準 `iter.Seq` を `for range`',
     'Iterator2Range': '標準 `iter.Seq2` を `for range`',
-    'MapRange': 'map を `for range`',
+    'MapRange': '`maps.All` を反復',
     'SlicesCollect': '`slices.Collect` で収集',
     'MapsCollect': '`maps.Collect` で収集',
-    'MapLoop': '`for range` 内で値を変換',
-    'Map2Loop': '`for range` 内で値を変換し、キーを維持',
-    'FilterLoop': '`for range` 内で値を選別',
-    'Filter2Loop': '`for range` 内で組を選別',
-    'KeyLoop': '`for range` で添字を取得',
-    'TakeSlice': '先頭 8 件の部分スライスを反復',
-    'Take2Slice': '先頭 8 件の添字・値を反復',
-    'SkipSlice': '先頭 8 件を除いた部分スライスを反復',
-    'Skip2Slice': '先頭 8 件を除き、元の添字・値を反復',
+    'MapLoop': '`slices.Values` で値を変換',
+    'Map2Loop': '`slices.All` で値を変換し、キーを維持',
+    'FilterLoop': '`slices.Values` で値を選別',
+    'Filter2Loop': '`slices.All` で組を選別',
+    'MapKeysIterator': '`maps.All` からキーを取得',
+    'MapValuesIterator': '`maps.All` から値を取得',
+    'TakeSlice': '先頭 8 件を `slices.Values` で反復',
+    'Take2Slice': '先頭 8 件を `slices.All` で反復',
+    'SkipSlice': '先頭 8 件を除き `slices.Values` で反復',
+    'Skip2Slice': '先頭 8 件を除き `slices.All` で元の添字・値を取得',
     'ZipIndex': '添字で同じ位置の値を組にする',
     'ZipLeft0': '左入力を反復し、右の不足分を 0 で補完',
     'ZipLeft7': '左入力を反復し、右の不足分を 7 で補完',
@@ -266,8 +264,6 @@ REFERENCE_DESCRIPTIONS = {
     'ZipRight9': '右入力を反復し、左の不足分を 9 で補完',
     'ChannelReceive': 'channel を直接受信し、送信元の終了を待つ',
     'ChannelSend': '1 goroutine で送信し、channel を直接受信',
-    'PairAppend': '標準 iterator の組を `append` で保存',
-    'PairRange': '保存済みの組のスライスを反復',
 }
 
 

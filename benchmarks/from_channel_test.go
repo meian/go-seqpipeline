@@ -9,8 +9,9 @@ import (
 
 func fromChannelLibrary(values []int) int64 {
 	ch, done := producer(values, 0)
+	source := seq.FromChannel(context.Background(), ch)
 	var sum int64
-	for v := range seq.FromChannel(context.Background(), ch) {
+	for v := range source {
 		sum += int64(v)
 	}
 	<-done

@@ -63,10 +63,13 @@
 - 定期更新時のコードを基準に公開APIの現行一覧を作成し、その一覧に合わせて測定ケースを追加・修正・削除する
 - 通常の機能PRやリリースに測定コードの即時更新を要求しない
 - 原則としてAPIごとに独立して測定し、適切な実行条件（入力件数、データ型、分岐条件など）を設ける
-- 各 API にライブラリを使わない一般的な Go の実装を用意し、入力・処理・出力・収集・結果保持・終了待ちをそろえて比較する
-- 通常のループ・部分スライス・標準 iterator・標準の収集 API・直接の channel 操作を使い、比較のためだけに不自然な処理を追加しない
+- 標準の処理を置き換える各 API に Go の比較実装を用意し、入力・処理・出力・収集・結果保持・終了待ちをそろえる
+- Cache / Cache2 は標準 API の代替ではないため Unit を設けず、保存と再利用を Scenario で測る
+- Unit は Library の入力元と同じ標準 iterator を用い、スライス直接反復と iterator 反復の差を混ぜない
+- `FromSlice` は `slices.Values`、Seq2 のスライス入力は `slices.All`、`FromMap` は `maps.All` に対応させる
+- Keys / Values は map を受け取り、`FromMap(...).Pipe(...)` と `maps.All` からの射影を比較する
+- 通常の最適化は有効とし、結果を演算子単独の費用とは解釈しない
 - ライブラリ側と Go 側の計測範囲・結果保持をそろえ、代表入力で処理を実行できることを確認する
-- Fill は保存のみ、Warm は保存後の反復のみを双方で測り、Fill の保存結果もテストで確認する
 - 単独測定に意味がないAPIは、関連APIの測定に含める
 - その場合は対象API・代替ケース・理由を記録する
 - 遅延評価のAPIは構築だけを測って性能を代表させない
@@ -78,16 +81,18 @@
 - 通常ループ・標準iterator・直接Channel操作など、処理結果と測定範囲が比較可能な対照を選ぶ
 - 入力件数や段数等の条件を変え、なぜ性能差が出るか読み取れるようにする
 - Cacheは初回保存（Fill）、保存済み結果の反復（Warm）、保存費用を含む複数回利用を区別する
+- Fill の疎通テストでは、代表入力の保存結果も確認する
 - Channelは生成・送受信・goroutine起動・終了待ち・容量などの条件を明記する
 - シナリオを追加するときは利用上の意味を説明し、ケース数を増やすこと自体を目的にしない
 
 ### コードの配置
 
-- 測定分類ではなく、Map / Filter / Take / Skip などの機能ごとに `*_test.go` を分ける
+- Unit / Scenario を分離した上で、Map / Filter / Take / Skip などの機能ごとにファイルを分ける
 - 対応する Seq / Seq2 は同じファイルへ置いてよいが、各 API の処理・ベンチマーク・テストを連続して記述する
-- 同じ機能の Unit / Scenario は同じファイルへ置いてよい
+- Unit は機能別の `*_test.go`、Scenario は機能別の `*_scenario_test.go` へ分け、同じファイルにケースを混在させない
 - 複数機能を組み合わせる Scenario は独立した機能群として扱う
 - 各 API・実装に `mapLibrary` / `mapGo` のような処理全体の関数を用意する
+- Library は `source := seq.FromSlice(...).Pipe(...)` などで接続を終えてから `for ... range source` で評価する
 - 通常の `BenchmarkMapLibrary` / `TestMapLibrary` から、同じ `mapLibrary` を直接呼ぶ
 - 共通化するのは処理全体と低水準の入力生成などに限り、ケース登録表・汎用状態構造体・共通の測定ループ・テストディスパッチャーを作らない
 - ベンチマークとテストをテーブル駆動にせず、条件は各 `b.Run` / `t.Run` へ明記する
@@ -118,7 +123,7 @@
 
 | 成果物 | 内容 | Git管理 |
 | --- | --- | --- |
-| ベンチマークコード・等価性テスト | 全APIのUnitと代表Scenario | する |
+| ベンチマークコード・疎通テスト | API 別の Unit と利用目的別の Scenario | する |
 | 概要レポート | 代表Scenarioの結果と解釈 | する |
 | 詳細な集計結果 | 全Unit/Scenarioのケース別測定値 | する |
 | 測定方法の詳細 | 環境・条件・計測範囲・再現方法 | する |
@@ -156,9 +161,9 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 | `benchmarks/take_test.go` / `skip_test.go` | Take / Skip の処理・測定・結果検証 |
 | `benchmarks/from_*_test.go` / `to_*_test.go` | 入出力の変換・収集の処理・測定・結果検証 |
 | `benchmarks/zip_test.go` / `pipe_test.go` | Zip の設定、Pipe / Pipe2 の処理・測定・結果検証 |
-| `benchmarks/pipeline_test.go` | 複数段のパイプラインの処理・測定・等価性テスト |
-| `benchmarks/channel_test.go` | Channel を含むパイプラインの処理・測定・等価性テスト |
-| `benchmarks/cache_test.go` | Cache / Cache2 の Fill / Warm / Reuse の処理・測定・結果検証 |
+| `benchmarks/pipeline_scenario_test.go` | 複数段のパイプラインの処理・測定・等価性テスト |
+| `benchmarks/channel_scenario_test.go` | Channel を含むパイプラインの処理・測定・等価性テスト |
+| `benchmarks/cache_scenario_test.go` | Cache / Cache2 の Fill / Warm / Reuse の処理・測定・結果検証 |
 | `benchmarks/benchmark_helper_test.go` | 入力生成・結果保持と低水準の変換・判定 |
 | `benchmarks/REPORT.md` | Scenario の代表値・倍率・考察 |
 | `benchmarks/results/environment.md` | 利用者が結果を適用できるか判断する実行環境 |
@@ -202,7 +207,7 @@ benchstat の列は `impl` を使い、他の条件が同じ行の実装だけ�
 Unit の名前には `class=Unit`・`api`・`N`・`phase`・`ref`・`impl` を含め、`ref` は Go の書き方、`impl` は Go / Library を表す。  
 `benchstat -ignore .name -filter "/class:Unit" -col "/impl@(Go Library)" -format=csv` で同じスナップショット内を比較し、条件を行から除外しない。  
 `.name` は各実装の入口名なので比較の行から除き、`class` と処理条件は残す。  
-Unit の Warm / Fill は同じ保存段階の Go 実装と比較し、構築範囲の異なる Warm / Uncached の倍率は作らない。  
+Cache の Warm / Fill は単独の Scenario として掲載し、構築範囲の異なる Warm / Uncached の倍率は作らない。  
 Scenario の比較相手がない Warm / Fill は全件掲載する。  
 `publish.py` は統計計算をせず、benchstat の中央値・信頼区間・検定結果を Markdown に整形する。  
 全 API・全 Scenario と全指標を詳細表に掲載し、API 名や条件を長いケース名から分離する。  

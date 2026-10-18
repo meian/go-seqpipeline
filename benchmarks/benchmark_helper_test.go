@@ -15,3 +15,11 @@ func input(n int) []int {
 
 func mapValue(v int) int   { return (v + 1) & 65535 }
 func keepValue(v int) bool { return v%3 != 0 }
+
+func mapInput(n int) map[int]int {
+	values := make(map[int]int, n)
+	for i := 0; i < n; i++ {
+		values[i] = i
+	}
+	return values
+}
