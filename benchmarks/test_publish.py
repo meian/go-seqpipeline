@@ -162,6 +162,46 @@ class PublishTest(unittest.TestCase):
         self.assertIn('A&#124;B<br>C', publish.table(['heading'], [['A|B\nC']]))
 
 
+class SourceLinksTest(unittest.TestCase):
+    def setUp(self):
+        self.case = publish.key('Unit/api=Map/N=64/phase=Evaluate/ref=MapLoop/impl=Go')
+        self.code = {'benchmarks/transform_test.go':
+                     'func runUnitMapEvaluateGo(data *unitInput) int64 { return 0 }\n'
+                     'func benchmarkUnitMapEvaluateGo(b *testing.B, values []int) {}\n'
+                     'func TestUnitMapEvaluateGo(t *testing.T) {}\n'}
+
+    def test_link_identifies_processing_at_measured_commit(self):
+        sources = publish.SourceLinks(self.code, 'a'*40)
+        self.assertEqual(sources.link(self.case, 'Go'),
+                         '[Go](https://github.com/meian/go-seqpipeline/blob/'+'a'*40+
+                         '/benchmarks/transform_test.go#L1)')
+        sources.verify([self.case])
+
+    def test_missing_benchmark_or_test_entry_is_rejected(self):
+        for prefix in ('benchmarkUnit', 'TestUnit'):
+            code = {path: '\n'.join(line for line in source.splitlines()
+                                   if not line.startswith('func '+prefix))
+                    for path, source in self.code.items()}
+            with self.subTest(prefix=prefix):
+                with self.assertRaisesRegex(ValueError, 'missing processing function or entry'):
+                    publish.SourceLinks(code, 'a'*40).link(self.case, 'Go')
+
+    def test_unlinked_processing_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'unlinked processing functions'):
+            publish.SourceLinks(self.code, 'a'*40).verify([self.case])
+
+    def test_scenario_names_identify_implementation_or_phase(self):
+        for name, function in [
+            ('ScenarioChannel/N=64/buffer=0/impl=Direct', 'runScenarioChannelDirect'),
+            ('ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Loop', 'runScenarioPipelineLoop'),
+            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Fill', 'runScenarioCacheFill'),
+            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Warm', 'runScenarioCacheWarm'),
+            ('ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Cached', 'runScenarioCacheCached'),
+        ]:
+            with self.subTest(name=name):
+                self.assertEqual(publish.processing_function(publish.key(name)), function)
+
+
 class MeasureCleanupTest(unittest.TestCase):
     def exercise(self, interrupted):
         with tempfile.TemporaryDirectory(prefix='benchmark-cleanup-') as directory:

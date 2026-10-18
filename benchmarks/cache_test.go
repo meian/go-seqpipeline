@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"fmt"
+	"iter"
 	"slices"
 	"testing"
 
@@ -18,36 +19,18 @@ func cacheUnitCases(values []int) []unitCase {
 	}
 	warm := seq.Cache(source)
 	warm2 := seq.Cache2(pairs)
-	return []unitCase{
-		{"Cache", "Fill", func() int64 { s := seq.Cache(source); cachedConsumer = func() int64 { return sumSeq(s) }; return 0 }, 0},
-		{"Cache", "Warm", func() int64 { return sumSeq(warm) }, total},
-		{"Cache2", "Fill", func() int64 { s := seq.Cache2(pairs); cachedConsumer = func() int64 { return sumSeq2(s) }; return 0 }, 0},
-		{"Cache2", "Warm", func() int64 { return sumSeq2(warm2) }, total + keys},
+	data := &unitInput{
+		values: values,
+		source: source,
+		pairs:  pairs,
+		warm:   warm,
+		warm2:  warm2,
 	}
-}
-
-func TestCacheUnitResults(t *testing.T) {
-	checkUnitCases(t, cacheUnitCases, cacheUnitReferences)
-	for _, n := range []int{0, 1, 64, 4096} {
-		for _, tc := range cacheUnitCases(input(n)) {
-			t.Run(fmt.Sprintf("%s/N=%d/phase=%s", tc.api, n, tc.phase), func(t *testing.T) {
-				reference := referenceFor(tc, cacheUnitReferences(input(n)))
-				for _, run := range []func() int64{tc.run, reference.run} {
-					if got := run(); got != tc.want {
-						t.Fatalf("got %d; want %d", got, tc.want)
-					}
-					if tc.phase == "Fill" {
-						want := int64(n * (n - 1) / 2)
-						if tc.api == "Cache2" {
-							want *= 2
-						}
-						if got := cachedConsumer(); got != want {
-							t.Fatalf("filled cache: got %d; want %d", got, want)
-						}
-					}
-				}
-			})
-		}
+	return []unitCase{
+		{"Cache", "Fill", unitRun{data, runUnitCacheFillLibrary}, 0},
+		{"Cache", "Warm", unitRun{data, runUnitCacheWarmLibrary}, total},
+		{"Cache2", "Fill", unitRun{data, runUnitCache2FillLibrary}, 0},
+		{"Cache2", "Warm", unitRun{data, runUnitCache2WarmLibrary}, total + keys},
 	}
 }
 
@@ -67,43 +50,12 @@ func cacheSeq2(values []int, work int) seq.Seq2[int, int] {
 	return seq.FromSeq2(slices.All(values)).Pipe2(seq.Map2(func(k, v int) (int, int) { return k, cacheValue(v, work) }))
 }
 
-// cached=true の呼び出しが Cache/Cache2 の作成・充填に相当する。
-func cacheConsumer(values []int, kind string, work int, cached bool) func() int64 {
-	if kind == "Seq" {
-		s := cacheSeq(values, work)
-		if cached {
-			s = seq.Cache(s)
-		}
-		return func() int64 { return sumSeq(s) }
-	}
-	s := cacheSeq2(values, work)
-	if cached {
-		s = seq.Cache2(s)
-	}
-	return func() int64 { return sumSeq2(s) }
-}
-
 func TestCacheEquivalent(t *testing.T) {
 	for _, kind := range []string{"Seq", "Seq2"} {
 		for _, n := range []int{0, 1, 64, 4096} {
 			for _, work := range []int{0, 32} {
 				t.Run(fmt.Sprintf("%s/N%d/W%d", kind, n, work), func(t *testing.T) {
 					values := input(n)
-					var want int64
-					for k, v := range values {
-						want += int64(cacheValue(v, work))
-						if kind == "Seq2" {
-							want += int64(k)
-						}
-					}
-					for _, cached := range []bool{false, true} {
-						consume := cacheConsumer(values, kind, work, cached)
-						for r := 0; r < 16; r++ {
-							if got := consume(); got != want {
-								t.Fatalf("cached=%v got %d; want %d", cached, got, want)
-							}
-						}
-					}
 					// チェックサムに加え、保存した値・キーの順序も比較する。
 					if got := seq.ToSlice(seq.Cache(cacheSeq(values, work))); !slices.Equal(got, seq.ToSlice(cacheSeq(values, work))) {
 						t.Fatal("Seq cache differs")
@@ -124,43 +76,155 @@ func TestCacheEquivalent(t *testing.T) {
 	}
 }
 
+type cachedScenario struct {
+	single seq.Seq[int]
+	pairs  seq.Seq2[int, int]
+}
+
+var scenarioCachedResult cachedScenario
+
+func runScenarioCacheFill(values []int, kind string, work int) cachedScenario {
+	if kind == "Seq" {
+		return cachedScenario{single: seq.Cache(cacheSeq(values, work))}
+	}
+	return cachedScenario{pairs: seq.Cache2(cacheSeq2(values, work))}
+}
+
+func runScenarioCacheWarm(cached cachedScenario) int64 {
+	var sum int64
+	if cached.single != nil {
+		for v := range cached.single {
+			sum += int64(v)
+		}
+	} else {
+		for k, v := range cached.pairs {
+			sum += int64(k) + int64(v)
+		}
+	}
+	return sum
+}
+
+func runScenarioCacheCached(values []int, kind string, work, reuse int) int64 {
+	cached := runScenarioCacheFill(values, kind, work)
+	var sum int64
+	for r := 0; r < reuse; r++ {
+		sum += runScenarioCacheWarm(cached)
+	}
+	return sum
+}
+
+func runScenarioCacheUncached(values []int, kind string, work, reuse int) int64 {
+	var sum int64
+	if kind == "Seq" {
+		source := cacheSeq(values, work)
+		for r := 0; r < reuse; r++ {
+			sum += sumSeq(source)
+		}
+	} else {
+		source := cacheSeq2(values, work)
+		for r := 0; r < reuse; r++ {
+			sum += sumSeq2(source)
+		}
+	}
+	return sum
+}
+
+func benchmarkScenarioCacheFill(b *testing.B, values []int, kind string, work int) {
+	b.ReportAllocs()
+	for b.Loop() {
+		scenarioCachedResult = runScenarioCacheFill(values, kind, work)
+	}
+}
+
+func benchmarkScenarioCacheWarm(b *testing.B, values []int, kind string, work int) {
+	cached := runScenarioCacheFill(values, kind, work)
+	b.ReportAllocs()
+	for b.Loop() {
+		checksum = runScenarioCacheWarm(cached)
+	}
+}
+
+func benchmarkScenarioCacheCached(b *testing.B, values []int, kind string, work, reuse int) {
+	b.ReportAllocs()
+	for b.Loop() {
+		checksum = runScenarioCacheCached(values, kind, work, reuse)
+	}
+}
+
+func benchmarkScenarioCacheUncached(b *testing.B, values []int, kind string, work, reuse int) {
+	b.ReportAllocs()
+	for b.Loop() {
+		checksum = runScenarioCacheUncached(values, kind, work, reuse)
+	}
+}
+
+func testScenarioCache(t *testing.T, run func([]int, string, int, int) int64) {
+	t.Helper()
+	for _, kind := range []string{"Seq", "Seq2"} {
+		for _, n := range []int{0, 1, 64, 4096} {
+			values := input(n)
+			for _, work := range []int{0, 32} {
+				var want int64
+				for k, v := range values {
+					want += int64(cacheValue(v, work))
+					if kind == "Seq2" {
+						want += int64(k)
+					}
+				}
+				for _, reuse := range []int{1, 4, 16} {
+					t.Run(fmt.Sprintf("%s/N%d/W%d/R%d", kind, n, work, reuse), func(t *testing.T) {
+						if got := run(values, kind, work, reuse); got != want*int64(reuse) {
+							t.Fatalf("got %d; want %d", got, want*int64(reuse))
+						}
+					})
+				}
+			}
+		}
+	}
+}
+
+func TestScenarioCacheFill(t *testing.T) {
+	testScenarioCache(t, func(values []int, kind string, work, reuse int) int64 {
+		cached := runScenarioCacheFill(values, kind, work)
+		var sum int64
+		for r := 0; r < reuse; r++ {
+			sum += runScenarioCacheWarm(cached)
+		}
+		return sum
+	})
+}
+
+func TestScenarioCacheWarm(t *testing.T) {
+	testScenarioCache(t, func(values []int, kind string, work, reuse int) int64 {
+		cached := runScenarioCacheFill(values, kind, work)
+		var sum int64
+		for r := 0; r < reuse; r++ {
+			sum += runScenarioCacheWarm(cached)
+		}
+		return sum
+	})
+}
+
+func TestScenarioCacheCached(t *testing.T) { testScenarioCache(t, runScenarioCacheCached) }
+
+func TestScenarioCacheUncached(t *testing.T) { testScenarioCache(t, runScenarioCacheUncached) }
+
 func BenchmarkScenarioCache(b *testing.B) {
 	for _, kind := range []string{"Seq", "Seq2"} {
 		for _, n := range []int{64, 4096} {
 			values := input(n)
 			for _, work := range []int{0, 32} {
 				prefix := fmt.Sprintf("kind=%s/N=%d/work=%d", kind, n, work)
-				b.Run(prefix+"/phase=Warm", func(b *testing.B) {
-					consume := cacheConsumer(values, kind, work, true)
-					b.ReportAllocs()
-					for b.Loop() {
-						checksum = consume()
-					}
-				})
-				b.Run(prefix+"/phase=Fill", func(b *testing.B) {
-					b.ReportAllocs()
-					for b.Loop() {
-						// 保存のみ。下流による反復は含めず、結果をグローバルへ保持する。
-						cachedConsumer = cacheConsumer(values, kind, work, true)
-					}
-				})
+				b.Run(prefix+"/phase=Warm", func(b *testing.B) { benchmarkScenarioCacheWarm(b, values, kind, work) })
+				b.Run(prefix+"/phase=Fill", func(b *testing.B) { benchmarkScenarioCacheFill(b, values, kind, work) })
 				for _, reuse := range []int{1, 4, 16} {
-					for _, cached := range []bool{false, true} {
-						impl := "Uncached"
-						if cached {
-							impl = "Cached"
-						}
-						b.Run(fmt.Sprintf("%s/phase=Reuse/reuse=%d/impl=%s", prefix, reuse, impl), func(b *testing.B) {
-							b.ReportAllocs()
-							for b.Loop() {
-								consume := cacheConsumer(values, kind, work, cached)
-								var sum int64
-								for r := 0; r < reuse; r++ {
-									sum += consume()
-								}
-								checksum = sum
-							}
-						})
+					for _, implementation := range []struct {
+						name  string
+						entry func(*testing.B, []int, string, int, int)
+					}{
+						{"Uncached", benchmarkScenarioCacheUncached}, {"Cached", benchmarkScenarioCacheCached},
+					} {
+						b.Run(fmt.Sprintf("%s/phase=Reuse/reuse=%d/impl=%s", prefix, reuse, implementation.name), func(b *testing.B) { implementation.entry(b, values, kind, work, reuse) })
 					}
 				}
 			}
@@ -173,34 +237,131 @@ var cachedConsumer func() int64
 func cacheUnitReferences(values []int) map[string]unitReference {
 	standard := slices.Values(values)
 	standardPairs := slices.All(values)
-	fill2 := func() []pair {
-		var cached []pair
-		for k, v := range standardPairs {
-			cached = append(cached, pair{k, v})
-		}
-		return cached
-	}
 	warm := slices.Collect(standard)
-	warm2 := fill2()
-	consume2 := func(cached []pair) int64 {
-		var sum int64
-		for _, p := range cached {
-			sum += int64(p.key) + int64(p.value)
-		}
-		return sum
+	warm2 := collectUnitPairs(standardPairs)
+	data := &unitInput{
+		values:        values,
+		standard:      standard,
+		standardPairs: standardPairs,
+		warmValues:    warm,
+		warmPairs:     warm2,
 	}
 	return map[string]unitReference{
-		"Cache/Fill": {"SlicesCollect", func() int64 {
-			cached := slices.Collect(standard)
-			cachedConsumer = func() int64 { return rangeValues(cached) }
-			return 0
-		}},
-		"Cache/Warm": {"SliceRange", func() int64 { return rangeValues(warm) }},
-		"Cache2/Fill": {"PairAppend", func() int64 {
-			cached := fill2()
-			cachedConsumer = func() int64 { return consume2(cached) }
-			return 0
-		}},
-		"Cache2/Warm": {"PairRange", func() int64 { return consume2(warm2) }},
+		"Cache/Fill":  {"SlicesCollect", unitRun{data, runUnitCacheFillGo}},
+		"Cache/Warm":  {"SliceRange", unitRun{data, runUnitCacheWarmGo}},
+		"Cache2/Fill": {"PairAppend", unitRun{data, runUnitCache2FillGo}},
+		"Cache2/Warm": {"PairRange", unitRun{data, runUnitCache2WarmGo}},
 	}
+}
+
+func collectUnitPairs(source iter.Seq2[int, int]) []pair {
+	var cached []pair
+	for k, v := range source {
+		cached = append(cached, pair{k, v})
+	}
+	return cached
+}
+
+func sumUnitPairs(cached []pair) int64 {
+	var sum int64
+	for _, p := range cached {
+		sum += int64(p.key) + int64(p.value)
+	}
+	return sum
+}
+
+func runUnitCacheFillLibrary(data *unitInput) int64 {
+	s := seq.Cache(data.source)
+	cachedConsumer = func() int64 { return sumSeq(s) }
+	return 0
+}
+
+func benchmarkUnitCacheFillLibrary(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCacheFillLibrary)
+}
+
+func TestUnitCacheFillLibrary(t *testing.T) {
+	testUnitOperation(t, "Cache", "Fill", "Library", runUnitCacheFillLibrary)
+}
+
+func runUnitCacheFillGo(data *unitInput) int64 {
+	cached := slices.Collect(data.standard)
+	cachedConsumer = func() int64 { return rangeValues(cached) }
+	return 0
+}
+
+func benchmarkUnitCacheFillGo(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCacheFillGo)
+}
+
+func TestUnitCacheFillGo(t *testing.T) {
+	testUnitOperation(t, "Cache", "Fill", "Go", runUnitCacheFillGo)
+}
+
+func runUnitCacheWarmLibrary(data *unitInput) int64 { return sumSeq(data.warm) }
+
+func benchmarkUnitCacheWarmLibrary(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCacheWarmLibrary)
+}
+
+func TestUnitCacheWarmLibrary(t *testing.T) {
+	testUnitOperation(t, "Cache", "Warm", "Library", runUnitCacheWarmLibrary)
+}
+
+func runUnitCacheWarmGo(data *unitInput) int64 { return rangeValues(data.warmValues) }
+
+func benchmarkUnitCacheWarmGo(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCacheWarmGo)
+}
+
+func TestUnitCacheWarmGo(t *testing.T) {
+	testUnitOperation(t, "Cache", "Warm", "Go", runUnitCacheWarmGo)
+}
+
+func runUnitCache2FillLibrary(data *unitInput) int64 {
+	s := seq.Cache2(data.pairs)
+	cachedConsumer = func() int64 { return sumSeq2(s) }
+	return 0
+}
+
+func benchmarkUnitCache2FillLibrary(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCache2FillLibrary)
+}
+
+func TestUnitCache2FillLibrary(t *testing.T) {
+	testUnitOperation(t, "Cache2", "Fill", "Library", runUnitCache2FillLibrary)
+}
+
+func runUnitCache2FillGo(data *unitInput) int64 {
+	cached := collectUnitPairs(data.standardPairs)
+	cachedConsumer = func() int64 { return sumUnitPairs(cached) }
+	return 0
+}
+
+func benchmarkUnitCache2FillGo(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCache2FillGo)
+}
+
+func TestUnitCache2FillGo(t *testing.T) {
+	testUnitOperation(t, "Cache2", "Fill", "Go", runUnitCache2FillGo)
+}
+
+func runUnitCache2WarmLibrary(data *unitInput) int64 { return sumSeq2(data.warm2) }
+
+func benchmarkUnitCache2WarmLibrary(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCache2WarmLibrary)
+}
+
+func TestUnitCache2WarmLibrary(t *testing.T) {
+	testUnitOperation(t, "Cache2", "Warm", "Library", runUnitCache2WarmLibrary)
+}
+
+func runUnitCache2WarmGo(data *unitInput) int64 { return sumUnitPairs(data.warmPairs) }
+
+func benchmarkUnitCache2WarmGo(b *testing.B, data *unitInput) {
+	benchmarkUnitOperation(b, data, runUnitCache2WarmGo)
+}
+
+func TestUnitCache2WarmGo(t *testing.T) {
+	testUnitOperation(t, "Cache2", "Warm", "Go", runUnitCache2WarmGo)
 }

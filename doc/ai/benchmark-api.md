@@ -69,3 +69,10 @@
 Go 側の実装も同じ機能ファイルの `*UnitReferences` に置く。  
 各 API・phase の比較相手は登録時に検証し、対応漏れ・重複・不要な登録をテストで検出する。  
 公開結果には比較相手の書き方を示し、一般的な Go と Library の時間・割り当て・検定を併記する。  
+
+## 処理へのリンク
+
+各 API・phase・実装の処理を `runUnit{API名からドットを除いた文字列}{phase}{GoまたはLibrary}` に置く。  
+対応する `benchmarkUnit...` と `TestUnit...` は同じ処理を呼び、共通ランナーは測定名と入力準備を担当する。  
+Scenario も実装・Fill / Warm ごとの `runScenario...`・`benchmarkScenario...`・`TestScenario...` に分ける。  
+公開表のリンクは測定コミットの関数宣言行から自動生成するため、行番号を手動で転記しない。  

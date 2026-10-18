@@ -6,6 +6,7 @@ import math
 import platform
 import re
 import sys
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -55,8 +56,56 @@ class Comparison:
     stats: dict
 
 
+def processing_function(case):
+    kind, entries = case
+    dimensions = dict(entries)
+    if kind == 'Unit':
+        return 'runUnit'+dimensions['api'].replace('.', '')+dimensions['phase']+dimensions['impl']
+    implementation = dimensions.get('impl', dimensions.get('phase'))
+    return 'run'+kind+implementation
+
+
+class SourceLinks:
+    """測定コミットの名前付き処理へリンクし、対応する入口も検証する。"""
+    def __init__(self, files, commit):
+        self.commit = commit
+        self.locations = {}
+        self.used = set()
+        for path, source in files.items():
+            for line, text in enumerate(source.splitlines(), 1):
+                match = re.match(r'^func (\w+)\(', text)
+                if match:
+                    name = match[1]
+                    if name in self.locations:
+                        raise ValueError(f'duplicate function: {name}')
+                    self.locations[name] = path, line
+
+    @classmethod
+    def from_commit(cls, root, commit):
+        paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', commit, '--', 'benchmarks'],
+                                        cwd=root, text=True).splitlines()
+        files = {path: subprocess.check_output(['git', 'show', commit+':'+path], cwd=root, text=True)
+                 for path in paths if path.endswith('_test.go')}
+        return cls(files, commit)
+
+    def link(self, case, label):
+        name = processing_function(case)
+        suffix = name.removeprefix('run')
+        for function in (name, 'benchmark'+suffix, 'Test'+suffix):
+            if function not in self.locations:
+                raise ValueError(f'missing processing function or entry: {function}')
+        self.used.add(name)
+        path, line = self.locations[name]
+        return f'[{label}](https://github.com/meian/go-seqpipeline/blob/{self.commit}/{path}#L{line})'
+
+    def verify(self, cases):
+        if self.used != {processing_function(case) for case in cases}:
+            raise ValueError('unlinked processing functions')
+
+
 class Snapshot:
     def __init__(self, directory):
+        self.sources = None
         self.values = {}
         self.seen = set()
         self.stats_seen = set()
@@ -105,6 +154,9 @@ class Snapshot:
                     raise ValueError('missing comparison statistics')
             self.comparisons.extend(groups.values())
 
+    def source(self, case, label):
+        return self.sources.link(case, label) if self.sources else label
+
     def cell(self, case, metric, interval=True):
         self.seen.add((case, metric))
         value = self.values[case, metric]
@@ -150,6 +202,7 @@ def preface(title):
 
 [性能概要](../REPORT.md) / [測定条件](../METHOD.md) / [実行環境](environment.md)。  
 値は中央値（`±` は 95% 信頼区間）で、割り当て量は保持メモリ量とは異なる。  
+実装名・時間の列名から、測定した処理のコードを開ける。  
 
 '''
 
@@ -250,11 +303,12 @@ def render_unit(snapshot):
                 label += '（キー既定値あり）'
             text += f'### {label}：{phase_label}\n\n'
             text += 'Go：'+REFERENCE_DESCRIPTIONS.get(reference, reference)+'。  \n\n'
-            text += table(['N', 'Go ns/op', 'Library ns/op', '倍率'],
+            text += table(['N', snapshot.source(comparisons[0].base, 'Go ns/op'),
+                           snapshot.source(comparisons[0].target, 'Library ns/op'), '倍率'],
                           [[dict(c.base[1])['N'], snapshot.cell(c.base, 'sec/op'),
                             snapshot.cell(c.target, 'sec/op'), snapshot.ratio(c)] for c in comparisons])
             text += table(['N', '実装', 'B/op', 'allocs/op'],
-                          [[dict(case[1])['N'], dict(case[1])['impl'],
+                          [[dict(case[1])['N'], snapshot.source(case, dict(case[1])['impl']),
                             snapshot.cell(case, 'B/op'), snapshot.cell(case, 'allocs/op')]
                            for c in comparisons for case in (c.base, c.target)])
             text += '<details>\n<summary>検定</summary>\n\n'
@@ -299,7 +353,8 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
                     covered.update((c.base, c.target))
                     rows.append([*fields(c.base), snapshot.cell(c.base, 'sec/op'),
                                  snapshot.cell(c.target, 'sec/op'), snapshot.ratio(c)])
-                text += table([*headers, base+' ns/op', target+' ns/op', '倍率'], rows)
+                text += table([*headers, snapshot.source(comparisons[0].base, base+' ns/op'),
+                               snapshot.source(comparisons[0].target, target+' ns/op'), '倍率'], rows)
                 text += f'<details>\n<summary>検定：{base} と {target}</summary>\n\n'
                 text += comparison_statistics(snapshot, comparisons, headers, fields)
                 text += '</details>\n\n'
@@ -307,11 +362,11 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
             if alone:
                 text += '#### 時間\n\n'
                 text += table([*headers, '実装', 'ns/op'],
-                              [[*fields(case), dict(case[1]).get('impl', '—'),
+                              [[*fields(case), snapshot.source(case, dict(case[1]).get('impl', dict(case[1]).get('phase', '—'))),
                                 snapshot.cell(case, 'sec/op')] for case in alone])
             text += '#### メモリ割り当て\n\n'
             text += table([*headers, '実装', 'B/op', 'allocs/op'],
-                          [[*fields(case), dict(case[1]).get('impl', '—'),
+                          [[*fields(case), snapshot.source(case, dict(case[1]).get('impl', dict(case[1]).get('phase', '—'))),
                             snapshot.cell(case, 'B/op'), snapshot.cell(case, 'allocs/op')] for case in cases])
     return text.rstrip('\n')+'\n'
 
@@ -343,9 +398,9 @@ def render_overview(snapshot):
                 text += f'## {title}\n\n'
                 text += condition(comparison.base)+'。  \n\n'
                 ratio = '~' if comparison.stats['sec/op'][0] == '~' else snapshot.ratio(comparison)
-                rows = [[base, snapshot.cell(comparison.base, 'sec/op', False), '1×',
+                rows = [[snapshot.source(comparison.base, base), snapshot.cell(comparison.base, 'sec/op', False), '1×',
                          snapshot.cell(comparison.base, 'B/op', False)],
-                        [target, snapshot.cell(comparison.target, 'sec/op', False), ratio,
+                        [snapshot.source(comparison.target, target), snapshot.cell(comparison.target, 'sec/op', False), ratio,
                          snapshot.cell(comparison.target, 'B/op', False)]]
                 text += table(['実装', 'ns/op', '時間比', 'B/op'], rows)
                 break
@@ -358,10 +413,15 @@ def render_overview(snapshot):
 
 def render(directory, destination):
     snapshot = Snapshot(directory)
+    if (directory/'commit.txt').exists():
+        commit = (directory/'commit.txt').read_text().strip()
+        snapshot.sources = SourceLinks.from_commit(ROOT.parent, commit)
     unit = render_unit(snapshot)
     scenario = render_scenario(snapshot)
     overview = render_overview(snapshot)
     snapshot.verify()
+    if snapshot.sources:
+        snapshot.sources.verify(snapshot.cases)
     destination.mkdir(parents=True, exist_ok=True)
     (destination/'unit.md').write_text(unit)
     (destination/'scenario.md').write_text(scenario)

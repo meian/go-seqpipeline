@@ -9,7 +9,7 @@ import (
 )
 
 // depth は Map の数 + Filter の 1 段。途中終了時はさらに Take を接続する。
-func pipeline(values []int, kind string, depth, limit int) []pair {
+func runScenarioPipelinePipeline(values []int, kind string, depth, limit int) []pair {
 	var out []pair
 	if kind == "Seq" {
 		s := seq.FromSlice(values)
@@ -39,7 +39,7 @@ func pipeline(values []int, kind string, depth, limit int) []pair {
 	return out
 }
 
-func baseline(values []int, kind string, depth, limit int) []pair {
+func runScenarioPipelineLoop(values []int, kind string, depth, limit int) []pair {
 	var out []pair
 	for k, v := range values {
 		for j := 1; j < depth; j++ {
@@ -60,7 +60,7 @@ func baseline(values []int, kind string, depth, limit int) []pair {
 }
 
 // 要素ごとの変換・判定を通常の関数に分け、インライン化を許す。
-func functionCalls(values []int, kind string, depth, limit int) []pair {
+func runScenarioPipelineFunctions(values []int, kind string, depth, limit int) []pair {
 	var out []pair
 	for k, v := range values {
 		for j := 1; j < depth; j++ {
@@ -80,23 +80,69 @@ func functionCalls(values []int, kind string, depth, limit int) []pair {
 	return out
 }
 
-func TestPipelineEquivalent(t *testing.T) {
+// 変換回数から結果を直接計算し、測定対象の実装とは独立に照合する。
+func pipelineExpected(values []int, kind string, depth, limit int) []pair {
+	var out []pair
+	for k, v := range values {
+		value := (v + depth - 1) & 65535
+		if value%3 == 0 {
+			continue
+		}
+		if kind == "Seq" {
+			k = 0
+		}
+		out = append(out, pair{k, value})
+		if limit > 0 && len(out) == limit {
+			break
+		}
+	}
+	return out
+}
+
+func testScenarioPipeline(t *testing.T, run func([]int, string, int, int) []pair) {
+	t.Helper()
 	for _, n := range []int{0, 1, 64, 4096} {
 		for _, kind := range []string{"Seq", "Seq2"} {
 			for _, depth := range []int{2, 6} {
 				for _, limit := range []int{0, 8} {
-					name := fmt.Sprintf("%s/N%d/D%d/L%d", kind, n, depth, limit)
-					t.Run(name, func(t *testing.T) {
-						want := baseline(input(n), kind, depth, limit)
-						for _, got := range [][]pair{functionCalls(input(n), kind, depth, limit), pipeline(input(n), kind, depth, limit)} {
-							if !slices.Equal(got, want) {
-								t.Fatalf("got %v; want %v", got, want)
-							}
+					t.Run(fmt.Sprintf("%s/N%d/D%d/L%d", kind, n, depth, limit), func(t *testing.T) {
+						values := input(n)
+						if got, want := run(values, kind, depth, limit), pipelineExpected(values, kind, depth, limit); !slices.Equal(got, want) {
+							t.Fatalf("got %v; want %v", got, want)
 						}
 					})
 				}
 			}
 		}
+	}
+}
+
+func TestScenarioPipelineLoop(t *testing.T) { testScenarioPipeline(t, runScenarioPipelineLoop) }
+
+func TestScenarioPipelineFunctions(t *testing.T) {
+	testScenarioPipeline(t, runScenarioPipelineFunctions)
+}
+
+func TestScenarioPipelinePipeline(t *testing.T) { testScenarioPipeline(t, runScenarioPipelinePipeline) }
+
+func benchmarkScenarioPipelineLoop(b *testing.B, values []int, kind string, depth, limit int) {
+	b.ReportAllocs()
+	for b.Loop() {
+		output = runScenarioPipelineLoop(values, kind, depth, limit)
+	}
+}
+
+func benchmarkScenarioPipelineFunctions(b *testing.B, values []int, kind string, depth, limit int) {
+	b.ReportAllocs()
+	for b.Loop() {
+		output = runScenarioPipelineFunctions(values, kind, depth, limit)
+	}
+}
+
+func benchmarkScenarioPipelinePipeline(b *testing.B, values []int, kind string, depth, limit int) {
+	b.ReportAllocs()
+	for b.Loop() {
+		output = runScenarioPipelinePipeline(values, kind, depth, limit)
 	}
 }
 
@@ -110,20 +156,13 @@ func BenchmarkScenarioPipeline(b *testing.B) {
 					if limit > 0 {
 						mode = "Early8"
 					}
-					for _, impl := range []string{"Loop", "Functions", "Pipeline"} {
-						b.Run(fmt.Sprintf("kind=%s/N=%d/depth=%d/mode=%s/impl=%s", kind, n, depth, mode, impl), func(b *testing.B) {
-							b.ReportAllocs()
-							for b.Loop() {
-								switch impl {
-								case "Pipeline":
-									output = pipeline(values, kind, depth, limit)
-								case "Functions":
-									output = functionCalls(values, kind, depth, limit)
-								default:
-									output = baseline(values, kind, depth, limit)
-								}
-							}
-						})
+					for _, implementation := range []struct {
+						name  string
+						entry func(*testing.B, []int, string, int, int)
+					}{
+						{"Loop", benchmarkScenarioPipelineLoop}, {"Functions", benchmarkScenarioPipelineFunctions}, {"Pipeline", benchmarkScenarioPipelinePipeline},
+					} {
+						b.Run(fmt.Sprintf("kind=%s/N=%d/depth=%d/mode=%s/impl=%s", kind, n, depth, mode, implementation.name), func(b *testing.B) { implementation.entry(b, values, kind, depth, limit) })
 					}
 				}
 			}
