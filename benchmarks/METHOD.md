@@ -3,6 +3,12 @@
 [今回の環境・コミット・コマンド条件](results/environment.md) と [公開 API の対応表](API.md) を併せて参照。  
 全測定値は [Unit 詳細表](results/unit.md) と [Scenario 詳細表](results/scenario.md) に掲載する。  
 
+## コードの配置
+
+測定コードは [変換・収集](conversion_test.go)、[変換・選別・射影](transform_test.go)、[件数制御](limit_test.go)、[Zip](zip_test.go)、[Pipe 接続](pipe_test.go)、[Pipeline](pipeline_test.go)、[Channel](channel_test.go)、[Cache](cache_test.go) に分ける。  
+同じ機能の Unit / Scenario と結果・等価性テストを同じファイルに置く。  
+[共通ヘルパー](benchmark_helper_test.go) が入力・出力保持・集計と Unit の実行を担当し、測定分類はファイル名ではなく既存のベンチマーク名で識別する。  
+
 ## Unit の範囲
 
 名前は `Unit/api=Map/N=64/phase=Evaluate` のように API・入力件数・評価範囲を表す。  
@@ -114,7 +120,7 @@ B/op は途中の拡張時に破棄する領域も含む割り当て総量であ
 `TestPipelineEquivalent` は空入力・1 件・64 件・4096 件について、全条件の出力値・キー・順序をスライス比較する。  
 `TestChannelEquivalent` は同じ入力群で、全構成・容量の出力値・順序を確認する。  
 `TestCacheEquivalent` は同じ入力群・上流負荷でキャッシュ前後の値・キー・順序を比較し、16 回の再利用でも期待チェックサムが一致することを確認する。  
-`TestUnitResults` は空入力・1 件・64 件・4096 件で各 API/phase の期待チェックサムを確認し、Fill では保存した結果も計測外で確認する。  
+各機能ファイルの `Test*UnitResults` は空入力・1 件・64 件・4096 件で各 API/phase の期待チェックサムを確認し、Cache の Fill では保存した結果も計測外で確認する。  
 これらは時間計測と分離した通常のテストとして実行する。  
 
 ## 集計と再作成

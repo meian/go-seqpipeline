@@ -44,6 +44,21 @@
 - Channelは生成・送受信・goroutine起動・終了待ち・容量などの条件を明記する
 - シナリオを追加するときは利用上の意味を説明し、ケース数を増やすこと自体を目的にしない
 
+### コードの配置
+
+- 測定分類ではなく、機能のまとまりで `*_test.go` を分ける
+- 対応する Seq / Seq2 のケースは同じファイルへ置き、各 API のケースをまとめる
+- 同じ機能の Unit / Scenario と結果・等価性テストは同じファイルへ置く
+- 複数機能を組み合わせる Scenario は独立した機能群として扱う
+- 入力・出力保持・反復集計・共通の実行ループは必要に応じてヘルパーへ分離する
+- 機能別ファイルの Unit ケースを共通ランナーへ登録し、`Unit/api=...` の名前を保つ
+- Scenario も `ScenarioPipeline` / `ScenarioChannel` / `ScenarioCache` 等の名前で分類を保つ
+- 定期更新で追加する機能も同じ配置方針とし、ケースの登録漏れ・重複を確認する
+
+ファイルの分割だけを目的に細分化せず、機能のまとまりと保守性を優先する。  
+既存の名前・条件を保つ整理では、全ベンチマークの試行実行と結果検証で欠落がないことを確認する。  
+公開済みの測定値はその測定コミットのスナップショットとして維持し、コード整理だけで更新しない。  
+
 ### 測定の正確性
 
 - 比較対象の出力値、順序、早期停止などが等価であることを通常のテストで検証する
@@ -90,8 +105,15 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 
 | パス | 役割 |
 | --- | --- |
-| `benchmarks/unit_test.go` | Unit と結果検証 |
-| `benchmarks/scenario_test.go` | Pipeline / Channel / Cache の Scenario と等価性テスト |
+| `benchmarks/conversion_test.go` | 入力変換・出力収集の Unit と結果検証 |
+| `benchmarks/transform_test.go` | Map / Filter / Keys / Values の Unit と結果検証 |
+| `benchmarks/limit_test.go` | Take / Skip の Unit と結果検証 |
+| `benchmarks/zip_test.go` | Zip と設定メソッドの Unit と結果検証 |
+| `benchmarks/pipe_test.go` | Pipe / Pipe2 の Unit と結果検証 |
+| `benchmarks/pipeline_test.go` | 複数段の Pipeline Scenario と等価性テスト |
+| `benchmarks/channel_test.go` | Channel の Unit / Scenario と結果・等価性テスト |
+| `benchmarks/cache_test.go` | Cache の Unit / Scenario と結果・等価性テスト |
+| `benchmarks/benchmark_helper_test.go` | 共通入力・集計・Unit 実行ループ |
 | `benchmarks/API.md` | 今回の公開 API 対応表と代替測定の理由 |
 | `benchmarks/METHOD.md` | 測定範囲・ケース名・再現条件・ツール導入 |
 | `benchmarks/REPORT.md` | Scenario の代表値・倍率・考察 |

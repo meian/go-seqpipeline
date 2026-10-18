@@ -50,3 +50,18 @@
 それぞれ入力・Map / Map2・Zip・Values と Pipe / Pipe2 の測定で利用する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
 各ケースの詳しい条件は [測定方法](METHOD.md) を参照。  
+
+## 測定コードの配置
+
+| API・機能 | 測定・結果検証のファイル |
+| --- | --- |
+| FromSlice / FromSeq / ToSeq / ToSlice / FromMap / FromSeq2 / ToSeq2 / ToMap | [conversion_test.go](conversion_test.go) |
+| Map / Map2 / Filter / Filter2 / Keys / Values | [transform_test.go](transform_test.go) |
+| Take / Skip と Operator / Operator2 | [limit_test.go](limit_test.go) |
+| Zip と設定メソッド | [zip_test.go](zip_test.go) |
+| Seq / Seq2 の Pipe / Pipe2 | [pipe_test.go](pipe_test.go) |
+| FromChannel / ToChannel、相互変換 Scenario | [channel_test.go](channel_test.go) |
+| Cache / Cache2、Fill / Warm / Reuse Scenario | [cache_test.go](cache_test.go) |
+| Map / Filter / Take を接続する Pipeline Scenario | [pipeline_test.go](pipeline_test.go) |
+
+共通の Unit ランナーは [benchmark_helper_test.go](benchmark_helper_test.go) に置き、全件を従来の `Unit/api=...` という名前で実行する。  
