@@ -1,0 +1,63 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/meian/go-seqpipeline/benchmarks
+cpu: Apple M4
+                                                        │    Loop     │               Pipeline                │
+                                                        │   sec/op    │    sec/op     vs base                 │
+ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All-2         245.6n ± 2%    518.6n ± 1%  +111.16% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8-2      55.83n ± 1%   188.65n ± 1%  +237.93% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All-2         305.2n ± 1%   1065.0n ± 1%  +249.01% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8-2      72.34n ± 1%   362.50n ± 1%  +401.14% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All-2       13.35µ ± 1%    25.08µ ± 1%   +87.86% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8-2    57.43n ± 2%   192.25n ± 1%  +234.78% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All-2       17.58µ ± 5%    52.66µ ± 0%  +199.59% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8-2    73.62n ± 1%   369.10n ± 0%  +401.32% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All-2        246.8n ± 1%    543.5n ± 1%  +120.20% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8-2     57.84n ± 1%   193.85n ± 1%  +235.15% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All-2        313.1n ± 1%   1145.0n ± 1%  +265.76% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8-2     75.41n ± 1%   364.15n ± 0%  +382.89% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All-2      13.72µ ± 1%    26.40µ ± 1%   +92.33% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8-2   59.66n ± 1%   192.25n ± 1%  +222.27% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All-2      18.25µ ± 1%    58.02µ ± 0%  +217.93% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8-2   74.52n ± 1%   363.45n ± 0%  +387.69% (p=0.000 n=10)
+geomean                                                   367.9n         1.192µ       +224.03%
+
+                                                        │     Loop     │               Pipeline                │
+                                                        │     B/op     │     B/op      vs base                 │
+ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All-2         1.984Ki ± 0%   2.273Ki ± 0%   +14.57% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8-2        240.0 ± 0%     640.0 ± 0%  +166.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All-2         1.983Ki ± 0%   2.648Ki ± 0%   +33.53% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8-2        239.5 ± 0%    1024.0 ± 0%  +327.56% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All-2       173.2Ki ± 0%   173.5Ki ± 0%    +0.17% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8-2      239.0 ± 0%     640.0 ± 0%  +167.78% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All-2       173.2Ki ± 0%   173.9Ki ± 0%    +0.38% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8-2      239.0 ± 0%    1024.0 ± 0%  +328.45% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All-2        1.984Ki ± 0%   2.273Ki ± 0%   +14.60% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8-2       240.0 ± 0%     640.0 ± 0%  +166.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All-2        1.983Ki ± 0%   2.648Ki ± 0%   +33.53% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8-2       240.0 ± 0%    1024.0 ± 0%  +326.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All-2      173.2Ki ± 0%   173.5Ki ± 0%    +0.17% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8-2     240.0 ± 0%     640.0 ± 0%  +166.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All-2      173.2Ki ± 0%   173.9Ki ± 0%    +0.38% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8-2     239.0 ± 0%    1024.0 ± 0%  +328.45% (p=0.000 n=10)
+geomean                                                   2.083Ki        4.040Ki        +94.00%
+
+                                                        │    Loop     │               Pipeline               │
+                                                        │  allocs/op  │  allocs/op   vs base                 │
+ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All-2         7.000 ± 14%   17.000 ± 0%  +142.86% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8-2      4.000 ± 25%   18.000 ± 0%  +350.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All-2         6.000 ±  0%   29.000 ± 0%  +383.33% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8-2      3.000 ± 33%   30.000 ± 0%  +900.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All-2       15.00 ±  0%    25.00 ± 0%   +66.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8-2    3.000 ± 33%   18.000 ± 0%  +500.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All-2       15.00 ±  0%    37.00 ± 0%  +146.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8-2    3.000 ±  0%   30.000 ± 0%  +900.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All-2        6.500 ±  8%   17.000 ± 0%  +161.54% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8-2     4.000 ± 25%   18.000 ± 0%  +350.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All-2        6.000 ±  0%   29.000 ± 0%  +383.33% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8-2     3.000 ±  0%   30.000 ± 0%  +900.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All-2      15.00 ±  7%    25.00 ± 0%   +66.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8-2   4.000 ± 25%   18.000 ± 0%  +350.00% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All-2      15.00 ±  0%    37.00 ± 0%  +146.67% (p=0.000 n=10)
+ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8-2   3.000 ±  0%   30.000 ± 0%  +900.00% (p=0.000 n=10)
+geomean                                                   5.714          24.57       +330.10%

@@ -1,0 +1,27 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/meian/go-seqpipeline/benchmarks
+cpu: Apple M4
+,Direct,,RoundTrip,,,
+,sec/op,CI,sec/op,CI,vs base,P
+ScenarioChannel/N=64/buffer=0-2,6.265e-06,0%,1.4134500000000002e-05,0%,+125.61%,p=0.000 n=10
+ScenarioChannel/N=64/buffer=64-2,2.3600000000000003e-06,1%,8.752500000000001e-06,0%,+270.87%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=0-2,0.00037465450000000004,0%,0.0007866135,0%,+109.96%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=64-2,0.00011062950000000001,2%,0.0006680105000000001,4%,+503.83%,p=0.000 n=10
+geomean,2.7979100309532793e-05,,8.979234497158905e-05,,+220.93%,
+
+,Direct,,RoundTrip,,,
+,B/op,CI,B/op,CI,vs base,P
+ScenarioChannel/N=64/buffer=0-2,2344,0%,2840,0%,+21.16%,p=0.000 n=10
+ScenarioChannel/N=64/buffer=64-2,2872,0%,3368,0%,+17.27%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=0-2,177704,0%,178200,0%,+0.28%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=64-2,178232,0%,178728,0%,+0.28%,p=0.000 n=10
+geomean,21488.50648329015,,23493.497721619642,,+9.33%,
+
+,Direct,,RoundTrip,,,
+,allocs/op,CI,allocs/op,CI,vs base,P
+ScenarioChannel/N=64/buffer=0-2,12,0%,23,0%,+91.67%,p=0.000 n=10
+ScenarioChannel/N=64/buffer=64-2,12,0%,23,0%,+91.67%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=0-2,20,0%,31,0%,+55.00%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=64-2,20,0%,31,0%,+55.00%,p=0.000 n=10
+geomean,15.491933384829666,,26.70205984563738,,+72.36%,

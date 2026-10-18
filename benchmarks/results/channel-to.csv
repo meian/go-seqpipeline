@@ -1,0 +1,21 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/meian/go-seqpipeline/benchmarks
+cpu: Apple M4
+,Seq,,ToChannel,,,
+,sec/op,CI,sec/op,CI,vs base,P
+ScenarioChannel/N=64/buffer=0-2,2.2855000000000002e-07,2%,7.035500000000001e-06,1%,+2978.32%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=0-2,1.4604000000000001e-05,0%,0.0003561435,1%,+2338.67%,p=0.000 n=10
+geomean,1.8269494245873362e-06,,5.005644408315476e-05,,+2639.89%,
+
+,Seq,,ToChannel,,,
+,B/op,CI,B/op,CI,vs base,P
+ScenarioChannel/N=64/buffer=0-2,2072,0%,2576,0%,+24.32%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=0-2,177432,0%,177936,0%,+0.28%,p=0.000 n=10
+geomean,19173.917283643423,,21409.416993463416,,+11.66%,
+
+,Seq,,ToChannel,,,
+,allocs/op,CI,allocs/op,CI,vs base,P
+ScenarioChannel/N=64/buffer=0-2,9,0%,18,0%,+100.00%,p=0.000 n=10
+ScenarioChannel/N=4096/buffer=0-2,17,0%,26,0%,+52.94%,p=0.000 n=10
+geomean,12.36931687685298,,21.63330765278394,,+74.89%,
