@@ -1,40 +1,22 @@
 # 性能概要
 
-このレポートは測定時点の性能スナップショットである。  
-[測定環境・対象コミット](results/environment.md)、[測定方法と範囲](METHOD.md)、[今回の API 対応表](API.md) を参照。  
-全 Unit / Scenario の時間・割り当て量と信頼区間は [詳細集計](results/all.txt)（[CSV](results/all.csv)）に分離している。  
+測定時点の代表的な Scenario を示す。  
+全件は [Unit](results/unit.md) / [Scenario](results/scenario.md)、条件は [測定環境](results/environment.md) / [測定方法](METHOD.md) を参照。  
+時間・割り当て量は中央値、倍率は対象 / 対照で、1 より大きいと対象が遅い。  
+割り当て量は保持メモリ量とは異なり、統計的に不明確な差は断定しない。  
 
-## Scenario の代表値
+| 代表条件（対照 → 対象） | ns/op（対照 → 対象） | 倍率 | B/op（対照 → 対象） | allocs/op（対照 → 対象） | 時間の検定 |
+| --- | --- | --- | --- | --- | --- |
+| Pipeline<br>Seq / N=4096 / 段数=2 / 全件<br>Loop → Pipeline | 13,349 → 25,078 | 1.879× | 177,392 → 177,688 | 15 → 25 | +87.86%<br>p=0.000 n=10 |
+| Pipeline<br>Seq / N=4096 / 段数=6 / 全件<br>Functions → Pipeline | 18,257.5 → 52,655 | 2.884× | 177,391 → 178,072 | 14 → 37 | +188.40%<br>p=0.000 n=10 |
+| Channel<br>N=4096 / 入力容量=64<br>Direct → FromChannel | 110,629.5 → 183,729.5 | 1.661× | 178,232 → 178,440 | 20 → 27 | +66.08%<br>p=0.000 n=10 |
+| Channel<br>N=4096 / 入力容量=0<br>Seq → ToChannel | 14,604 → 356,143.5 | 24.387× | 177,432 → 177,936 | 17 → 26 | +2338.67%<br>p=0.000 n=10 |
+| Cache<br>Seq / N=4096 / 負荷=0 / 利用回数=1 / 保存費用込み Reuse<br>Uncached → Cached | 11,198.5 → 23,290 | 2.080× | 152 → 128,488 | 6 → 26 | +107.97%<br>p=0.000 n=10 |
+| Cache<br>Seq2 / N=4096 / 負荷=32 / 利用回数=16 / 保存費用込み Reuse<br>Uncached → Cached | 1,234,016.5 → 171,404.5 | 0.139× | 752 → 260,152 | 36 → 56 | -86.11%<br>p=0.000 n=10 |
 
-N4096 の代表例を示し、全件・途中終了、キャッシュの初回費用を含む利用回数を区別する。  
-時間は benchstat の中央値、倍率は同じ行の対象 / 対照であり、過去の測定とは比較しない。  
-倍率が異なっていても検定が `~` の場合は差を断定しない。  
+軽い処理では接続する段数の費用が表れやすく、途中終了は不要な上流評価を抑える。  
+Channel は起動・送受信・終了の費用を含み、入力容量でも特性が変わる。  
+Cache は初回保存と保持メモリを必要とし、上流負荷・利用回数によって有利な条件が変わる。  
+整数の算術処理での結果であり、外部 I/O や他の型・出力方式への速度保証ではない。  
 
-| 条件 | 対照 → 対象 | 対照 ns/op | 対象 ns/op | 倍率 | 同一測定内の検定 |
-| --- | --- | ---: | ---: | ---: | --- |
-| Pipeline/kind=Seq/N=4096/depth=2/mode=All | Loop → Pipeline | 13349.00 | 25078.00 | 1.879 | +87.86% (p=0.000 n=10) |
-| Pipeline/kind=Seq/N=4096/depth=6/mode=All | Functions → Pipeline | 18257.50 | 52655.00 | 2.884 | +188.40% (p=0.000 n=10) |
-| Pipeline/kind=Seq2/N=4096/depth=6/mode=All | Loop → Pipeline | 18249.50 | 58021.50 | 3.179 | +217.93% (p=0.000 n=10) |
-| Pipeline/kind=Seq/N=4096/depth=6/mode=Early8 | Loop → Pipeline | 73.62 | 369.10 | 5.013 | +401.32% (p=0.000 n=10) |
-| Channel/N=4096/buffer=0 | Direct → FromChannel | 374654.50 | 469948.00 | 1.254 | +25.44% (p=0.000 n=10) |
-| Channel/N=4096/buffer=64 | Direct → FromChannel | 110629.50 | 183729.50 | 1.661 | +66.08% (p=0.000 n=10) |
-| Channel/N=4096/buffer=0 | Seq → ToChannel | 14604.00 | 356143.50 | 24.387 | +2338.67% (p=0.000 n=10) |
-| Channel/N=4096/buffer=64 | Direct → RoundTrip | 110629.50 | 668010.50 | 6.038 | +503.83% (p=0.000 n=10) |
-| Cache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=1 | Uncached → Cached | 11198.50 | 23290.00 | 2.080 | +107.97% (p=0.000 n=10) |
-| Cache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=4 | Uncached → Cached | 303532.50 | 98969.00 | 0.326 | -67.39% (p=0.000 n=10) |
-| Cache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=16 | Uncached → Cached | 1234016.50 | 171404.50 | 0.139 | -86.11% (p=0.000 n=10) |
-
-## 読み方
-
-軽い変換では、接続する段数が多いほど関数・反復・構築の費用が表れやすい。  
-Early8 は必要な出力がそろうと上流も止まるため、入力件数が多くても全件は処理しない。  
-Channel は送受信・goroutine 起動・終了処理を含み、入力容量で対照の絶対時間も変わる。  
-Cache は初回保存の時間と要素数に比例する保持メモリを必要とし、上流負荷と利用回数によって再評価を省く効果が変わる。  
-Warm の測定値は保存費用を含まないため、利用全体の判断には Reuse の同じ回数の Uncached / Cached を比較する。  
-
-これらは整数と軽い算術を使った条件の結果で、外部 I/O や別の型・出力方式へ一般化しない。  
-短い測定・OS・GC・温度等の影響があり、細かい順位や統計的に不明確な差は結論にしない。  
-詳細な実装間比較は [Loop](results/pipeline-loop.txt)、[Functions](results/pipeline-functions.txt)、[FromChannel](results/channel-from.txt)、[往復変換](results/channel-roundtrip.txt)、[ToChannel](results/channel-to.txt)、[Cache 再利用](results/cache-reuse.txt) を参照。  
-
-更新は専用の定期更新 Issue で現在の結果を置き換える。  
-通常の機能変更 PR やリリースで追加測定を義務付けず、手順は [運用ガイド](../doc/ai/benchmark.md) にまとめる。  
+更新は [運用ガイド](../doc/ai/benchmark.md) に従い、定期更新 Issue で現在の結果を置き換える。  

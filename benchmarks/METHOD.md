@@ -1,7 +1,7 @@
 # 測定方法
 
 [今回の環境・コミット・コマンド条件](results/environment.md) と [公開 API の対応表](API.md) を併せて参照。  
-全測定値は [benchstat 詳細集計](results/all.txt) と [CSV](results/all.csv) に掲載する。  
+全測定値は [Unit 詳細表](results/unit.md) と [Scenario 詳細表](results/scenario.md) に掲載する。  
 
 ## Unit の範囲
 
@@ -123,13 +123,21 @@ B/op は途中の拡張時に破棄する領域も含む割り当て総量であ
 時間の差の検定には既定の有意水準 0.05 を使い、`~` は統計的に差が明確ではないことを表す。  
 概要の倍率は同じ集計行の中央値同士の比であり、検定結果も併記する。  
 ゼロ割り当てを含む全件の幾何平均は解釈せず、各ケースの値を参照する。  
-`publish.py` はサンプル数・正常終了の確認、benchstat CSV の代表行の整形、測定環境の記録のみを行い、独自の統計処理は実装しない。  
+`publish.py` は benchstat CSV の中央値・信頼区間・検定結果を読み、全件の Markdown 表と概要を生成する。  
+Unit は API と測定条件を分けてカテゴリ別に並べ、Scenario は条件が一致する対照と対象の時間を横並びにする。  
+横幅を抑えるため Scenario のメモリ割り当ては別表とし、B/op と allocs/op の検定も掲載する。  
+比較対象のないケースも単独測定表へ自動的に掲載する。  
+新しい API は既知のカテゴリまたは「その他」、新しい Scenario はその名前の見出しへ追加される。  
+公開表で未使用のケース・指標、指標の欠落・重複、比較 CSV と全件 CSV の中央値・信頼区間の不一致があれば生成を失敗させる。  
+代表例の選択だけは `publish.py` で指定し、定期更新時に見直す。  
+統計計算は benchstat に任せ、整形処理では倍率と表示用の単位変換のみを計算する。  
 
 ```sh
 # 初回のみ。測定ツールをライブラリの go.mod に追加しない
 go install golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e
 # 正しさの検証
 go test ./... -count=1
+python3 -m unittest discover -s benchmarks -p 'test_*.py'
 # 現在の結果と概要を全件置き換える
 BENCHSTAT="$(go env GOPATH)/bin/benchstat" BENCHTIME=100ms COUNT=10 GOMAXPROCS=2 sh benchmarks/measure.sh
 ```
@@ -138,7 +146,9 @@ Go と benchstat の実行ファイルは `GO_BINARY` / `BENCHSTAT` で指定で
 サンドボックスでは事前取得済みの Go ツールチェーンの実行ファイルを `GO_BINARY` に指定し、必要なら `GOTOOLCHAIN=local` で自動ダウンロードを避ける。  
 `GOCACHE` を省略すると `/tmp` の一時ディレクトリ内に作り、測定終了時に削除する。  
 再利用できる書き込み先がある場合は `GOCACHE` を明示してよいが、raw の出力先は変わらない。  
-raw は `/tmp/seq-benchmark.XXXXXX/raw.txt` のみへ出力し、成功・失敗・通常の中断時に trap で削除する。  
+raw と benchstat CSV・環境記録用の中間ファイルは `/tmp/seq-benchmark.XXXXXX/` にのみ出力する。  
+全件の生成と整合性検証に成功してから公開 Markdown を置き換え、成功・失敗・通常の中断時には trap で一時ディレクトリ全体を削除する。  
+Git 管理する測定結果は `results/unit.md`、`results/scenario.md`、`results/environment.md` のみとし、raw・TXT・CSV は保存しない。  
 SIGKILL や OS 停止では trap が動かないため、その場合は該当する一時ディレクトリを削除してから再実行する。  
 集計結果の再生成には再測定が必要で、生データの保管・世代管理は行わない。  
 詳細な運用とチェックリストは [運用ガイド](../doc/ai/benchmark.md) を参照。  

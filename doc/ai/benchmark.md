@@ -65,8 +65,8 @@
 
 集計の統計処理には可能な限り `golang.org/x/perf/cmd/benchstat` を利用し、独自集計コードの重複を避ける。  
 ベンチマーク名はAPI・シナリオ・条件・実装が識別でき、集計処理でフィルタしやすい形式とする。  
-rawは計測中の一時ファイルに限り、処理後に破棄する。  
-リポジトリ内の `results/` にrawを配置したり、GitHub Releases・CI Artifacts等へ保存したりしない。  
+raw と benchstat の TXT・CSV は一時入力・中間データに限り、処理後に破棄する。  
+リポジトリ内の `results/` には公開用 Markdown だけを置き、raw・TXT・CSV を GitHub Releases・CI Artifacts 等にも保存しない。  
 再集計が必要な場合は保存済みrawを探すのではなく、定期更新手順に従って再測定する。  
 
 ## 再測定・レポート更新手順
@@ -96,10 +96,11 @@ rawは計測中の一時ファイルに限り、処理後に破棄する。
 | `benchmarks/METHOD.md` | 測定範囲・ケース名・再現条件・ツール導入 |
 | `benchmarks/REPORT.md` | Scenario の代表値・倍率・考察 |
 | `benchmarks/results/environment.md` | 今回の環境・対象コミット・測定条件・ツール版 |
-| `benchmarks/results/all.{txt,csv}` | 全 Unit / Scenario の集計 |
-| `benchmarks/results/{pipeline-loop,pipeline-functions,channel-from,channel-roundtrip,channel-to,cache-reuse}.{txt,csv}` | 同一条件内の比較集計 |
+| `benchmarks/results/unit.md` | 全 Unit の API・条件別 Markdown 表 |
+| `benchmarks/results/scenario.md` | 全 Scenario の時間・割り当て量・検定の Markdown 表 |
 | `benchmarks/measure.sh` | 一時測定・集計・公開表の再作成・raw 削除 |
-| `benchmarks/publish.py` | 正常終了・サンプル数の確認と集計済み CSV の整形 |
+| `benchmarks/publish.py` | 中間 CSV の整合性・網羅性確認と Markdown 生成 |
+| `benchmarks/test_publish.py` | 生成処理・欠落検出・一時ファイル削除のテスト |
 
 リポジトリのルートで実行する。  
 Go・Python 3・benchstat を用意し、ライブラリ本体の go.mod に測定ツールの依存を追加しない。  
@@ -109,6 +110,7 @@ Go・Python 3・benchstat を用意し、ライブラリ本体の go.mod に測�
 go install golang.org/x/perf/cmd/benchstat@latest
 # 通常テスト・等価性テスト
 go test ./... -count=1
+python3 -m unittest discover -s benchmarks -p 'test_*.py'
 # 全件測定・集計・概要更新。raw は処理後に削除される
 BENCHSTAT="$(go env GOPATH)/bin/benchstat" sh benchmarks/measure.sh
 # 精度と実行コストに応じて条件を選ぶ例
@@ -122,14 +124,19 @@ Go の自動取得を避ける場合は、適切な版の `GO_BINARY` を指定�
 実際に使った `BENCHTIME` / `COUNT` / `GOMAXPROCS` とツールの版は環境記録に出力される。  
 測定中は別のテストやビルドを並行実行しない。  
 
-raw はリポジトリ外の `/tmp/seq-benchmark.XXXXXX/raw.txt` だけに出力する。  
+raw・benchstat CSV・環境記録用の中間ファイルはリポジトリ外の `/tmp/seq-benchmark.XXXXXX/` にだけ出力する。  
 成功・失敗・通常の中断で一時ディレクトリ全体を削除する。  
 SIGKILL や OS 停止では trap が動かないため、残った該当一時ディレクトリを削除してから再実行する。  
 再集計が必要なら過去の raw を探さず、全件を再測定する。  
 
 benchstat の列は `impl` を使い、他の条件が同じ行の実装だけを比較する。  
 Warm / Fill は絶対指標にとどめ、構築範囲の異なる Warm / Uncached の倍率は作らない。  
-`publish.py` は統計計算をせず、benchstat の中央値と検定結果を整形する。  
+`publish.py` は統計計算をせず、benchstat の中央値・信頼区間・検定結果を Markdown に整形する。  
+全 API・全 Scenario と全指標を詳細表に掲載し、API 名や条件を長いケース名から分離する。  
+各ケースの ns/op・B/op・allocs/op の存在と公開表への掲載、比較 CSV と全件 CSV の一致を検証する。  
+未知の API・Scenario も詳細表に自動追加し、比較対象がないケースを省略しない。  
+概要の代表例だけは定期更新時に選択を見直し、値を手動転記しない。  
+生成・検証がすべて成功してから現在の公開 Markdown を置き換える。  
 定期更新では現在の結果・代表例を見直し、不要になった集計ファイルも削除する。  
 
 ### 更新時チェックリスト
@@ -142,7 +149,8 @@ Warm / Fill は絶対指標にとどめ、構築範囲の異なる Warm / Uncach
 - [ ] 詳細集計・概要・測定方法・環境・対象コミットの対応を確認した
 - [ ] 現在の結果を置き換え、過去との比較・推移・回帰判定を追加していない
 - [ ] README は日英で同期し、文書のコマンド・リンクを検証した
-- [ ] raw が追跡されず、今回の一時 raw も残っていない
+- [ ] raw・TXT・CSV が Git 管理されず、今回の一時 raw・中間ファイルも残っていない
+- [ ] 全件の指標・信頼区間・比較検定が Markdown に残り、生成処理のテストが通った
 - [ ] 通常の機能 PR・リリースへの測定義務や、定期実行の自動化を追加していない
 
 ## 結果の解釈と比較時の注意
