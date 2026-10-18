@@ -116,7 +116,7 @@ func TestPipelineEquivalent(t *testing.T) {
 	}
 }
 
-func BenchmarkPipeline(b *testing.B) {
+func BenchmarkScenarioPipeline(b *testing.B) {
 	for _, kind := range []string{"Seq", "Seq2"} {
 		for _, n := range []int{64, 4096} {
 			values := input(n)
@@ -127,7 +127,7 @@ func BenchmarkPipeline(b *testing.B) {
 						mode = "Early8"
 					}
 					for _, impl := range []string{"Loop", "Functions", "Pipeline"} {
-						b.Run(fmt.Sprintf("%s/N%d/D%d/%s/%s", kind, n, depth, mode, impl), func(b *testing.B) {
+						b.Run(fmt.Sprintf("kind=%s/N=%d/depth=%d/mode=%s/impl=%s", kind, n, depth, mode, impl), func(b *testing.B) {
 							b.ReportAllocs()
 							for b.Loop() {
 								switch impl {
@@ -228,7 +228,7 @@ func TestChannelEquivalent(t *testing.T) {
 	}
 }
 
-func BenchmarkChannel(b *testing.B) {
+func BenchmarkScenarioChannel(b *testing.B) {
 	for _, n := range []int{64, 4096} {
 		values := input(n)
 		for _, impl := range []string{"Seq", "ToChannel", "Direct", "FromChannel", "RoundTrip"} {
@@ -237,7 +237,7 @@ func BenchmarkChannel(b *testing.B) {
 				capacities = []int{0, 64}
 			}
 			for _, capacity := range capacities {
-				b.Run(fmt.Sprintf("N%d/B%d/%s", n, capacity, impl), func(b *testing.B) {
+				b.Run(fmt.Sprintf("N=%d/buffer=%d/impl=%s", n, capacity, impl), func(b *testing.B) {
 					b.ReportAllocs()
 					for b.Loop() {
 						output = channelRun(values, capacity, impl)
@@ -333,20 +333,20 @@ func TestCacheEquivalent(t *testing.T) {
 	}
 }
 
-func BenchmarkCache(b *testing.B) {
+func BenchmarkScenarioCache(b *testing.B) {
 	for _, kind := range []string{"Seq", "Seq2"} {
 		for _, n := range []int{64, 4096} {
 			values := input(n)
 			for _, work := range []int{0, 32} {
-				prefix := fmt.Sprintf("%s/N%d/W%d", kind, n, work)
-				b.Run(prefix+"/Warm", func(b *testing.B) {
+				prefix := fmt.Sprintf("kind=%s/N=%d/work=%d", kind, n, work)
+				b.Run(prefix+"/phase=Warm", func(b *testing.B) {
 					consume := cacheConsumer(values, kind, work, true)
 					b.ReportAllocs()
 					for b.Loop() {
 						checksum = consume()
 					}
 				})
-				b.Run(prefix+"/Fill", func(b *testing.B) {
+				b.Run(prefix+"/phase=Fill", func(b *testing.B) {
 					b.ReportAllocs()
 					for b.Loop() {
 						// 保存のみ。下流による反復は含めず、結果をグローバルへ保持する。
@@ -355,11 +355,11 @@ func BenchmarkCache(b *testing.B) {
 				})
 				for _, reuse := range []int{1, 4, 16} {
 					for _, cached := range []bool{false, true} {
-						impl := "Raw"
+						impl := "Uncached"
 						if cached {
 							impl = "Cached"
 						}
-						b.Run(fmt.Sprintf("%s/R%d/%s", prefix, reuse, impl), func(b *testing.B) {
+						b.Run(fmt.Sprintf("%s/phase=Reuse/reuse=%d/impl=%s", prefix, reuse, impl), func(b *testing.B) {
 							b.ReportAllocs()
 							for b.Loop() {
 								consume := cacheConsumer(values, kind, work, cached)

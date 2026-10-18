@@ -243,9 +243,9 @@ go test ./... -run '^Example' -count=1
 
 ## Benchmarks
 
-[Benchmark report](benchmarks/REPORT.md) records reproducible comparisons of pipelines, loops, per-element function calls, channels, and caching.  
-The report includes its target commit, measurement conditions, raw results, and aggregation script.  
-Benchmarks and reports are updated through dedicated periodic issues; ordinary code changes do not require rerunning them.  
+Pipeline costs depend on the number of stages, early termination, channel transfers, and cache reuse.  
+See the [performance overview](benchmarks/REPORT.md) for representative scenarios from the current measurement snapshot.  
+Benchmarks are updated through dedicated periodic issues; ordinary feature changes and releases do not require updates.  
 
 ## License
 
