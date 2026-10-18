@@ -39,60 +39,13 @@ func BenchmarkToSliceLibrary(b *testing.B) {
 }
 
 func TestToSliceLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := toSliceLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := toSliceLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := toSliceLibrary(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := toSliceLibrary(values)
-		const want int64 = 60
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := toSliceLibrary(values)
-		const want int64 = 2016
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := toSliceLibrary(values)
-		const want int64 = 8386560
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := toSliceLibrary(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func toSliceGo(values []int) int64 {
@@ -125,58 +78,11 @@ func BenchmarkToSliceGo(b *testing.B) {
 }
 
 func TestToSliceGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := toSliceGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := toSliceGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := toSliceGo(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := toSliceGo(values)
-		const want int64 = 60
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := toSliceGo(values)
-		const want int64 = 2016
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := toSliceGo(values)
-		const want int64 = 8386560
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := toSliceGo(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }

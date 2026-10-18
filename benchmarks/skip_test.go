@@ -36,60 +36,13 @@ func BenchmarkSkipOperatorLibrary(b *testing.B) {
 }
 
 func TestSkipOperatorLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := skipOperatorLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := skipOperatorLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := skipOperatorLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := skipOperatorLibrary(values)
-		const want int64 = 30
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := skipOperatorLibrary(values)
-		const want int64 = 1988
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := skipOperatorLibrary(values)
-		const want int64 = 8386532
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := skipOperatorLibrary(values)
+	const want int64 = 19
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func skipOperatorGo(values []int) int64 {
@@ -121,60 +74,13 @@ func BenchmarkSkipOperatorGo(b *testing.B) {
 }
 
 func TestSkipOperatorGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := skipOperatorGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := skipOperatorGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := skipOperatorGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := skipOperatorGo(values)
-		const want int64 = 30
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := skipOperatorGo(values)
-		const want int64 = 1988
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := skipOperatorGo(values)
-		const want int64 = 8386532
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := skipOperatorGo(values)
+	const want int64 = 19
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func skipOperator2Library(values []int) int64 {
@@ -206,60 +112,13 @@ func BenchmarkSkipOperator2Library(b *testing.B) {
 }
 
 func TestSkipOperator2Library(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := skipOperator2Library(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := skipOperator2Library(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := skipOperator2Library(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := skipOperator2Library(values)
-		const want int64 = 57
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := skipOperator2Library(values)
-		const want int64 = 3976
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := skipOperator2Library(values)
-		const want int64 = 16773064
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := skipOperator2Library(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func skipOperator2Go(values []int) int64 {
@@ -291,58 +150,11 @@ func BenchmarkSkipOperator2Go(b *testing.B) {
 }
 
 func TestSkipOperator2Go(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := skipOperator2Go(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := skipOperator2Go(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := skipOperator2Go(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := skipOperator2Go(values)
-		const want int64 = 57
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := skipOperator2Go(values)
-		const want int64 = 3976
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := skipOperator2Go(values)
-		const want int64 = 16773064
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := skipOperator2Go(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }

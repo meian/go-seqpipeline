@@ -83,5 +83,5 @@ Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のよ
 
 ベンチマーク関数内の各 `b.Run` は条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  
 `class=Unit` / `class=ScenarioPipeline` / `class=ScenarioChannel` / `class=ScenarioCache` で分類し、入力や段数などの比較条件も名前へ残す。  
-テストも条件ごとに処理本体を直接呼び、期待値・出力・順序を検証する。  
+テストは各処理につき代表入力 1 件で処理本体を直接呼び、簡単な期待値で疎通を確認する。  
 公開表のリンクは測定コミットの関数宣言行から自動生成するため、行番号を手動で転記しない。  

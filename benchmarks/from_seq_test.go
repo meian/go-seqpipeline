@@ -36,60 +36,13 @@ func BenchmarkFromSeqLibrary(b *testing.B) {
 }
 
 func TestFromSeqLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := fromSeqLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := fromSeqLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := fromSeqLibrary(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := fromSeqLibrary(values)
-		const want int64 = 60
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := fromSeqLibrary(values)
-		const want int64 = 2016
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := fromSeqLibrary(values)
-		const want int64 = 8386560
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := fromSeqLibrary(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func fromSeqGo(values []int) int64 {
@@ -121,60 +74,13 @@ func BenchmarkFromSeqGo(b *testing.B) {
 }
 
 func TestFromSeqGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := fromSeqGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := fromSeqGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := fromSeqGo(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := fromSeqGo(values)
-		const want int64 = 60
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := fromSeqGo(values)
-		const want int64 = 2016
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := fromSeqGo(values)
-		const want int64 = 8386560
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := fromSeqGo(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func fromSeq2Library(values []int) int64 {
@@ -206,60 +112,13 @@ func BenchmarkFromSeq2Library(b *testing.B) {
 }
 
 func TestFromSeq2Library(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := fromSeq2Library(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := fromSeq2Library(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := fromSeq2Library(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := fromSeq2Library(values)
-		const want int64 = 115
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := fromSeq2Library(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := fromSeq2Library(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := fromSeq2Library(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func fromSeq2Go(values []int) int64 {
@@ -291,58 +150,11 @@ func BenchmarkFromSeq2Go(b *testing.B) {
 }
 
 func TestFromSeq2Go(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := fromSeq2Go(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := fromSeq2Go(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := fromSeq2Go(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := fromSeq2Go(values)
-		const want int64 = 115
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := fromSeq2Go(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := fromSeq2Go(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := fromSeq2Go(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }

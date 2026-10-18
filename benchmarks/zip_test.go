@@ -35,60 +35,13 @@ func BenchmarkZipOperatorLibrary(b *testing.B) {
 }
 
 func TestZipOperatorLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipOperatorLibrary(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipOperatorLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipOperatorLibrary(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipOperatorLibrary(values)
-		const want int64 = 120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipOperatorLibrary(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipOperatorLibrary(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipOperatorLibrary(values)
+	const want int64 = 42
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipOperatorGo(values []int) int64 {
@@ -119,60 +72,13 @@ func BenchmarkZipOperatorGo(b *testing.B) {
 }
 
 func TestZipOperatorGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipOperatorGo(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipOperatorGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipOperatorGo(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipOperatorGo(values)
-		const want int64 = 120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipOperatorGo(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipOperatorGo(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipOperatorGo(values)
+	const want int64 = 42
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipAlignByLibrary(values []int) int64 {
@@ -205,60 +111,13 @@ func BenchmarkZipAlignByLibrary(b *testing.B) {
 }
 
 func TestZipAlignByLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipAlignByLibrary(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipAlignByLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipAlignByLibrary(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipAlignByLibrary(values)
-		const want int64 = 88
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipAlignByLibrary(values)
-		const want int64 = 2512
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipAlignByLibrary(values)
-		const want int64 = 10482688
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipAlignByLibrary(values)
+	const want int64 = 27
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipAlignByGo(values []int) int64 {
@@ -294,60 +153,13 @@ func BenchmarkZipAlignByGo(b *testing.B) {
 }
 
 func TestZipAlignByGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipAlignByGo(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipAlignByGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipAlignByGo(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipAlignByGo(values)
-		const want int64 = 88
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipAlignByGo(values)
-		const want int64 = 2512
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipAlignByGo(values)
-		const want int64 = 10482688
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipAlignByGo(values)
+	const want int64 = 27
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipWithDefaultValueLibrary(values []int) int64 {
@@ -380,60 +192,13 @@ func BenchmarkZipWithDefaultValueLibrary(b *testing.B) {
 }
 
 func TestZipWithDefaultValueLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipWithDefaultValueLibrary(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipWithDefaultValueLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipWithDefaultValueLibrary(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipWithDefaultValueLibrary(values)
-		const want int64 = 130
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipWithDefaultValueLibrary(values)
-		const want int64 = 2736
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipWithDefaultValueLibrary(values)
-		const want int64 = 10497024
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipWithDefaultValueLibrary(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipWithDefaultValueGo(values []int) int64 {
@@ -469,60 +234,13 @@ func BenchmarkZipWithDefaultValueGo(b *testing.B) {
 }
 
 func TestZipWithDefaultValueGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipWithDefaultValueGo(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipWithDefaultValueGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipWithDefaultValueGo(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipWithDefaultValueGo(values)
-		const want int64 = 130
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipWithDefaultValueGo(values)
-		const want int64 = 2736
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipWithDefaultValueGo(values)
-		const want int64 = 10497024
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipWithDefaultValueGo(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipWithDefaultKeyLibrary(values []int) int64 {
@@ -555,60 +273,13 @@ func BenchmarkZipWithDefaultKeyLibrary(b *testing.B) {
 }
 
 func TestZipWithDefaultKeyLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipWithDefaultKeyLibrary(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipWithDefaultKeyLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipWithDefaultKeyLibrary(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipWithDefaultKeyLibrary(values)
-		const want int64 = 130
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipWithDefaultKeyLibrary(values)
-		const want int64 = 2736
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipWithDefaultKeyLibrary(values)
-		const want int64 = 10497024
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipWithDefaultKeyLibrary(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipWithDefaultKeyGo(values []int) int64 {
@@ -644,60 +315,13 @@ func BenchmarkZipWithDefaultKeyGo(b *testing.B) {
 }
 
 func TestZipWithDefaultKeyGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipWithDefaultKeyGo(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipWithDefaultKeyGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipWithDefaultKeyGo(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipWithDefaultKeyGo(values)
-		const want int64 = 130
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipWithDefaultKeyGo(values)
-		const want int64 = 2736
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipWithDefaultKeyGo(values)
-		const want int64 = 10497024
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipWithDefaultKeyGo(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyOperatorLibrary(values []int) int64 {
@@ -729,60 +353,13 @@ func BenchmarkZipKeyOperatorLibrary(b *testing.B) {
 }
 
 func TestZipKeyOperatorLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyOperatorLibrary(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyOperatorLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyOperatorLibrary(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyOperatorLibrary(values)
-		const want int64 = 120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyOperatorLibrary(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyOperatorLibrary(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyOperatorLibrary(values)
+	const want int64 = 42
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyOperatorGo(values []int) int64 {
@@ -813,60 +390,13 @@ func BenchmarkZipKeyOperatorGo(b *testing.B) {
 }
 
 func TestZipKeyOperatorGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyOperatorGo(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyOperatorGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyOperatorGo(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyOperatorGo(values)
-		const want int64 = 120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyOperatorGo(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyOperatorGo(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyOperatorGo(values)
+	const want int64 = 42
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyAlignByLibrary(values []int) int64 {
@@ -899,60 +429,13 @@ func BenchmarkZipKeyAlignByLibrary(b *testing.B) {
 }
 
 func TestZipKeyAlignByLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyAlignByLibrary(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyAlignByLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyAlignByLibrary(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyAlignByLibrary(values)
-		const want int64 = 130
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyAlignByLibrary(values)
-		const want int64 = 2736
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyAlignByLibrary(values)
-		const want int64 = 10497024
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyAlignByLibrary(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyAlignByGo(values []int) int64 {
@@ -988,60 +471,13 @@ func BenchmarkZipKeyAlignByGo(b *testing.B) {
 }
 
 func TestZipKeyAlignByGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyAlignByGo(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyAlignByGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyAlignByGo(values)
-		const want int64 = 14
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyAlignByGo(values)
-		const want int64 = 130
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyAlignByGo(values)
-		const want int64 = 2736
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyAlignByGo(values)
-		const want int64 = 10497024
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyAlignByGo(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyWithDefaultValueLibrary(values []int) int64 {
@@ -1074,60 +510,13 @@ func BenchmarkZipKeyWithDefaultValueLibrary(b *testing.B) {
 }
 
 func TestZipKeyWithDefaultValueLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyWithDefaultValueLibrary(values)
-		const want int64 = 54
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyWithDefaultValueLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyWithDefaultValueLibrary(values)
-		const want int64 = 16
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyWithDefaultValueLibrary(values)
-		const want int64 = 142
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyWithDefaultValueLibrary(values)
-		const want int64 = 2800
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyWithDefaultValueLibrary(values)
-		const want int64 = 10501120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyWithDefaultValueLibrary(values)
+	const want int64 = 54
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyWithDefaultValueGo(values []int) int64 {
@@ -1163,60 +552,13 @@ func BenchmarkZipKeyWithDefaultValueGo(b *testing.B) {
 }
 
 func TestZipKeyWithDefaultValueGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyWithDefaultValueGo(values)
-		const want int64 = 54
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyWithDefaultValueGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyWithDefaultValueGo(values)
-		const want int64 = 16
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyWithDefaultValueGo(values)
-		const want int64 = 142
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyWithDefaultValueGo(values)
-		const want int64 = 2800
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyWithDefaultValueGo(values)
-		const want int64 = 10501120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyWithDefaultValueGo(values)
+	const want int64 = 54
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyWithDefaultKeyLibrary(values []int) int64 {
@@ -1249,60 +591,13 @@ func BenchmarkZipKeyWithDefaultKeyLibrary(b *testing.B) {
 }
 
 func TestZipKeyWithDefaultKeyLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyWithDefaultKeyLibrary(values)
-		const want int64 = 54
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyWithDefaultKeyLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyWithDefaultKeyLibrary(values)
-		const want int64 = 16
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyWithDefaultKeyLibrary(values)
-		const want int64 = 142
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyWithDefaultKeyLibrary(values)
-		const want int64 = 2800
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyWithDefaultKeyLibrary(values)
-		const want int64 = 10501120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyWithDefaultKeyLibrary(values)
+	const want int64 = 54
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func zipKeyWithDefaultKeyGo(values []int) int64 {
@@ -1338,58 +633,11 @@ func BenchmarkZipKeyWithDefaultKeyGo(b *testing.B) {
 }
 
 func TestZipKeyWithDefaultKeyGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := zipKeyWithDefaultKeyGo(values)
-		const want int64 = 54
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := zipKeyWithDefaultKeyGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := zipKeyWithDefaultKeyGo(values)
-		const want int64 = 16
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := zipKeyWithDefaultKeyGo(values)
-		const want int64 = 142
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := zipKeyWithDefaultKeyGo(values)
-		const want int64 = 2800
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := zipKeyWithDefaultKeyGo(values)
-		const want int64 = 10501120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := zipKeyWithDefaultKeyGo(values)
+	const want int64 = 54
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }

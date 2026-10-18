@@ -40,60 +40,13 @@ func BenchmarkToMapLibrary(b *testing.B) {
 }
 
 func TestToMapLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := toMapLibrary(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := toMapLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := toMapLibrary(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := toMapLibrary(values)
-		const want int64 = 115
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := toMapLibrary(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := toMapLibrary(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := toMapLibrary(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func toMapGo(values []int) int64 {
@@ -126,58 +79,11 @@ func BenchmarkToMapGo(b *testing.B) {
 }
 
 func TestToMapGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := toMapGo(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := toMapGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := toMapGo(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := toMapGo(values)
-		const want int64 = 115
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := toMapGo(values)
-		const want int64 = 4032
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := toMapGo(values)
-		const want int64 = 16773120
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := toMapGo(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }

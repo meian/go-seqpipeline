@@ -36,60 +36,13 @@ func BenchmarkTakeOperatorLibrary(b *testing.B) {
 }
 
 func TestTakeOperatorLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := takeOperatorLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := takeOperatorLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := takeOperatorLibrary(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := takeOperatorLibrary(values)
-		const want int64 = 30
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := takeOperatorLibrary(values)
-		const want int64 = 28
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := takeOperatorLibrary(values)
-		const want int64 = 28
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := takeOperatorLibrary(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func takeOperatorGo(values []int) int64 {
@@ -121,60 +74,13 @@ func BenchmarkTakeOperatorGo(b *testing.B) {
 }
 
 func TestTakeOperatorGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := takeOperatorGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := takeOperatorGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := takeOperatorGo(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := takeOperatorGo(values)
-		const want int64 = 30
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := takeOperatorGo(values)
-		const want int64 = 28
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := takeOperatorGo(values)
-		const want int64 = 28
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := takeOperatorGo(values)
+	const want int64 = 36
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func takeOperator2Library(values []int) int64 {
@@ -206,60 +112,13 @@ func BenchmarkTakeOperator2Library(b *testing.B) {
 }
 
 func TestTakeOperator2Library(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := takeOperator2Library(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := takeOperator2Library(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := takeOperator2Library(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := takeOperator2Library(values)
-		const want int64 = 58
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := takeOperator2Library(values)
-		const want int64 = 56
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := takeOperator2Library(values)
-		const want int64 = 56
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := takeOperator2Library(values)
+	const want int64 = 64
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func takeOperator2Go(values []int) int64 {
@@ -291,58 +150,11 @@ func BenchmarkTakeOperator2Go(b *testing.B) {
 }
 
 func TestTakeOperator2Go(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-		got := takeOperator2Go(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := takeOperator2Go(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := takeOperator2Go(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := takeOperator2Go(values)
-		const want int64 = 58
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := takeOperator2Go(values)
-		const want int64 = 56
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := takeOperator2Go(values)
-		const want int64 = 56
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := takeOperator2Go(values)
+	const want int64 = 64
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }

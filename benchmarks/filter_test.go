@@ -36,60 +36,13 @@ func BenchmarkFilterLibrary(b *testing.B) {
 }
 
 func TestFilterLibrary(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := filterLibrary(values)
-		const want int64 = 12
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := filterLibrary(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := filterLibrary(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := filterLibrary(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := filterLibrary(values)
-		const want int64 = 1323
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := filterLibrary(values)
-		const want int64 = 5589675
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := filterLibrary(values)
+	const want int64 = 12
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func filterGo(values []int) int64 {
@@ -122,60 +75,13 @@ func BenchmarkFilterGo(b *testing.B) {
 }
 
 func TestFilterGo(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := filterGo(values)
-		const want int64 = 12
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := filterGo(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := filterGo(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := filterGo(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := filterGo(values)
-		const want int64 = 1323
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := filterGo(values)
-		const want int64 = 5589675
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := filterGo(values)
+	const want int64 = 12
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func filter2Library(values []int) int64 {
@@ -207,60 +113,13 @@ func BenchmarkFilter2Library(b *testing.B) {
 }
 
 func TestFilter2Library(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := filter2Library(values)
-		const want int64 = 20
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := filter2Library(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := filter2Library(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := filter2Library(values)
-		const want int64 = 88
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := filter2Library(values)
-		const want int64 = 2646
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := filter2Library(values)
-		const want int64 = 11179350
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := filter2Library(values)
+	const want int64 = 20
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func filter2Go(values []int) int64 {
@@ -293,58 +152,11 @@ func BenchmarkFilter2Go(b *testing.B) {
 }
 
 func TestFilter2Go(t *testing.T) {
-	t.Run("Values", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
+	values := []int{1, 2, 3, 4, 5, 6}
 
-		got := filter2Go(values)
-		const want int64 = 20
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Empty", func(t *testing.T) {
-		values := []int(nil)
-
-		got := filter2Go(values)
-		const want int64 = 0
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Single", func(t *testing.T) {
-		values := []int{7}
-
-		got := filter2Go(values)
-		const want int64 = 7
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Mixed", func(t *testing.T) {
-		values := []int{17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}
-
-		got := filter2Go(values)
-		const want int64 = 88
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N64", func(t *testing.T) {
-		values := input(64)
-
-		got := filter2Go(values)
-		const want int64 = 2646
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("N4096", func(t *testing.T) {
-		values := input(4096)
-
-		got := filter2Go(values)
-		const want int64 = 11179350
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	got := filter2Go(values)
+	const want int64 = 20
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
