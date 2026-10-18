@@ -61,28 +61,105 @@ func unitCases(values []int) []unitCase {
 	return cases
 }
 
-func checkUnitCases(t *testing.T, factory func([]int) []unitCase) {
+type unitReference struct {
+	name string
+	run  func() int64
+}
+
+func unitReferences(values []int) map[string]unitReference {
+	references := make(map[string]unitReference)
+	for _, family := range []map[string]unitReference{
+		conversionUnitReferences(values), transformUnitReferences(values), limitUnitReferences(values),
+		pipeUnitReferences(values), channelUnitReferences(values), cacheUnitReferences(values), zipUnitReferences(values),
+	} {
+		for api, reference := range family {
+			if _, exists := references[api]; exists {
+				panic("duplicate unit reference: " + api)
+			}
+			references[api] = reference
+		}
+	}
+	return references
+}
+
+func referenceFor(tc unitCase, references map[string]unitReference) unitReference {
+	reference, ok := references[tc.api+"/"+tc.phase]
+	if !ok {
+		reference, ok = references[tc.api]
+	}
+	if !ok || reference.run == nil || reference.name == "" {
+		panic("missing unit reference: " + tc.api + "/" + tc.phase)
+	}
+	return reference
+}
+
+func rangeValues(values []int) int64 {
+	var sum int64
+	for _, v := range values {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func checkUnitCases(t *testing.T, factory func([]int) []unitCase, references func([]int) map[string]unitReference) {
 	t.Helper()
-	for _, n := range []int{0, 1, 64, 4096} {
-		for _, tc := range factory(input(n)) {
-			t.Run(fmt.Sprintf("%s/N=%d/phase=%s", tc.api, n, tc.phase), func(t *testing.T) {
-				if got := tc.run(); got != tc.want {
-					t.Fatalf("got %d; want %d", got, tc.want)
+	inputs := [][]int{input(0), input(1), input(64), input(4096), {17, -2, 0, 9, 4, 8, 1, -7, 22, 5, 3}}
+	for i, values := range inputs {
+		plain := references(values)
+		for _, tc := range factory(values) {
+			reference := referenceFor(tc, plain)
+			t.Run(fmt.Sprintf("%s/input=%d/phase=%s", tc.api, i, tc.phase), func(t *testing.T) {
+				for _, impl := range []struct {
+					name string
+					run  func() int64
+				}{{"Go", reference.run}, {"Library", tc.run}} {
+					if got := impl.run(); got != tc.want {
+						t.Fatalf("%s got %d; want %d", impl.name, got, tc.want)
+					}
 				}
 			})
 		}
 	}
 }
 
+func TestUnitComparisonCoverage(t *testing.T) {
+	for _, n := range []int{64, 4096} {
+		references := unitReferences(input(n))
+		used := make(map[string]bool)
+		for _, tc := range unitCases(input(n)) {
+			_ = referenceFor(tc, references)
+			key := tc.api
+			if _, ok := references[key+"/"+tc.phase]; ok {
+				key += "/" + tc.phase
+			}
+			if used[key] {
+				t.Fatalf("duplicate unit comparison: %s", key)
+			}
+			used[key] = true
+		}
+		if len(used) != len(references) {
+			t.Fatalf("unused references: used %d of %d", len(used), len(references))
+		}
+	}
+}
+
 func BenchmarkUnit(b *testing.B) {
 	for _, n := range []int{64, 4096} {
-		for _, tc := range unitCases(input(n)) {
-			b.Run(fmt.Sprintf("api=%s/N=%d/phase=%s", tc.api, n, tc.phase), func(b *testing.B) {
-				b.ReportAllocs()
-				for b.Loop() {
-					checksum = tc.run()
-				}
-			})
+		values := input(n)
+		references := unitReferences(values)
+		for _, tc := range unitCases(values) {
+			reference := referenceFor(tc, references)
+			for _, impl := range []struct {
+				name string
+				run  func() int64
+			}{{"Go", reference.run}, {"Library", tc.run}} {
+				b.Run(fmt.Sprintf("api=%s/N=%d/phase=%s/ref=%s/impl=%s", tc.api, n, tc.phase, reference.name, impl.name), func(b *testing.B) {
+					b.ReportAllocs()
+					for b.Loop() {
+						checksum = impl.run()
+					}
+				})
+			}
 		}
 	}
 }

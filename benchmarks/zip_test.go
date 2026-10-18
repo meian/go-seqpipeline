@@ -40,4 +40,50 @@ func zipUnitCases(values []int) []unitCase {
 	}
 }
 
-func TestZipUnitResults(t *testing.T) { checkUnitCases(t, zipUnitCases) }
+func TestZipUnitResults(t *testing.T) { checkUnitCases(t, zipUnitCases, zipUnitReferences) }
+
+func zipIndex(left, right []int) int64 {
+	var sum int64
+	for i, k := range left {
+		sum += int64(k) + int64(right[i])
+	}
+	return sum
+}
+
+func zipLeft(left, right []int, fallback int) int64 {
+	var sum int64
+	for i, k := range left {
+		v := fallback
+		if i < len(right) {
+			v = right[i]
+		}
+		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func zipRight(left, right []int, fallback int) int64 {
+	var sum int64
+	for i, v := range right {
+		k := fallback
+		if i < len(left) {
+			k = left[i]
+		}
+		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func zipUnitReferences(values []int) map[string]unitReference {
+	short := values[:len(values)/2]
+	return map[string]unitReference{
+		"Zip.Operator":            {"ZipIndex", func() int64 { return zipIndex(values, values) }},
+		"Zip.AlignBy":             {"ZipLeft0", func() int64 { return zipLeft(values, short, 0) }},
+		"Zip.WithDefaultValue":    {"ZipLeft7", func() int64 { return zipLeft(values, short, 7) }},
+		"Zip.WithDefaultKey":      {"ZipRight7", func() int64 { return zipRight(short, values, 7) }},
+		"ZipKey.Operator":         {"ZipIndex", func() int64 { return zipIndex(values, values) }},
+		"ZipKey.AlignBy":          {"ZipRight7", func() int64 { return zipRight(short, values, 7) }},
+		"ZipKey.WithDefaultValue": {"ZipLeft9", func() int64 { return zipLeft(values, short, 9) }},
+		"ZipKey.WithDefaultKey":   {"ZipRight9", func() int64 { return zipRight(short, values, 9) }},
+	}
+}

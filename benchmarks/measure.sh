@@ -15,8 +15,13 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 export GOCACHE=${GOCACHE:-"$workdir/go-cache"}
 "$GO_BINARY" test ./benchmarks -count=1
-"$GO_BINARY" test ./benchmarks -run '^$' -bench . -benchmem \
-  -benchtime="$BENCHTIME" -count="$COUNT" > "$workdir/raw.txt"
+# 各巡で Go / Library を一組ずつ測り、長い連続測定の偏りを減らす。
+round=0
+while [ "$round" -lt "$COUNT" ]; do
+ "$GO_BINARY" test ./benchmarks -run '^$' -bench . -benchmem \
+   -benchtime="$BENCHTIME" -count=1 >> "$workdir/raw.txt"
+ round=$((round + 1))
+done
 python3 benchmarks/publish.py validate "$workdir/raw.txt" "$COUNT"
 "$BENCHSTAT" -format=csv - < "$workdir/raw.txt" > "$workdir/all.csv"
 compare() {
@@ -26,6 +31,7 @@ compare() {
  "$BENCHSTAT" -filter "$filter" -col "$columns" -format=csv - \
    < "$workdir/raw.txt" > "$workdir/$name.csv"
 }
+compare unit '.name:Unit' '/impl@(Go Library)'
 compare pipeline-loop '.name:ScenarioPipeline' '/impl@(Loop Pipeline)'
 compare pipeline-functions '.name:ScenarioPipeline' '/impl@(Functions Pipeline)'
 compare channel-from '.name:ScenarioChannel' '/impl@(Direct FromChannel)'

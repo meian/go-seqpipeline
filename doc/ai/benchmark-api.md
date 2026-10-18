@@ -3,7 +3,7 @@
 対象コミットは [測定環境](../../benchmarks/results/environment.md) に記録する。  
 `seq` の公開関数 21 件と公開メソッド 16 件、計 37 件を今回のコードから棚卸しした。  
 非公開の設定値型が返す公開メソッドも含む。  
-34 種の API 名・36 種の API/phase を N64 / N4096 の計 72 ケースで測定し、設定値の生成 3 関数は関連する評価ケースで代替する。  
+34 種の API 名・36 種の API/phase を N64 / N4096 の計 72 条件を Go / Library の 144 ケースで比較し、設定値の生成 3 関数は関連する評価ケースで代替する。  
 この表は今回のスナップショットの対応であり、通常の機能変更時に即時追従を要求する検証ではない。  
 
 | 公開 API | Unit の api キー | 測定範囲・代替理由 |
@@ -64,4 +64,8 @@
 | Cache / Cache2、Fill / Warm / Reuse Scenario | [cache_test.go](../../benchmarks/cache_test.go) |
 | Map / Filter / Take を接続する Pipeline Scenario | [pipeline_test.go](../../benchmarks/pipeline_test.go) |
 
-共通の Unit ランナーは [benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) に置き、全件を従来の `Unit/api=...` という名前で実行する。  
+共通の Unit ランナーは [benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) に置き、全件を従来の `Unit/api=...` という名前に `ref`（一般的な Go の書き方）と `impl=Go / Library` を付けて実行する。  
+
+Go 側の実装も同じ機能ファイルの `*UnitReferences` に置く。  
+各 API・phase の比較相手は登録時に検証し、対応漏れ・重複・不要な登録をテストで検出する。  
+公開結果には比較相手の書き方を示し、一般的な Go と Library の時間・割り当て・検定を併記する。  

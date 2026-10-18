@@ -32,7 +32,7 @@ func channelUnitCases(values []int) []unitCase {
 	}
 }
 
-func TestChannelUnitResults(t *testing.T) { checkUnitCases(t, channelUnitCases) }
+func TestChannelUnitResults(t *testing.T) { checkUnitCases(t, channelUnitCases, channelUnitReferences) }
 
 // producer は送信専用の 1 goroutine。close 後、呼び出し元が終了を join する。
 func producer(values []int, capacity int) (<-chan int, <-chan struct{}) {
@@ -121,5 +121,33 @@ func BenchmarkScenarioChannel(b *testing.B) {
 				})
 			}
 		}
+	}
+}
+
+func channelUnitReferences(values []int) map[string]unitReference {
+	return map[string]unitReference{
+		"FromChannel": {"ChannelReceive", func() int64 {
+			ch, done := producer(values, 0)
+			var sum int64
+			for v := range ch {
+				sum += int64(v)
+			}
+			<-done
+			return sum
+		}},
+		"ToChannel": {"ChannelSend", func() int64 {
+			ch := make(chan int)
+			go func() {
+				defer close(ch)
+				for _, v := range values {
+					ch <- v
+				}
+			}()
+			var sum int64
+			for v := range ch {
+				sum += int64(v)
+			}
+			return sum
+		}},
 	}
 }

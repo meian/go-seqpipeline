@@ -27,19 +27,23 @@ func cacheUnitCases(values []int) []unitCase {
 }
 
 func TestCacheUnitResults(t *testing.T) {
+	checkUnitCases(t, cacheUnitCases, cacheUnitReferences)
 	for _, n := range []int{0, 1, 64, 4096} {
 		for _, tc := range cacheUnitCases(input(n)) {
 			t.Run(fmt.Sprintf("%s/N=%d/phase=%s", tc.api, n, tc.phase), func(t *testing.T) {
-				if got := tc.run(); got != tc.want {
-					t.Fatalf("got %d; want %d", got, tc.want)
-				}
-				if tc.phase == "Fill" {
-					want := int64(n * (n - 1) / 2)
-					if tc.api == "Cache2" {
-						want *= 2
+				reference := referenceFor(tc, cacheUnitReferences(input(n)))
+				for _, run := range []func() int64{tc.run, reference.run} {
+					if got := run(); got != tc.want {
+						t.Fatalf("got %d; want %d", got, tc.want)
 					}
-					if got := cachedConsumer(); got != want {
-						t.Fatalf("filled cache: got %d; want %d", got, want)
+					if tc.phase == "Fill" {
+						want := int64(n * (n - 1) / 2)
+						if tc.api == "Cache2" {
+							want *= 2
+						}
+						if got := cachedConsumer(); got != want {
+							t.Fatalf("filled cache: got %d; want %d", got, want)
+						}
 					}
 				}
 			})
@@ -165,3 +169,38 @@ func BenchmarkScenarioCache(b *testing.B) {
 }
 
 var cachedConsumer func() int64
+
+func cacheUnitReferences(values []int) map[string]unitReference {
+	standard := slices.Values(values)
+	standardPairs := slices.All(values)
+	fill2 := func() []pair {
+		var cached []pair
+		for k, v := range standardPairs {
+			cached = append(cached, pair{k, v})
+		}
+		return cached
+	}
+	warm := slices.Collect(standard)
+	warm2 := fill2()
+	consume2 := func(cached []pair) int64 {
+		var sum int64
+		for _, p := range cached {
+			sum += int64(p.key) + int64(p.value)
+		}
+		return sum
+	}
+	return map[string]unitReference{
+		"Cache/Fill": {"SlicesCollect", func() int64 {
+			cached := slices.Collect(standard)
+			cachedConsumer = func() int64 { return rangeValues(cached) }
+			return 0
+		}},
+		"Cache/Warm": {"SliceRange", func() int64 { return rangeValues(warm) }},
+		"Cache2/Fill": {"PairAppend", func() int64 {
+			cached := fill2()
+			cachedConsumer = func() int64 { return consume2(cached) }
+			return 0
+		}},
+		"Cache2/Warm": {"PairRange", func() int64 { return consume2(warm2) }},
+	}
+}

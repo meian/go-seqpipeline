@@ -26,4 +26,14 @@ func pipeUnitCases(values []int) []unitCase {
 	}
 }
 
-func TestPipeUnitResults(t *testing.T) { checkUnitCases(t, pipeUnitCases) }
+func TestPipeUnitResults(t *testing.T) { checkUnitCases(t, pipeUnitCases, pipeUnitReferences) }
+
+func pipeUnitReferences(values []int) map[string]unitReference {
+	transforms := transformUnitReferences(values)
+	return map[string]unitReference{
+		"Seq.Pipe":   transforms["Map"],
+		"Seq.Pipe2":  {"ZipIndex", func() int64 { return zipIndex(values, values) }},
+		"Seq2.Pipe":  transforms["Values"],
+		"Seq2.Pipe2": transforms["Map2"],
+	}
+}

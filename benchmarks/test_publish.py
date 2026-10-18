@@ -16,19 +16,26 @@ class PublishTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix='benchmark-publish-')
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
-        self.single = 'Unit/api=FutureAPI/N=8/phase=Evaluate-2'
+        self.single = 'Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop/impl=Go-2'
+        self.library = 'Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop/impl=Library-2'
         self.base = 'ScenarioFuture/N=8/impl=Loop-2'
         self.target = 'ScenarioFuture/N=8/impl=Pipeline-2'
         self.alone = 'ScenarioFuture/N=8/phase=Warm-2'
         self.all_rows = []
         self.comparison_rows = []
+        self.unit_rows = []
         for metric in publish.METRICS:
             self.all_rows += [['', '-', ''], ['', metric, 'CI']]
             self.all_rows += [[name, value, '2%'] for name, value in
-                             ((self.single, 1), (self.base, 2), (self.target, 4), (self.alone, 8))]
+                             ((self.single, 1), (self.library, 2), (self.base, 2), (self.target, 4), (self.alone, 8))]
             self.comparison_rows += [['', 'Loop', '', 'Pipeline', '', '', ''],
                                      ['', metric, 'CI', metric, 'CI', 'vs base', 'P'],
                                      ['ScenarioFuture/N=8-2', 2, '2%', 4, '2%', '~', 'p=0.123 n=10']]
+            self.unit_rows += [['', 'Go', '', 'Library', '', '', ''],
+                               ['', metric, 'CI', metric, 'CI', 'vs base', 'P'],
+                               ['Unit/api=FutureAPI/N=8/phase=Evaluate/ref=FutureLoop-2',
+                                1, '2%', 2, '2%', '+100.00%', 'p=0.000 n=10']]
+        self.write('unit.csv', self.unit_rows)
         self.write('all.csv', self.all_rows)
         self.write('future.csv', self.comparison_rows)
 
@@ -39,11 +46,16 @@ class PublishTest(unittest.TestCase):
     def test_render_covers_future_api_scenario_and_all_metrics(self):
         destination = self.directory/'output/results'
         snapshot = publish.render(self.directory, destination)
-        self.assertEqual(len(snapshot.seen), 12)
+        self.assertEqual(len(snapshot.seen), 15)
         unit = (destination/'unit.md').read_text()
         scenario = (destination/'scenario.md').read_text()
         self.assertIn('## その他', unit)
-        self.assertIn('| FutureAPI | 8 | 1,000,000,000 ±2%', unit)
+        self.assertIn('### FutureAPI：構築・評価', unit)
+        self.assertIn('Go：FutureLoop。', unit)
+        self.assertIn('| 8 | 1,000,000,000 ±2% | 2,000,000,000 ±2% | 2.000× |', unit)
+        self.assertIn('| 8 | Go | 1 ±2% | 1 ±2% |', unit)
+        self.assertIn('| 8 | Library | 2 ±2% | 2 ±2% |', unit)
+        self.assertIn('| 8 | sec/op | +100.00% | p=0.000 n=10 |', unit)
         self.assertIn('## Future', scenario)
         self.assertIn('2.000×', scenario)
         self.assertIn('| 8 | sec/op | ~ | p=0.123 n=10 |', scenario)
@@ -53,7 +65,7 @@ class PublishTest(unittest.TestCase):
     def test_result_tables_keep_conditions_and_comparisons_separate(self):
         snapshot = publish.Snapshot(self.directory)
         # 概要の代表ケースも、同じ条件を持つ比較から自動生成する。
-        comparison = snapshot.comparisons[0]
+        comparison = next(c for c in snapshot.comparisons if c.base[0] != 'Unit')
         dimensions = {'kind': 'Seq', 'N': '4096', 'depth': '2', 'mode': 'All'}
         for label, attribute in [('Loop', 'base'), ('Pipeline', 'target')]:
             original = getattr(comparison, attribute)
@@ -95,6 +107,18 @@ class PublishTest(unittest.TestCase):
         self.assertIn('100ms / 1', text)
         for term in ('raw', 'CSV', 'Git 管理', '後続コミット', '一時ディレクトリ', '世代管理'):
             self.assertNotIn(term, text)
+
+    def test_missing_unit_comparison_is_rejected(self):
+        (self.directory/'unit.csv').unlink()
+        with self.assertRaisesRegex(ValueError, 'missing unit comparisons'):
+            publish.render_unit(publish.Snapshot(self.directory))
+
+    def test_unit_comparison_with_wrong_implementation_is_rejected(self):
+        snapshot = publish.Snapshot(self.directory)
+        comparison = next(c for c in snapshot.comparisons if c.base[0] == 'Unit')
+        comparison.base, comparison.target = comparison.target, comparison.base
+        with self.assertRaisesRegex(ValueError, 'unit comparison must be Go / Library'):
+            publish.render_unit(snapshot)
 
     def test_missing_metric_is_rejected(self):
         self.write('all.csv', self.all_rows[:-1])

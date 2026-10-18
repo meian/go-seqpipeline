@@ -140,7 +140,7 @@ def condition(case, omit=()):
               'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
-    order = list(labels)+sorted(set(dimensions)-set(labels)-{'api', 'impl'})
+    order = list(labels)+sorted(set(dimensions)-set(labels)-{'api', 'impl', 'ref'})
     return ' / '.join(labels.get(k, k+'=')+values.get(dimensions[k], dimensions[k])
                       for k in order if k in dimensions and k not in omit)
 
@@ -183,29 +183,83 @@ def condition_groups(cases):
     return groups.items()
 
 
+REFERENCE_DESCRIPTIONS = {
+    'SliceRange': 'スライスを `for range`',
+    'IteratorRange': '標準 `iter.Seq` を `for range`',
+    'Iterator2Range': '標準 `iter.Seq2` を `for range`',
+    'MapRange': 'map を `for range`',
+    'SlicesCollect': '`slices.Collect` で収集',
+    'MapsCollect': '`maps.Collect` で収集',
+    'MapLoop': '`for range` 内で値を変換',
+    'Map2Loop': '`for range` 内で値を変換し、キーを維持',
+    'FilterLoop': '`for range` 内で値を選別',
+    'Filter2Loop': '`for range` 内で組を選別',
+    'KeyLoop': '`for range` で添字を取得',
+    'TakeSlice': '先頭 8 件の部分スライスを反復',
+    'Take2Slice': '先頭 8 件の添字・値を反復',
+    'SkipSlice': '先頭 8 件を除いた部分スライスを反復',
+    'Skip2Slice': '先頭 8 件を除き、元の添字・値を反復',
+    'ZipIndex': '添字で同じ位置の値を組にする',
+    'ZipLeft0': '左入力を反復し、右の不足分を 0 で補完',
+    'ZipLeft7': '左入力を反復し、右の不足分を 7 で補完',
+    'ZipLeft9': '左入力を反復し、右の不足分を 9 で補完',
+    'ZipRight7': '右入力を反復し、左の不足分を 7 で補完',
+    'ZipRight9': '右入力を反復し、左の不足分を 9 で補完',
+    'ChannelReceive': 'channel を直接受信し、送信元の終了を待つ',
+    'ChannelSend': '1 goroutine で送信し、channel を直接受信',
+    'PairAppend': '標準 iterator の組を `append` で保存',
+    'PairRange': '保存済みの組のスライスを反復',
+}
+
+
+def comparison_statistics(snapshot, comparisons, headers, fields):
+    rows = []
+    for c in comparisons:
+        for metric in METRICS:
+            snapshot.stats_seen.add((c.base, c.target, metric))
+            delta, probability = c.stats[metric]
+            rows.append([*fields(c.base), metric, delta, probability])
+    return table([*headers, '指標', '増減率', '検定'], rows)
+
+
 def render_unit(snapshot):
-    text = preface('API 別の性能')
+    text = preface('API 別の比較')
+    text += '''Go はライブラリを使わない同一処理、Library は対応する API を使った処理。  
+倍率は Library / Go で、1 を超えると Library が遅い。  
+検定の `~` は差が不明確で、増減率の正値は Library の時間・割り当ての増加を表す。  
+
+'''
+    pairs = [c for c in snapshot.comparisons if c.base[0] == 'Unit']
+    covered = set()
     groups = {}
-    for case in snapshot.cases:
-        if case[0] == 'Unit':
-            groups.setdefault(unit_category(dict(case[1])['api']), []).append(case)
-    for group, cases in groups.items():
-        cases.sort(key=lambda case: (dict(case[1])['api'], dict(case[1]).get('phase', ''),
-                                     int(dict(case[1]).get('N', 0))))
-        text += f'## {group}\n\n'
-        # 同じ API の設定メソッドでも、キー既定値の有無は区別する。
-        sections = {}
-        for case in cases:
-            detail = condition(case, omit=('N',))
-            if dict(case[1])['api'].startswith('ZipKey.'):
-                detail += ' / キー既定値あり'
-            sections.setdefault(detail, []).append(case)
-        for detail, section in sections.items():
-            text += f'### {detail or "既定条件"}\n\n'
-            rows = [[dict(case[1])['api'].replace('ZipKey.', 'Zip.', 1),
-                     dict(case[1]).get('N', '—'),
-                     *(snapshot.cell(case, metric) for metric in METRICS)] for case in section]
-            text += table(['API', 'N', 'ns/op', 'B/op', 'allocs/op'], rows)
+    for c in pairs:
+        dims = dict(c.base[1])
+        if dims.get('impl') != 'Go' or dict(c.target[1]).get('impl') != 'Library':
+            raise ValueError('unit comparison must be Go / Library')
+        covered.update((c.base, c.target))
+        identity = dims['api'], dims['ref'], condition(c.base, omit=('N',))
+        groups.setdefault(unit_category(dims['api']), {}).setdefault(identity, []).append(c)
+    if covered != {case for case in snapshot.cases if case[0] == 'Unit'}:
+        raise ValueError('missing unit comparisons')
+    for category, sections in groups.items():
+        text += f'## {category}\n\n'
+        for (api, reference, phase_label), comparisons in sorted(sections.items()):
+            comparisons.sort(key=lambda c: int(dict(c.base[1])['N']))
+            label = api.replace('ZipKey.', 'Zip.', 1)
+            if api.startswith('ZipKey.'):
+                label += '（キー既定値あり）'
+            text += f'### {label}：{phase_label}\n\n'
+            text += 'Go：'+REFERENCE_DESCRIPTIONS.get(reference, reference)+'。  \n\n'
+            text += table(['N', 'Go ns/op', 'Library ns/op', '倍率'],
+                          [[dict(c.base[1])['N'], snapshot.cell(c.base, 'sec/op'),
+                            snapshot.cell(c.target, 'sec/op'), snapshot.ratio(c)] for c in comparisons])
+            text += table(['N', '実装', 'B/op', 'allocs/op'],
+                          [[dict(case[1])['N'], dict(case[1])['impl'],
+                            snapshot.cell(case, 'B/op'), snapshot.cell(case, 'allocs/op')]
+                           for c in comparisons for case in (c.base, c.target)])
+            text += '<details>\n<summary>検定</summary>\n\n'
+            text += comparison_statistics(snapshot, comparisons, ['N'], lambda case: [dict(case[1])['N']])
+            text += '</details>\n\n'
     return text.rstrip('\n')+'\n'
 
 
@@ -247,13 +301,7 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
                                  snapshot.cell(c.target, 'sec/op'), snapshot.ratio(c)])
                 text += table([*headers, base+' ns/op', target+' ns/op', '倍率'], rows)
                 text += f'<details>\n<summary>検定：{base} と {target}</summary>\n\n'
-                rows = []
-                for c in comparisons:
-                    for metric in METRICS:
-                        snapshot.stats_seen.add((c.base, c.target, metric))
-                        delta, probability = c.stats[metric]
-                        rows.append([*fields(c.base), metric, delta, probability])
-                text += table([*headers, '指標', '増減率', '検定'], rows)
+                text += comparison_statistics(snapshot, comparisons, headers, fields)
                 text += '</details>\n\n'
             alone = [case for case in cases if case not in covered]
             if alone:
