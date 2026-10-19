@@ -320,7 +320,39 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 ## Channel
 
-### 入力条件別
+### Seq 入力
+
+#### 時間：Seq と ToChannel
+
+| N | [Seq ns/op](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L17) | [ToChannel ns/op](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L52) | 倍率 |
+| --- | --- | --- | --- |
+| 64 | 549 ±2% | 6,714.5 ±2% | 12.230× |
+| 4096 | 26,019 ±2% | 337,299.5 ±1% | 12.964× |
+
+<details>
+<summary>検定：Seq と ToChannel</summary>
+
+| N | 指標 | 増減率 | 検定 |
+| --- | --- | --- | --- |
+| 64 | sec/op | +1123.04% | p=0.000 n=10 |
+| 64 | B/op | +6.53% | p=0.000 n=10 |
+| 64 | allocs/op | -5.88% | p=0.000 n=10 |
+| 4096 | sec/op | +1196.36% | p=0.000 n=10 |
+| 4096 | B/op | +0.09% | p=0.000 n=10 |
+| 4096 | allocs/op | -4.00% | p=0.000 n=10 |
+
+</details>
+
+#### メモリ割り当て
+
+| N | 実装 | B/op | allocs/op |
+| --- | --- | --- | --- |
+| 64 | [Seq](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L17) | 2,328 ±0% | 17 ±0% |
+| 64 | [ToChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L52) | 2,480 ±0% | 16 ±0% |
+| 4096 | [Seq](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L17) | 177,688 ±0% | 25 ±0% |
+| 4096 | [ToChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L52) | 177,840.5 ±0% | 24 ±0% |
+
+### Channel 入力
 
 #### 時間：Direct と FromChannel
 
@@ -380,27 +412,6 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 
 </details>
 
-#### 時間：Seq と ToChannel
-
-| N | 入力容量 | [Seq ns/op](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L17) | [ToChannel ns/op](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L52) | 倍率 |
-| --- | --- | --- | --- | --- |
-| 64 | 0 | 549 ±2% | 6,714.5 ±2% | 12.230× |
-| 4096 | 0 | 26,019 ±2% | 337,299.5 ±1% | 12.964× |
-
-<details>
-<summary>検定：Seq と ToChannel</summary>
-
-| N | 入力容量 | 指標 | 増減率 | 検定 |
-| --- | --- | --- | --- | --- |
-| 64 | 0 | sec/op | +1123.04% | p=0.000 n=10 |
-| 64 | 0 | B/op | +6.53% | p=0.000 n=10 |
-| 64 | 0 | allocs/op | -5.88% | p=0.000 n=10 |
-| 4096 | 0 | sec/op | +1196.36% | p=0.000 n=10 |
-| 4096 | 0 | B/op | +0.09% | p=0.000 n=10 |
-| 4096 | 0 | allocs/op | -4.00% | p=0.000 n=10 |
-
-</details>
-
 #### メモリ割り当て
 
 | N | 入力容量 | 実装 | B/op | allocs/op |
@@ -408,16 +419,12 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
 | 64 | 0 | [Direct](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L88) | 2,256 ±0% | 8 ±0% |
 | 64 | 0 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L141) | 2,600 ±0% | 20 ±0% |
 | 64 | 0 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L192) | 2,752 ±0% | 19 ±0% |
-| 64 | 0 | [Seq](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L17) | 2,328 ±0% | 17 ±0% |
-| 64 | 0 | [ToChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L52) | 2,480 ±0% | 16 ±0% |
 | 64 | 64 | [Direct](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L88) | 2,784 ±0% | 8 ±0% |
 | 64 | 64 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L141) | 3,128 ±0% | 20 ±0% |
 | 64 | 64 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L192) | 3,280 ±0% | 19 ±0% |
 | 4096 | 0 | [Direct](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L88) | 177,616 ±0% | 16 ±0% |
 | 4096 | 0 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L141) | 177,960 ±0% | 28 ±0% |
 | 4096 | 0 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L192) | 178,112 ±0% | 27 ±0% |
-| 4096 | 0 | [Seq](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L17) | 177,688 ±0% | 25 ±0% |
-| 4096 | 0 | [ToChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L52) | 177,840.5 ±0% | 24 ±0% |
 | 4096 | 64 | [Direct](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L88) | 178,144 ±0% | 16 ±0% |
 | 4096 | 64 | [FromChannel](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L141) | 178,488.5 ±0% | 28 ±0% |
 | 4096 | 64 | [RoundTrip](https://github.com/meian/go-seqpipeline/blob/b57287562a850088ae8c5b15690600755f58f4eb/benchmarks/channel_scenario_test.go#L192) | 178,640 ±0% | 27 ±0% |

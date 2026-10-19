@@ -53,7 +53,8 @@ Pipeline の段数は Map と Filter の合計で、途中終了時の Take は�
 Loop は直接ループ、Functions は要素ごとの通常の関数呼び出し、Pipeline はオペレーターの接続で同じ結果を作る。  
 入力生成は計測に含まず、通常のインライン化・最適化は有効にしている。  
 
-Channel の入力容量は 0 / 64、ToChannel の出力容量は常に 0。  
+Direct / FromChannel / RoundTrip の入力容量は 0 / 64。  
+ToChannel / RoundTrip の出力容量は常に 0。  
 Direct / FromChannel / ToChannel は送信用 1 goroutine、RoundTrip は 2 goroutine を使う。  
 途中終了・キャンセルの費用はこの Channel 比較に含まない。  
 

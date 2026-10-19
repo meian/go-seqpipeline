@@ -86,6 +86,32 @@ class PublishTest(unittest.TestCase):
                     self.assertLessEqual(len(line.strip('|').split('|')), 5)
         self.assertIn('<summary>検定：Loop と Pipeline</summary>', publish.render_scenario(snapshot))
 
+    def test_channel_capacity_is_shown_only_for_channel_input(self):
+        snapshot = publish.Snapshot(self.directory)
+        original = next(c for c in snapshot.comparisons if c.base[0] == 'ScenarioFuture')
+        values = snapshot.values
+        snapshot.cases = []
+        snapshot.values = {}
+        snapshot.comparisons = []
+        for base, target in [('Seq', 'ToChannel'), ('Direct', 'FromChannel')]:
+            cases = [publish.key(f'ScenarioChannel/N=4096/buffer=0/impl={label}')
+                     for label in (base, target)]
+            for case, source in zip(cases, (original.base, original.target)):
+                snapshot.cases.append(case)
+                for metric in publish.METRICS:
+                    snapshot.values[case, metric] = values[source, metric]
+            snapshot.comparisons.append(publish.Comparison(*cases, original.stats.copy()))
+        overview = publish.render_overview(snapshot)
+        self.assertIn('## Channel へ書き出す', overview)
+        self.assertNotIn('容量', overview)
+        detail = publish.render_scenario(snapshot)
+        seq_input, channel_input = detail.split('### Seq 入力')[1].split('### Channel 入力')
+        self.assertNotIn('入力容量', seq_input)
+        self.assertIn('| 4096 | 2,000,000,000 ±2% | 4,000,000,000 ±2% | 2.000× |', seq_input)
+        self.assertIn('| N | 入力容量 | Direct ns/op | FromChannel ns/op | 倍率 |', channel_input)
+        self.assertIn('| 4096 | 0 | 2,000,000,000 ±2% | 4,000,000,000 ±2% | 2.000× |', channel_input)
+        snapshot.verify()
+
     def test_public_reports_exclude_maintainer_instructions(self):
         destination = self.directory/'output/results'
         publish.render(self.directory, destination)

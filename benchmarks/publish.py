@@ -191,8 +191,15 @@ def table(headers, rows):
     return '\n'.join(lines)+'\n\n'
 
 
-def condition(case, omit=()):
+def displayed_dimensions(case):
     dimensions = dict(case[1])
+    if case[0] == 'ScenarioChannel' and dimensions.get('impl') in ('Seq', 'ToChannel'):
+        dimensions.pop('buffer', None)
+    return dimensions
+
+
+def condition(case, omit=()):
+    dimensions = displayed_dimensions(case)
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
               'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
@@ -230,7 +237,10 @@ def condition_groups(cases):
     """共通条件を表の外へ出し、件数・段数などは独立した列にする。"""
     groups = {}
     for case in cases:
-        groups.setdefault(condition(case, omit=('N', 'depth', 'buffer', 'reuse')), []).append(case)
+        detail = condition(case, omit=('N', 'depth', 'buffer', 'reuse'))
+        if case[0] == 'ScenarioChannel':
+            detail = 'Channel 入力' if 'buffer' in displayed_dimensions(case) else 'Seq 入力'
+        groups.setdefault(detail, []).append(case)
     for group in groups.values():
         group.sort(key=lambda case: (
             *(int(dict(case[1]).get(k, 0)) for k in ('N', 'depth', 'buffer', 'reuse')),
@@ -335,7 +345,7 @@ Fill / Warm は保存費用込みの Reuse と計測範囲が異なる。
         text += f'## {group.removeprefix("Scenario")}\n\n'
         for detail, cases in condition_groups(groups[group]):
             text += f'### {detail or "入力条件別"}\n\n'
-            axes = [k for k in ('N', 'depth', 'buffer', 'reuse') if any(k in dict(c[1]) for c in cases)]
+            axes = [k for k in ('N', 'depth', 'buffer', 'reuse') if any(k in displayed_dimensions(c) for c in cases)]
             labels = {'N': 'N', 'depth': '段数', 'buffer': '入力容量', 'reuse': '利用回数'}
             headers = [labels[k] for k in axes]
 
