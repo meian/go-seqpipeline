@@ -266,6 +266,8 @@ REFERENCE_DESCRIPTIONS = {
     'Take2Slice': '先頭 8 件を `slices.All` で反復',
     'SkipSlice': '先頭 8 件を除き `slices.Values` で反復',
     'Skip2Slice': '先頭 8 件を除き `slices.All` で元の添字・値を取得',
+    'ValuePair': '`slices.Values` の値と変換した値を組にする',
+    'Slice2Values': '`slices.All` から値を取得',
     'ZipIndex': '添字で同じ位置の値を組にする',
     'ZipLeft0': '左入力を反復し、右の不足分を 0 で補完',
     'ZipLeft7': '左入力を反復し、右の不足分を 7 で補完',

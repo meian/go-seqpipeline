@@ -27,10 +27,10 @@
 | `Map2` | `Map2` | 構築・全件評価・チェックサム |
 | `Keys` | `Keys` | 構築・全件評価・チェックサム |
 | `Values` | `Values` | 構築・全件評価・チェックサム |
-| `Seq.Pipe` | `Seq.Pipe` | 変換関数への転送なので、対応する Map / Zip / Values / Map2 の接続・評価に含める |
-| `Seq.Pipe2` | `Seq.Pipe2` | 変換関数への転送なので、対応する Map / Zip / Values / Map2 の接続・評価に含める |
-| `Seq2.Pipe` | `Seq2.Pipe` | 変換関数への転送なので、対応する Map / Zip / Values / Map2 の接続・評価に含める |
-| `Seq2.Pipe2` | `Seq2.Pipe2` | 変換関数への転送なので、対応する Map / Zip / Values / Map2 の接続・評価に含める |
+| `Seq.Pipe` | `Seq.Pipe` | Map の接続・全件評価 |
+| `Seq.Pipe2` | `Seq.Pipe2` | 単一入力から値と変換値の組を返す変換の接続・全件評価（Zip は使わない） |
+| `Seq2.Pipe` | `Seq2.Pipe` | slices.All を入力とする Values の接続・全件評価 |
+| `Seq2.Pipe2` | `Seq2.Pipe2` | Map2 の接続・全件評価 |
 | `Skip` | `Skip.Operator / Skip.Operator2` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
 | `skipOperator.Operator` | `Skip.Operator` | 構築・全件評価・チェックサム |
 | `skipOperator.Operator2` | `Skip.Operator2` | 構築・全件評価・チェックサム |
@@ -48,7 +48,7 @@
 | `zipKeyOperator.Operator` | `ZipKey.Operator` | 構築・全件評価・チェックサム |
 
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
-それぞれ入力・Map / Map2・Zip・Values と Pipe / Pipe2 の測定で利用する。  
+それぞれ入力・Map / Map2・単一入力から組への変換・Values と Pipe / Pipe2 の測定で利用する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
 各ケースの詳しい条件は [測定方法](../../benchmarks/METHOD.md) を参照。  
 
