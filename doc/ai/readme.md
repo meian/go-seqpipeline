@@ -7,13 +7,16 @@ README は導入と最初の実行の入口とし、掲載範囲とレビュー�
 
 `scripts/check_readme.py` は日英それぞれの README を最大 100 行・コード例 2 つまでに制限する。  
 整理後は両言語とも 73 行のため、暫定値 180 行から、説明の調整余地を残した 100 行に確定した。  
-空行・表・コードブロックを含む全行を数え、コード例は言語指定の有無によらずフェンスで囲んだブロックを数える。  
+空行・表・コードブロックを含む全行を数え、コード例は `markdown-it-py` で解析し、言語指定の有無によらず引用・リスト内のフェンスやインデント形式のコードブロックも数える。  
 単独の `go get github.com/meian/go-seqpipeline` を含む `sh` / `shell` / `bash` ブロックだけを例数から除外する。  
 閉じていないフェンス、読み取り失敗、上限超過では失敗し、詳細を利用ガイド・GoDoc・Go Example へ移す案内を出す。  
 
-リポジトリのルートで Python 3 を使って実行する。  
+リポジトリのルートで Python 3.8 以降を使い、文書チェック用の仮想環境に固定バージョンの依存を導入して実行する。  
 
 ```sh
+python3 -m venv /tmp/seq-readme-venv
+. /tmp/seq-readme-venv/bin/activate
+python3 -m pip install -r scripts/requirements.txt
 python3 -m unittest discover -s scripts -p 'test_*.py'
 python3 scripts/check_readme.py
 ```

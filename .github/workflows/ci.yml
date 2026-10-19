@@ -47,6 +47,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
+      - name: Install README guard dependencies
+        run: python3 -m pip install -r scripts/requirements.txt
       - name: Test README guard
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Check both READMEs

@@ -1,8 +1,9 @@
 """Keep README introductions within their documented size and example budgets."""
 
-import re
 import sys
 from pathlib import Path
+
+from markdown_it import MarkdownIt
 
 MAX_LINES = 100
 MAX_EXAMPLES = 2
@@ -15,39 +16,32 @@ MOVE_HINT = (
 
 
 def check_readme(text):
-    """Return policy violations, counting all lines and fenced examples."""
+    """Return policy violations, counting all lines and Markdown code blocks."""
     errors = []
     lines = text.splitlines()
     if len(lines) > MAX_LINES:
         errors.append(f"{len(lines)} lines exceeds the {MAX_LINES}-line limit.")
 
-    fence = None
     examples = 0
-    for line in lines:
-        if fence is None:
-            opening = re.fullmatch(r" {0,3}(`{3,}|~{3,})(.*)", line)
-            if opening:
-                marker, info = opening.groups()
-                fence = (marker, info.strip())
-                body = []
-        else:
-            marker, info = fence
-            closing_pattern = rf" {{0,3}}{marker[0]}{{{len(marker)},}}[ \t]*"
-            if re.fullmatch(closing_pattern, line):
-                # Only the standalone installation command is exempt, regardless
-                # of how other examples are labelled (Go, shell, or unlabelled).
-                installation = (
-                    info in ("sh", "shell", "bash")
-                    and "\n".join(body).strip() == INSTALL_COMMAND
-                )
-                if not installation:
-                    examples += 1
-                fence = None
-            else:
-                body.append(line)
+    for token in MarkdownIt("commonmark").parse(text):
+        if token.type not in ("fence", "code_block"):
+            continue
+        # Parsed tokens include code inside blockquotes and lists, but do not
+        # interpret literal fences inside a code block as additional examples.
+        installation = (
+            token.type == "fence"
+            and token.info.strip() in ("sh", "shell", "bash")
+            and token.content.strip() == INSTALL_COMMAND
+        )
+        if not installation:
+            examples += 1
+        if token.type == "fence":
+            # The source span includes the opener and, when present, the closer.
+            # Container prefixes are already removed from the parsed content.
+            source_lines = token.map[1] - token.map[0]
+            if source_lines == token.content.count("\n") + 1:
+                errors.append("Unclosed code fence.")
 
-    if fence is not None:
-        errors.append("Unclosed code fence.")
     if examples > MAX_EXAMPLES:
         errors.append(
             f"{examples} code examples exceeds the {MAX_EXAMPLES}-example limit "
