@@ -119,39 +119,44 @@ func zipSequences[K, V any](left Seq[K], right Seq[V], alignment ZipAlign, defau
 		if values == nil {
 			values = func(func(V) bool) {}
 		}
-		nextKey, stopKey := iter.Pull(keys)
-		defer stopKey()
+		// 終了基準の入力を直接反復し、もう一方だけを Pull で取得する。
+		// AlignRight は右から、それ以外は左から読む順序を保つ。
+		if alignment == AlignRight {
+			nextKey, stopKey := iter.Pull(keys)
+			defer stopKey()
+			for v := range values {
+				k, ok := nextKey()
+				if !ok {
+					k = defaultKey
+				}
+				if !yield(k, v) {
+					return
+				}
+			}
+			return
+		}
+
 		nextValue, stopValue := iter.Pull(values)
 		defer stopValue()
-		for {
-			var k K
-			var v V
-			var hasKey, hasValue bool
-			// AlignRight では右を先に読み、右の終了後に左を余分に取得しない。
-			if alignment == AlignRight {
-				v, hasValue = nextValue()
-				if !hasValue {
+		for k := range keys {
+			v, ok := nextValue()
+			if !ok {
+				if alignment == AlignShortest {
 					return
 				}
-				k, hasKey = nextKey()
-			} else {
-				k, hasKey = nextKey()
-				if !hasKey && alignment <= AlignLeft {
-					return
-				}
-				v, hasValue = nextValue()
-				if !hasValue && (alignment == AlignShortest || !hasKey) {
-					return
-				}
-			}
-			if !hasKey {
-				k = defaultKey
-			}
-			if !hasValue {
 				v = defaultValue
 			}
 			if !yield(k, v) {
 				return
+			}
+		}
+		if alignment == AlignLongest {
+			// 左が終了した後も、右に残る値には既定のキーを補う。
+			for {
+				v, ok := nextValue()
+				if !ok || !yield(defaultKey, v) {
+					return
+				}
 			}
 		}
 	}
