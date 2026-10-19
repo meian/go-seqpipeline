@@ -2,8 +2,8 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 測定日時（UTC） | 2026-10-18T14:29:13+00:00 |
-| 対象コード（ライブラリ・測定） | [b57287562a85](https://github.com/meian/go-seqpipeline/commit/b57287562a850088ae8c5b15690600755f58f4eb) |
+| 測定日時（UTC） | 2026-10-19T17:48:02+00:00 |
+| 対象コード（ライブラリ・測定） | [6dd1dd4f0afe](https://github.com/meian/go-seqpipeline/commit/6dd1dd4f0afebc6d4f562883f4ef9a6a457ecde2) |
 | Go | go version go1.27.1 darwin/arm64 |
 | OS / CPU | macOS-26.6.2-arm64-arm-64bit / Apple M4 |
 | GOMAXPROCS | 2 |
