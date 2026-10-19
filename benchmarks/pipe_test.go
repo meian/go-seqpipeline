@@ -84,9 +84,16 @@ func TestSeqPipeGo(t *testing.T) {
 }
 
 func seqPipe2Library(values []int) int64 {
-	inputSeq := seq.FromSlice(values)
-	source := inputSeq.
-		Pipe2(seq.Zip(inputSeq).Operator)
+	source := seq.FromSlice(values).
+		Pipe2(func(input seq.Seq[int]) seq.Seq2[int, int] {
+			return func(yield func(int, int) bool) {
+				for v := range input {
+					if !yield(v, (v+1)&65535) {
+						return
+					}
+				}
+			}
+		})
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -95,7 +102,7 @@ func seqPipe2Library(values []int) int64 {
 }
 
 func BenchmarkSeqPipe2Library(b *testing.B) {
-	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Library/N=64", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ValuePair/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
 		b.ReportAllocs()
@@ -103,7 +110,7 @@ func BenchmarkSeqPipe2Library(b *testing.B) {
 			checksum = seqPipe2Library(values)
 		}
 	})
-	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Library/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ValuePair/impl=Library/N=4096", func(b *testing.B) {
 		values := input(4096)
 
 		b.ReportAllocs()
@@ -117,7 +124,7 @@ func TestSeqPipe2Library(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 
 	got := seqPipe2Library(values)
-	const want int64 = 42
+	const want int64 = 48
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
@@ -125,14 +132,14 @@ func TestSeqPipe2Library(t *testing.T) {
 
 func seqPipe2Go(values []int) int64 {
 	var sum int64
-	for i, k := range slices.All(values) {
-		sum += int64(k) + int64(values[i])
+	for v := range slices.Values(values) {
+		sum += int64(v) + int64((v+1)&65535)
 	}
 	return sum
 }
 
 func BenchmarkSeqPipe2Go(b *testing.B) {
-	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Go/N=64", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ValuePair/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
 		b.ReportAllocs()
@@ -140,7 +147,7 @@ func BenchmarkSeqPipe2Go(b *testing.B) {
 			checksum = seqPipe2Go(values)
 		}
 	})
-	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ZipIndex/impl=Go/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ValuePair/impl=Go/N=4096", func(b *testing.B) {
 		values := input(4096)
 
 		b.ReportAllocs()
@@ -154,7 +161,7 @@ func TestSeqPipe2Go(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 
 	got := seqPipe2Go(values)
-	const want int64 = 42
+	const want int64 = 48
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
@@ -171,7 +178,7 @@ func seq2PipeLibrary(values []int) int64 {
 }
 
 func BenchmarkSeq2PipeLibrary(b *testing.B) {
-	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Library/N=64", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=Slice2Values/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
 		b.ReportAllocs()
@@ -179,7 +186,7 @@ func BenchmarkSeq2PipeLibrary(b *testing.B) {
 			checksum = seq2PipeLibrary(values)
 		}
 	})
-	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Library/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=Slice2Values/impl=Library/N=4096", func(b *testing.B) {
 		values := input(4096)
 
 		b.ReportAllocs()
@@ -201,14 +208,14 @@ func TestSeq2PipeLibrary(t *testing.T) {
 
 func seq2PipeGo(values []int) int64 {
 	var sum int64
-	for v := range slices.Values(values) {
+	for _, v := range slices.All(values) {
 		sum += int64(v)
 	}
 	return sum
 }
 
 func BenchmarkSeq2PipeGo(b *testing.B) {
-	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Go/N=64", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=Slice2Values/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
 		b.ReportAllocs()
@@ -216,7 +223,7 @@ func BenchmarkSeq2PipeGo(b *testing.B) {
 			checksum = seq2PipeGo(values)
 		}
 	})
-	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=SliceRange/impl=Go/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=Slice2Values/impl=Go/N=4096", func(b *testing.B) {
 		values := input(4096)
 
 		b.ReportAllocs()

@@ -34,9 +34,11 @@ FromSlice と同じ `slices.Values`、FromMap と同じ `maps.All` を対照に�
 | 先頭8件 | Take の接続から先頭 8 件の反復・加算まで |
 
 Map は値に 1 を加算し、Filter は 3 の倍数を除き、Skip は先頭 8 件を除外する。  
-Keys / Values は map のキー / 値を取り出し、他の Seq2 のキーはスライスの添字とする。  
+Keys / Values は map のキー / 値を取り出し、`slices.All` を入力元とする Seq2 のキーはスライスの添字とする。  
 Zip の既定ケースは等長入力、補完設定のケースは片側を半分の件数にし、出力はいずれも N 件とする。  
-Pipe / Pipe2 は Seq では Map / Zip、Seq2 では Values / Map2 を接続した費用を含む。  
+Seq.Pipe は Map、Seq.Pipe2 は単一入力の値 `v` から `(v, (v+1)&65535)` を返す変換、Seq2.Pipe / Pipe2 は Values / Map2 を接続した費用を含む。  
+Seq.Pipe2 は両実装とも `slices.Values`、Seq2.Pipe は両実装とも `slices.All` を入力元とする。  
+Zip は Zip 自体のケースだけで使用し、他の Seq2・パイプ接続の測定には含めない。  
 設定・型変換も反復まで含むため、呼び出し単独の費用ではない。  
 
 ## 利用場面別結果（Scenario）

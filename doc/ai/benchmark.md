@@ -67,6 +67,8 @@
 - Cache / Cache2 は標準 API の代替ではないため Unit を設けず、保存と再利用を Scenario で測る
 - Unit は Library の入力元と同じ標準 iterator を用い、スライス直接反復と iterator 反復の差を混ぜない
 - `FromSlice` は `slices.Values`、Seq2 のスライス入力は `slices.All`、`FromMap` は `maps.All` に対応させる
+- Seq2 の生成・反復・変換・パイプ接続に Zip を混ぜず、Zip 自体のケースで独立して測定する
+- Seq.Pipe2 は単一入力から組を返す変換を使い、Go 側も同じ入力・変換・出力・評価・結果保持にそろえる
 - Keys / Values は map を受け取り、`FromMap(...).Pipe(...)` と `maps.All` からの射影を比較する
 - 通常の最適化は有効とし、結果を演算子単独の費用とは解釈しない
 - ライブラリ側と Go 側の計測範囲・結果保持をそろえ、代表入力で処理を実行できることを確認する
