@@ -427,6 +427,74 @@ func TestZipInputTermination(t *testing.T) {
 	}
 }
 
+// TestZipInputOrder は取得・終了検出と出力の順序を、不等長入力と全終了条件で検証する。
+func TestZipInputOrder(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		alignment seq.ZipAlign
+		left      []int
+		right     []int
+		want      []string
+	}{
+		{
+			name:      "shortest",
+			alignment: seq.AlignShortest,
+			left:      []int{1, 2},
+			right:     []int{10},
+			want:      []string{"L1", "R10", "out:1,10", "L2", "R:end"},
+		},
+		{
+			name:      "left",
+			alignment: seq.AlignLeft,
+			left:      []int{1, 2},
+			right:     []int{10},
+			want:      []string{"L1", "R10", "out:1,10", "L2", "R:end", "out:2,-2", "L:end"},
+		},
+		{
+			name:      "right",
+			alignment: seq.AlignRight,
+			left:      []int{1},
+			right:     []int{10, 20},
+			want:      []string{"R10", "L1", "out:1,10", "R20", "L:end", "out:-1,20", "R:end"},
+		},
+		{
+			name:      "longest/right remainder",
+			alignment: seq.AlignLongest,
+			left:      []int{1},
+			right:     []int{10, 20},
+			want:      []string{"L1", "R10", "out:1,10", "L:end", "R20", "out:-1,20", "R:end"},
+		},
+		{
+			name:      "longest/left remainder",
+			alignment: seq.AlignLongest,
+			left:      []int{1, 2},
+			right:     []int{10},
+			want:      []string{"L1", "R10", "out:1,10", "L2", "R:end", "out:2,-2", "L:end"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var events []string
+			input := func(name string, values []int) seq.Seq[int] {
+				return func(yield func(int) bool) {
+					for _, v := range values {
+						events = append(events, fmt.Sprint(name, v))
+						if !yield(v) {
+							return
+						}
+					}
+					events = append(events, name+":end")
+				}
+			}
+			config := seq.Zip(input("R", tc.right)).AlignBy(tc.alignment).
+				WithDefaultValue(-2).WithDefaultKey(-1)
+			for k, v := range config.Operator(input("L", tc.left)) {
+				events = append(events, fmt.Sprintf("out:%d,%d", k, v))
+			}
+			assertEqual(t, events, tc.want)
+		})
+	}
+}
+
 // TestZipStopAfterPadding は不足分の補完を含む反復を Take で制限し、余分な取得なく入力を解放できることを検証する。
 func TestZipStopAfterPadding(t *testing.T) {
 	for _, alignment := range []seq.ZipAlign{seq.AlignLeft, seq.AlignRight, seq.AlignLongest} {
