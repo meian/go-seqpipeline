@@ -15,6 +15,7 @@ go get github.com/meian/go-seqpipeline
 ## 使い方
 
 `From` で始まる関数で入力を取り込み、`Pipe` / `Pipe2` でオペレーターを接続します。  
+シーケンスと入出力変換には `github.com/meian/go-seqpipeline/seq`、オペレーターには `github.com/meian/go-seqpipeline/op` を import します。  
 `seq.Seq[T]` / `seq.Seq2[K, V]` は、`iter.Seq` / `iter.Seq2` に接続メソッドを追加した型です。  
 どちらの入力でも、`Pipe` は `seq.Seq`、`Pipe2` は `seq.Seq2` を返します。  
 オペレーターの入出力は標準イテレーター型で、`Pipe` / `Pipe2` への接続時に型が推論されます。  
@@ -24,9 +25,9 @@ go get github.com/meian/go-seqpipeline
 
 ```go
 pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
-    Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
-    Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
-    Pipe(seq.Take(1).Operator)
+    Pipe(op.Map(func(v int) string { return strconv.Itoa(v) })).
+    Pipe(op.Filter(func(v string) bool { return len(v) > 2 })).
+    Pipe(op.Take(1).Operator)
 fmt.Println(seq.ToSlice(pipeline)) // [333]
 ```
 
@@ -34,11 +35,11 @@ fmt.Println(seq.ToSlice(pipeline)) // [333]
 
 ```go
 pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-    Pipe2(seq.Map2(func(k int, v string) (string, int) {
+    Pipe2(op.Map2(func(k int, v string) (string, int) {
         return strconv.Itoa(k), len(v)
     })).
-    Pipe2(seq.Filter2(func(k string, v int) bool { return v > 1 })).
-    Pipe2(seq.Take(1).Operator2)
+    Pipe2(op.Filter2(func(k string, v int) bool { return v > 1 })).
+    Pipe2(op.Take(1).Operator2)
 for k, v := range pairs {
     fmt.Println(k, v) // 1 3
 }
@@ -60,8 +61,8 @@ channel の受信を途中でやめる場合は、渡したコンテキストを
 ## 参照先
 
 - [利用ガイド](doc/guide.ja.md)：評価・停止・再評価・nil、入出力、接続型、独自オペレーター
-- [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq)：API ごとの仕様と境界条件
-- [Go Example](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples)：期待出力を持つ利用例（[ソース](seq/example_test.go)）
+- GoDoc：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) の個別 API の契約と境界条件
+- Go Example：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) の期待出力を持つ利用例（[seq のソース](seq/example_test.go)、[op のソース](op/example_test.go)）
 - [性能概要](benchmarks/REPORT.md)：測定結果と適用条件
 
 ## ライセンス

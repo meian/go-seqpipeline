@@ -1,11 +1,11 @@
-package seq_test
+package op_test
 
 import (
 	"iter"
 	"slices"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/seq"
+	"github.com/meian/go-seqpipeline/op"
 )
 
 // TestTakeOperator は、遅延評価・件数制限・上流停止・再評価・0 以下での非評価を確認する。
@@ -37,7 +37,7 @@ func TestTakeOperator(t *testing.T) {
 					}
 				}
 			})
-			iterator := seq.Take(tc.n).Operator(src)
+			iterator := op.Take(tc.n).Operator(src)
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, slices.Collect(iterator), tc.want)
@@ -52,7 +52,7 @@ func TestTakeOperator(t *testing.T) {
 // TestTakeOperatorEmptyAndNilInput は、nil と空入力を再評価しても要素を返さないことを確認する。
 func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
 	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
-		iterator := seq.Take(1).Operator(src)
+		iterator := op.Take(1).Operator(src)
 		for round := 0; round < 2; round++ {
 			assertEqual(t, slices.Collect(iterator), []int(nil))
 		}
@@ -93,7 +93,7 @@ func TestTakeOperator2(t *testing.T) {
 					}
 				}
 			})
-			pipeline := seq.Take(tc.n).Operator2(src)
+			pipeline := op.Take(tc.n).Operator2(src)
 			iterator := pipeline
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
@@ -109,7 +109,7 @@ func TestTakeOperator2(t *testing.T) {
 // TestTakeOperator2EmptyAndNilInput は、nil と空入力を再評価しても組を返さないことを確認する。
 func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
 	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
-		iterator := seq.Take(1).Operator2(src)
+		iterator := op.Take(1).Operator2(src)
 		for round := 0; round < 2; round++ {
 			assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
 		}
@@ -128,7 +128,7 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 			}
 		}
 	})
-	pipeline := seq.Take(3).Operator2(src)
+	pipeline := op.Take(3).Operator2(src)
 	for k, v := range pipeline {
 		assertEqual(t, k, 1)
 		assertEqual(t, v, 10)
@@ -149,7 +149,7 @@ func TestTakeOperatorDownstreamStop(t *testing.T) {
 			}
 		}
 	})
-	iterator := seq.Take(3).Operator(src)
+	iterator := op.Take(3).Operator(src)
 	for round := 1; round <= 2; round++ {
 		for v := range iterator {
 			assertEqual(t, v, 1)
@@ -161,9 +161,9 @@ func TestTakeOperatorDownstreamStop(t *testing.T) {
 
 // TestTakeConfigurationReuse は、同じ設定値を異なる型と複数の入力に適用しても残り件数を共有しないことを確認する。
 func TestTakeConfigurationReuse(t *testing.T) {
-	take := seq.Take(2)
-	var op seq.Operator[int, int] = take.Operator
-	var op2 seq.Operator2[[]int, string, []int, string] = take.Operator2
+	take := op.Take(2)
+	var transform op.Operator[int, int] = take.Operator
+	var op2 op.Operator2[[]int, string, []int, string] = take.Operator2
 	values := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{3, 3, 1} {
 			if !yield(v) {
@@ -182,7 +182,7 @@ func TestTakeConfigurationReuse(t *testing.T) {
 			}
 		}
 	})
-	first, second := op(values), take.Operator(values)
+	first, second := transform(values), take.Operator(values)
 	paired := op2(pairs)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, slices.Collect(first), []int{3, 3})

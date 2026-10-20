@@ -3,7 +3,7 @@
 English | [日本語](guide.ja.md)  
 
 This guide covers shared semantics and connections beyond the basic examples in the [README](../README.md).  
-See the [README](../README.md#type-inference) for basic type inference and [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) for individual API contracts.  
+See the [README](../README.md#type-inference) for basic type inference and the GoDoc for [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) for individual API contracts.  
 
 ## seq.Seq / seq.Seq2
 
@@ -11,6 +11,17 @@ See the [README](../README.md#type-inference) for basic type inference and [GoDo
 Like standard iterators, the results can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
 `seq.Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
 A `seq.Seq2` can also be converted into a single-value `seq.Seq` to continue the pipeline.  
+
+## Packages and migration
+
+`seq` provides sequences, connection methods, and input/output conversions; `op` provides operator function types, implementations, and settings.  
+Operators accept and return standard iterators, so they can also be used without wrapping inputs in `seq`.  
+For example, `slices.Collect(op.Map(strconv.Itoa)(slices.Values([]int{1, 2})))` directly transforms a standard iterator.  
+
+When migrating from operators in `seq`, add an import of `github.com/meian/go-seqpipeline/op` and change operator references such as `seq.Map` to `op.Map`.  
+The four operator function types and Zip settings and constants also move to `op`; compatibility aliases and wrappers are not provided in `seq`.  
+Keep sequence types, `Pipe` / `Pipe2`, and `From` / `To` conversions in `seq`.  
+For example, `seq.FromSlice(values).Pipe(op.Map(fn))` retains type inference and chaining.  
 
 ## Evaluation and usage semantics
 
@@ -31,11 +42,11 @@ Built-in operations other than channel conversions do not use goroutines or chan
 
 ### Reusing evaluated results
 
-Use `Pipe(seq.Cache)` / `Pipe2(seq.Cache2)` to save results at a pipeline boundary and build multiple downstream pipelines from them.  
+Use `Pipe(op.Cache)` / `Pipe2(op.Cache2)` to save results at a pipeline boundary and build multiple downstream pipelines from them.  
 Caching evaluates upstream once during connection, preserves order and duplicates, and returns a non-nil sequence even for nil or empty input.  
 Later iterations read the saved results from the beginning, including after an early stop; downstream operations run on every iteration.  
 
-See [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-Cache) for executable usage.  
+See [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) for executable usage.  
 
 Input must be finite, and memory use grows with the number of saved elements or pairs.  
 For an unbounded input, limit it before caching; a downstream limit cannot stop the initial evaluation.  
@@ -56,14 +67,14 @@ The following connection never returns because `Cache` tries to evaluate the ent
 The downstream `Take(3)` is never reached.  
 
 ```go
-naturals.Pipe(seq.Cache).Pipe(seq.Take(3).Operator)
+naturals.Pipe(op.Cache).Pipe(op.Take(3).Operator)
 ```
 
 Putting `Take(3)` first stops upstream after three values and creates a reusable cache.  
 For `seq.Seq2`, likewise connect `Take(3).Operator2` before `Cache2`.  
 
 ```go
-cached := naturals.Pipe(seq.Take(3).Operator).Pipe(seq.Cache)
+cached := naturals.Pipe(op.Take(3).Operator).Pipe(op.Cache)
 fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 ```
@@ -78,7 +89,7 @@ The zero values of `seq.Seq` / `seq.Seq2` are nil, and conversions to and from s
 Built-in operators treat nil as empty, but direct calls, iteration, and passing nil to `ToSlice` / `ToMap` panic.  
 For empty non-nil iterators, `ToSlice` returns nil and `ToMap` returns an empty non-nil map.  
 Evaluation, stopping, and nil handling for custom operators depend on their implementation.  
-See [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) and [tests](../seq) for each API's boundary conditions.  
+See GoDoc and the tests for [seq](../seq) / [op](../op) for each API's boundary conditions.  
 
 ## Input and output
 
@@ -121,19 +132,19 @@ For operations with separate functions for single values and key-value pairs, th
 ### Connecting operators
 
 Both `seq.Seq` and `seq.Seq2` define `Pipe` / `Pipe2`, which connect operators using standard iterators and return `seq.Seq` / `seq.Seq2`, respectively.  
-The function types `Operator`, `ToSeq2Operator`, `ToSeqOperator`, and `Operator2` represent the four combinations of input and output types.  
+The function types `op.Operator`, `op.ToSeq2Operator`, `op.ToSeqOperator`, and `op.Operator2` represent the four combinations of input and output types.  
 
 | Input | Method | Transformation function | Output |
 | --- | --- | --- | --- |
-| `seq.Seq[I]` | `Pipe` | `Operator[I, O]` | `seq.Seq[O]` |
-| `seq.Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]` | `seq.Seq2[K, V]` |
-| `seq.Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]` | `seq.Seq[O]` |
-| `seq.Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` | `seq.Seq2[K2, V2]` |
+| `seq.Seq[I]` | `Pipe` | `op.Operator[I, O]` | `seq.Seq[O]` |
+| `seq.Seq[I]` | `Pipe2` | `op.ToSeq2Operator[I, K, V]` | `seq.Seq2[K, V]` |
+| `seq.Seq2[K, V]` | `Pipe` | `op.ToSeqOperator[K, V, O]` | `seq.Seq[O]` |
+| `seq.Seq2[K, V]` | `Pipe2` | `op.Operator2[K, V, K2, V2]` | `seq.Seq2[K2, V2]` |
 
 `Pipe` / `Pipe2` convert the input to a standard iterator, call the transformation immediately, and convert the result back to the library type.  
 These type conversions preserve nil without evaluating or copying elements.  
 Input evaluation and stop propagation depend on the transformation function.  
-All four operator types can be called directly as `op(src)`; use `ToSeq` / `ToSeq2` to pass library types to direct calls or additional inputs such as `Zip`, and `FromSeq` / `FromSeq2` to continue chaining the result.  
+All four operator types can be called directly as `transform(src)`; use `ToSeq` / `ToSeq2` to pass library types to direct calls or additional inputs such as `Zip`, and `FromSeq` / `FromSeq2` to continue chaining the result.  
 
 ### Implementing custom operators
 
@@ -144,20 +155,20 @@ For operations whose factory arguments carry no type information, provide a conf
 
 ### Executable examples
 
-[Go Examples](../seq/example_test.go) demonstrate each operator with expected output.  
+Go Examples for [seq](../seq/example_test.go) / [op](../op/example_test.go) demonstrate connections and operators with expected output.  
 
 | Example | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
-| Transform elements or keys and values | [ExampleMap](../seq/example_test.go#L13) | [ExampleMap2](../seq/example_test.go#L19) |
-| Filter by a condition | [ExampleFilter](../seq/example_test.go#L29) | [ExampleFilter2](../seq/example_test.go#L35) |
-| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../seq/example_test.go#L43) | [ExampleTake_pairs](../seq/example_test.go#L49) |
-| Skip leading elements or pairs | [ExampleSkip](../seq/example_test.go#L257) | [ExampleSkip](../seq/example_test.go#L257) |
-| Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L59) | [ExampleSeq2_Pipe2](../seq/example_test.go#L201) |
-| Connect between `seq.Seq` and `seq.Seq2` | [ExampleSeq_Pipe2](../seq/example_test.go#L181) | [ExampleSeq2_Pipe](../seq/example_test.go#L193) |
-| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../seq/example_test.go#L146), [ExampleValues](../seq/example_test.go#L155) |
-| Directly call operators between `iter.Seq` and `iter.Seq2` | [ExampleToSeq2Operator](../seq/example_test.go#L213) | [ExampleToSeqOperator](../seq/example_test.go#L224) |
-| Connect and directly call function operators | [ExampleOperator](../seq/example_test.go#L83) | [ExampleOperator2](../seq/example_test.go#L130) |
-| Extend with custom operators | [ExampleOperator_custom](../seq/example_test.go#L113) | [ExampleOperator2](../seq/example_test.go#L130) |
+| Transform elements or keys and values | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L19) |
+| Filter by a condition | [ExampleFilter](../op/example_test.go#L29) | [ExampleFilter2](../op/example_test.go#L35) |
+| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../op/example_test.go#L43) | [ExampleTake_pairs](../op/example_test.go#L49) |
+| Skip leading elements or pairs | [ExampleSkip](../op/example_test.go#L216) | [ExampleSkip](../op/example_test.go#L216) |
+| Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L14) | [ExampleSeq2_Pipe2](../seq/example_test.go#L60) |
+| Connect between `seq.Seq` and `seq.Seq2` | [ExampleSeq_Pipe2](../seq/example_test.go#L40) | [ExampleSeq2_Pipe](../seq/example_test.go#L52) |
+| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../op/example_test.go#L137), [ExampleValues](../op/example_test.go#L146) |
+| Directly call operators between `iter.Seq` and `iter.Seq2` | [ExampleToSeq2Operator](../op/example_test.go#L172) | [ExampleToSeqOperator](../op/example_test.go#L183) |
+| Connect and directly call function operators | [ExampleOperator](../op/example_test.go#L74) | [ExampleOperator2](../op/example_test.go#L121) |
+| Extend with custom operators | [ExampleOperator_custom](../op/example_test.go#L104) | [ExampleOperator2](../op/example_test.go#L121) |
 
 To run only the Examples, use the following command.  
 

@@ -1,4 +1,4 @@
-package seq_test
+package op_test
 
 import (
 	"iter"
@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/seq"
+	"github.com/meian/go-seqpipeline/op"
 )
 
 func TestMapNilInput(t *testing.T) {
-	iterator := seq.Map(func(int) int {
+	iterator := op.Map(func(int) int {
 		t.Fatal("Map callback called")
 		return 0
 	})(nil)
@@ -22,7 +22,7 @@ func TestMapNilInput(t *testing.T) {
 }
 
 func TestMap2NilInput(t *testing.T) {
-	iterator := seq.Map2(func(int, string) (int, string) {
+	iterator := op.Map2(func(int, string) (int, string) {
 		t.Fatal("Map2 callback called")
 		return 0, ""
 	})(nil)
@@ -44,7 +44,7 @@ func TestMap(t *testing.T) {
 			}
 		}
 	})
-	mapped := seq.Map(func(v int) string {
+	mapped := op.Map(func(v int) string {
 		calls++
 		return strconv.Itoa(v)
 	})(src)
@@ -72,7 +72,7 @@ func TestMap2(t *testing.T) {
 			}
 		}
 	})
-	mapped := seq.Map2(func(k int, v string) (string, int) {
+	mapped := op.Map2(func(k int, v string) (string, int) {
 		calls++
 		return strconv.Itoa(k), len(v)
 	})(src)

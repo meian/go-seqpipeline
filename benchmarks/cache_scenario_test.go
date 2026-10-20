@@ -4,6 +4,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
@@ -16,18 +17,18 @@ func cacheValue(v, work int) int {
 
 func cacheSeq(values []int, work int) seq.Seq[int] {
 	return seq.FromSlice(values).
-		Pipe(seq.Map(func(v int) int { return cacheValue(v, work) }))
+		Pipe(op.Map(func(v int) int { return cacheValue(v, work) }))
 }
 
 func cacheSeq2(values []int, work int) seq.Seq2[int, int] {
 	return seq.FromSeq2(slices.All(values)).
-		Pipe2(seq.Map2(func(k, v int) (int, int) { return k, cacheValue(v, work) }))
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, cacheValue(v, work) }))
 }
 
 var scenarioCacheSeqResult seq.Seq[int]
 
 func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
-	return cacheSeq(values, work).Pipe(seq.Cache)
+	return cacheSeq(values, work).Pipe(op.Cache)
 }
 
 func BenchmarkScenarioCacheSeqFill(b *testing.B) {
@@ -369,7 +370,7 @@ func TestScenarioCacheSeqUncached(t *testing.T) {
 var scenarioCacheSeq2Result seq.Seq2[int, int]
 
 func scenarioCacheSeq2Fill(values []int, work int) seq.Seq2[int, int] {
-	return cacheSeq2(values, work).Pipe2(seq.Cache2)
+	return cacheSeq2(values, work).Pipe2(op.Cache2)
 }
 
 func BenchmarkScenarioCacheSeq2Fill(b *testing.B) {

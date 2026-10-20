@@ -4,12 +4,13 @@ import (
 	"maps"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func valuesLibrary(values map[int]int) int64 {
 	source := seq.FromMap(values).
-		Pipe(seq.Values)
+		Pipe(op.Values)
 	var sum int64
 	for v := range source {
 		sum += int64(v)

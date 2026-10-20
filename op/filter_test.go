@@ -1,15 +1,15 @@
-package seq_test
+package op_test
 
 import (
 	"iter"
 	"slices"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/seq"
+	"github.com/meian/go-seqpipeline/op"
 )
 
 func TestFilterNilInput(t *testing.T) {
-	iterator := seq.Filter(func(int) bool {
+	iterator := op.Filter(func(int) bool {
 		t.Fatal("Filter callback called")
 		return true
 	})(nil)
@@ -21,7 +21,7 @@ func TestFilterNilInput(t *testing.T) {
 }
 
 func TestFilter2NilInput(t *testing.T) {
-	iterator := seq.Filter2(func(int, string) bool {
+	iterator := op.Filter2(func(int, string) bool {
 		t.Fatal("Filter2 callback called")
 		return true
 	})(nil)
@@ -54,7 +54,7 @@ func TestFilter(t *testing.T) {
 					}
 				}
 			})
-			filtered := seq.Filter(func(v int) bool {
+			filtered := op.Filter(func(v int) bool {
 				calls++
 				return tc.matches(v)
 			})(src)
@@ -105,7 +105,7 @@ func TestFilter2(t *testing.T) {
 					}
 				}
 			})
-			filtered := seq.Filter2(func(k int, v string) bool {
+			filtered := op.Filter2(func(k int, v string) bool {
 				calls++
 				return tc.matches(k, v)
 			})(src)

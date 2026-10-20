@@ -1,7 +1,8 @@
 # 公開 API の測定対応（保守者向け）
 
 対象コミットは [測定環境](../../benchmarks/results/environment.md) に記録する。  
-`seq` の公開関数 21 件と公開メソッド 16 件、計 37 件を今回のコードから棚卸しした。  
+`seq` と `op` の公開関数 21 件と公開メソッド 16 件、計 37 件を棚卸しした。  
+`seq` は入出力変換の 10 関数と接続の 4 メソッド、`op` はオペレーターの 11 関数と設定値の 12 メソッドを扱う。  
 非公開の設定値型が返す公開メソッドも含む。  
 32 種の API/phase を N64 / N4096 の計 64 条件・Go / Library の 128 ケースで比較する。  
 設定値の生成 3 関数は関連する Unit で、Cache / Cache2 は利用目的に合う Scenario で測定する。  
@@ -9,43 +10,43 @@
 
 | 公開 API | Unit の api キー | 測定範囲・代替理由 |
 | --- | --- | --- |
-| `Cache` | — | 標準 API の代替ではないため Unit は設けず、Scenario の Fill / Warm / Reuse で測定 |
-| `Cache2` | — | Cache と同じく Scenario の Fill / Warm / Reuse で測定 |
-| `FromChannel` | `FromChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
-| `ToChannel` | `ToChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
-| `FromSlice` | `FromSlice` | 構築・全件評価・チェックサム |
-| `ToSlice` | `ToSlice` | 収集・割り当て・結果保持・チェックサム |
-| `FromSeq` | `FromSeq` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
-| `ToSeq` | `ToSeq` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
-| `FromMap` | `FromMap` | 構築・全件評価・チェックサム |
-| `ToMap` | `ToMap` | 収集・割り当て・結果保持・チェックサム |
-| `FromSeq2` | `FromSeq2` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
-| `ToSeq2` | `ToSeq2` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
-| `Filter` | `Filter` | 構築・全件評価・チェックサム |
-| `Filter2` | `Filter2` | 構築・全件評価・チェックサム |
-| `Map` | `Map` | 構築・全件評価・チェックサム |
-| `Map2` | `Map2` | 構築・全件評価・チェックサム |
-| `Keys` | `Keys` | 構築・全件評価・チェックサム |
-| `Values` | `Values` | 構築・全件評価・チェックサム |
-| `Seq.Pipe` | `Seq.Pipe` | Map の接続・全件評価 |
-| `Seq.Pipe2` | `Seq.Pipe2` | 単一入力から値と変換値の組を返す変換の接続・全件評価（Zip は使わない） |
-| `Seq2.Pipe` | `Seq2.Pipe` | slices.All を入力とする Values の接続・全件評価 |
-| `Seq2.Pipe2` | `Seq2.Pipe2` | Map2 の接続・全件評価 |
-| `Skip` | `Skip.Operator / Skip.Operator2` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
-| `skipOperator.Operator` | `Skip.Operator` | 構築・全件評価・チェックサム |
-| `skipOperator.Operator2` | `Skip.Operator2` | 構築・全件評価・チェックサム |
-| `Take` | `Take.Operator / Take.Operator2` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
-| `takeOperator.Operator` | `Take.Operator` | 設定・接続・先頭 8 件までの評価・チェックサム |
-| `takeOperator.Operator2` | `Take.Operator2` | 設定・接続・先頭 8 件までの評価・チェックサム |
-| `Zip` | `Zip.Operator` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
-| `zipOperator.AlignBy` | `Zip.AlignBy` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
-| `zipOperator.WithDefaultValue` | `Zip.WithDefaultValue` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
-| `zipOperator.WithDefaultKey` | `Zip.WithDefaultKey` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
-| `zipOperator.Operator` | `Zip.Operator` | 構築・全件評価・チェックサム |
-| `zipKeyOperator.AlignBy` | `ZipKey.AlignBy` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
-| `zipKeyOperator.WithDefaultValue` | `ZipKey.WithDefaultValue` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
-| `zipKeyOperator.WithDefaultKey` | `ZipKey.WithDefaultKey` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
-| `zipKeyOperator.Operator` | `ZipKey.Operator` | 構築・全件評価・チェックサム |
+| `op.Cache` | — | 標準 API の代替ではないため Unit は設けず、Scenario の Fill / Warm / Reuse で測定 |
+| `op.Cache2` | — | Cache と同じく Scenario の Fill / Warm / Reuse で測定 |
+| `seq.FromChannel` | `FromChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
+| `seq.ToChannel` | `ToChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
+| `seq.FromSlice` | `FromSlice` | 構築・全件評価・チェックサム |
+| `seq.ToSlice` | `ToSlice` | 収集・割り当て・結果保持・チェックサム |
+| `seq.FromSeq` | `FromSeq` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
+| `seq.ToSeq` | `ToSeq` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
+| `seq.FromMap` | `FromMap` | 構築・全件評価・チェックサム |
+| `seq.ToMap` | `ToMap` | 収集・割り当て・結果保持・チェックサム |
+| `seq.FromSeq2` | `FromSeq2` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
+| `seq.ToSeq2` | `ToSeq2` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
+| `op.Filter` | `Filter` | 構築・全件評価・チェックサム |
+| `op.Filter2` | `Filter2` | 構築・全件評価・チェックサム |
+| `op.Map` | `Map` | 構築・全件評価・チェックサム |
+| `op.Map2` | `Map2` | 構築・全件評価・チェックサム |
+| `op.Keys` | `Keys` | 構築・全件評価・チェックサム |
+| `op.Values` | `Values` | 構築・全件評価・チェックサム |
+| `seq.Seq.Pipe` | `Seq.Pipe` | Map の接続・全件評価 |
+| `seq.Seq.Pipe2` | `Seq.Pipe2` | 単一入力から値と変換値の組を返す変換の接続・全件評価（Zip は使わない） |
+| `seq.Seq2.Pipe` | `Seq2.Pipe` | slices.All を入力とする Values の接続・全件評価 |
+| `seq.Seq2.Pipe2` | `Seq2.Pipe2` | Map2 の接続・全件評価 |
+| `op.Skip` | `Skip.Operator / Skip.Operator2` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
+| `op.skipOperator.Operator` | `Skip.Operator` | 構築・全件評価・チェックサム |
+| `op.skipOperator.Operator2` | `Skip.Operator2` | 構築・全件評価・チェックサム |
+| `op.Take` | `Take.Operator / Take.Operator2` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
+| `op.takeOperator.Operator` | `Take.Operator` | 設定・接続・先頭 8 件までの評価・チェックサム |
+| `op.takeOperator.Operator2` | `Take.Operator2` | 設定・接続・先頭 8 件までの評価・チェックサム |
+| `op.Zip` | `Zip.Operator` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
+| `op.zipOperator.AlignBy` | `Zip.AlignBy` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
+| `op.zipOperator.WithDefaultValue` | `Zip.WithDefaultValue` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
+| `op.zipOperator.WithDefaultKey` | `Zip.WithDefaultKey` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
+| `op.zipOperator.Operator` | `Zip.Operator` | 構築・全件評価・チェックサム |
+| `op.zipKeyOperator.AlignBy` | `ZipKey.AlignBy` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
+| `op.zipKeyOperator.WithDefaultValue` | `ZipKey.WithDefaultValue` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
+| `op.zipKeyOperator.WithDefaultKey` | `ZipKey.WithDefaultKey` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
+| `op.zipKeyOperator.Operator` | `ZipKey.Operator` | 構築・全件評価・チェックサム |
 
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
 それぞれ入力・Map / Map2・単一入力から組への変換・Values と Pipe / Pipe2 の測定で利用する。  

@@ -1,4 +1,4 @@
-package seq
+package op
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ type zipOperator[V any] struct {
 // AlignShortest、AlignLeft、AlignRight、AlignLongest 以外の値は panic する。
 func (z zipOperator[V]) AlignBy(alignment ZipAlign) zipOperator[V] {
 	if alignment < AlignShortest || alignment > AlignLongest {
-		panic(fmt.Sprintf("seq.Zip: invalid alignment: %d", alignment))
+		panic(fmt.Sprintf("op.Zip: invalid alignment: %d", alignment))
 	}
 	z.alignment = alignment
 	return z
