@@ -11,14 +11,16 @@ import (
 )
 
 func ExampleMap() {
-	ope := op.Map(func(v int) string { return strconv.Itoa(v) })
-	fmt.Printf("%q\n", slices.Collect(ope(slices.Values([]int{2, 1}))))
+	pipeline := seq.FromSlice([]int{2, 1}).
+		Pipe(op.Map(func(v int) string { return strconv.Itoa(v) }))
+	fmt.Printf("%q\n", seq.ToSlice(pipeline))
 	// Output: ["2" "1"]
 }
 
 func ExampleMap2() {
-	ope := op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })
-	for k, v := range ope(slices.All([]string{"a", "bbb"})) {
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb"})).
+		Pipe2(op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) }))
+	for k, v := range pipeline {
 		fmt.Printf("%q: %d\n", k, v)
 	}
 	// Output:
@@ -27,14 +29,16 @@ func ExampleMap2() {
 }
 
 func ExampleFilter() {
-	ope := op.Filter(func(v int) bool { return v%2 == 0 })
-	fmt.Println(slices.Collect(ope(slices.Values([]int{3, 2, 4, 1}))))
+	pipeline := seq.FromSlice([]int{3, 2, 4, 1}).
+		Pipe(op.Filter(func(v int) bool { return v%2 == 0 }))
+	fmt.Println(seq.ToSlice(pipeline))
 	// Output: [2 4]
 }
 
 func ExampleFilter2() {
-	ope := op.Filter2(func(k int, v string) bool { return k > 0 && len(v) > 1 })
-	for k, v := range ope(slices.All([]string{"a", "bbb", "c"})) {
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "c"})).
+		Pipe2(op.Filter2(func(k int, v string) bool { return k > 0 && len(v) > 1 }))
+	for k, v := range pipeline {
 		fmt.Printf("%d: %q\n", k, v)
 	}
 	// Output: 1: "bbb"
@@ -56,23 +60,24 @@ func ExampleTake_pairs() {
 	// 1: 2
 }
 
-func ExampleMap2_directCall() {
+func ExampleMap2_filter() {
 	src := func(yield func(int, int) bool) {
 		if !yield(1, 10) {
 			return
 		}
 		yield(2, 20)
 	}
-	mapped := op.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })(src)
-	filtered := op.Filter2(func(k string, v int) bool { return v > 10 })(mapped)
-	for k, v := range filtered {
+	pipeline := seq.FromSeq2(src).
+		Pipe2(op.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })).
+		Pipe2(op.Filter2(func(k string, v int) bool { return v > 10 }))
+	for k, v := range pipeline {
 		fmt.Printf("%q: %d\n", k, v)
 	}
 	// Output: "2": 20
 }
 
 func ExampleOperator() {
-	ope := op.Operator[int, string](func(src iter.Seq[int]) iter.Seq[string] {
+	pipeline := seq.FromSlice([]int{1, 2}).Pipe(func(src iter.Seq[int]) iter.Seq[string] {
 		return func(yield func(string) bool) {
 			for v := range src {
 				if !yield(strconv.Itoa(v)) {
@@ -81,12 +86,8 @@ func ExampleOperator() {
 			}
 		}
 	})
-	src := seq.FromSlice([]int{1, 2})
-	fmt.Printf("%q\n", seq.ToSlice(src.Pipe(ope)))
-	fmt.Printf("%q\n", slices.Collect(ope(seq.ToSeq(src))))
-	// Output:
-	// ["1" "2"]
-	// ["1" "2"]
+	fmt.Printf("%q\n", seq.ToSlice(pipeline))
+	// Output: ["1" "2"]
 }
 
 func repeat(src iter.Seq[int]) iter.Seq[string] {
@@ -102,8 +103,7 @@ func repeat(src iter.Seq[int]) iter.Seq[string] {
 }
 
 func ExampleOperator_custom() {
-	var ope op.Operator[int, string] = repeat
-	pipeline := seq.FromSlice([]int{1, 2}).Pipe(ope).Pipe(op.Take(3).Operator)
+	pipeline := seq.FromSlice([]int{1, 2}).Pipe(repeat).Pipe(op.Take(3).Operator)
 	fmt.Printf("%q\n", seq.ToSlice(pipeline))
 	// Output: ["1" "1" "2"]
 }
@@ -119,17 +119,11 @@ func keyText(src iter.Seq2[int, int]) iter.Seq2[string, int] {
 }
 
 func ExampleOperator2() {
-	var ope op.Operator2[int, int, string, int] = keyText
-	src := seq.FromSeq2(slices.All([]int{4, 5}))
-	for k, v := range src.Pipe2(ope) {
-		fmt.Printf("%q: %d\n", k, v)
-	}
-	for k, v := range ope(seq.ToSeq2(src)) {
+	pipeline := seq.FromSeq2(slices.All([]int{4, 5})).Pipe2(keyText)
+	for k, v := range pipeline {
 		fmt.Printf("%q: %d\n", k, v)
 	}
 	// Output:
-	// "0": 4
-	// "1": 5
 	// "0": 4
 	// "1": 5
 }
@@ -170,9 +164,8 @@ func withLength[T ~string](src iter.Seq[T]) iter.Seq2[[]int, T] {
 }
 
 func ExampleToSeq2Operator() {
-	var ope op.ToSeq2Operator[string, []int, string] = withLength
-	src := seq.FromSlice([]string{"a", "bbb"})
-	for k, v := range ope(seq.ToSeq(src)) {
+	pipeline := seq.FromSlice([]string{"a", "bbb"}).Pipe2(withLength)
+	for k, v := range pipeline {
 		fmt.Println(k, v)
 	}
 	// Output:
@@ -181,9 +174,8 @@ func ExampleToSeq2Operator() {
 }
 
 func ExampleToSeqOperator() {
-	var ope op.ToSeqOperator[int, string, string] = op.Values[int, string]
-	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
-	fmt.Println(slices.Collect(ope(seq.ToSeq2(src))))
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb"})).Pipe(op.Values)
+	fmt.Println(seq.ToSlice(pipeline))
 	// Output: [a bbb]
 }
 

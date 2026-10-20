@@ -133,31 +133,30 @@ The function types `op.Operator`, `op.ToSeq2Operator`, `op.ToSeqOperator`, and `
 `Pipe` / `Pipe2` convert the input to a standard iterator, call the transformation immediately, and convert the result back to the library type.  
 These type conversions preserve nil without evaluating or copying elements.  
 Input evaluation and stop propagation depend on the transformation function.  
-All four operator types can be called directly as `ope(src)`; use `ToSeq` / `ToSeq2` to pass library types to direct calls or additional inputs such as `Zip`, and `FromSeq` / `FromSeq2` to continue chaining the result.  
+Use `ToSeq` / `ToSeq2` when passing library types as additional inputs to operators such as `Zip`.  
 
 ### Implementing custom operators
 
 Implement a transformation function using `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
-Compose existing operators with function calls such as `next(previous(src))`.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 
 ### Executable examples
 
-Go Examples for [seq](../seq/example_test.go) / [op](../op/example_test.go) demonstrate connections and operators with expected output.  
+Go Examples for [seq](../seq/example_test.go) / [op](../op/example_test.go) demonstrate operators connected through `Pipe` / `Pipe2`.  
 
 | Example | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
-| Transform elements or keys and values | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L19) |
-| Filter by a condition | [ExampleFilter](../op/example_test.go#L29) | [ExampleFilter2](../op/example_test.go#L35) |
-| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../op/example_test.go#L43) | [ExampleTake_pairs](../op/example_test.go#L49) |
-| Skip leading elements or pairs | [ExampleSkip](../op/example_test.go#L216) | [ExampleSkip](../op/example_test.go#L216) |
+| Transform elements or keys and values | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L20) |
+| Filter by a condition | [ExampleFilter](../op/example_test.go#L31) | [ExampleFilter2](../op/example_test.go#L38) |
+| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../op/example_test.go#L47) | [ExampleTake_pairs](../op/example_test.go#L53) |
+| Skip leading elements or pairs | [ExampleSkip](../op/example_test.go#L208) | [ExampleSkip](../op/example_test.go#L208) |
 | Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L14) | [ExampleSeq2_Pipe2](../seq/example_test.go#L60) |
 | Connect between `seq.Seq` and `seq.Seq2` | [ExampleSeq_Pipe2](../seq/example_test.go#L40) | [ExampleSeq2_Pipe](../seq/example_test.go#L52) |
-| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../op/example_test.go#L137), [ExampleValues](../op/example_test.go#L146) |
-| Directly call operators between `iter.Seq` and `iter.Seq2` | [ExampleToSeq2Operator](../op/example_test.go#L172) | [ExampleToSeqOperator](../op/example_test.go#L183) |
-| Connect and directly call function operators | [ExampleOperator](../op/example_test.go#L74) | [ExampleOperator2](../op/example_test.go#L121) |
-| Extend with custom operators | [ExampleOperator_custom](../op/example_test.go#L104) | [ExampleOperator2](../op/example_test.go#L121) |
+| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../op/example_test.go#L131), [ExampleValues](../op/example_test.go#L140) |
+| Connect function operators between `seq.Seq` and `seq.Seq2` | [ExampleToSeq2Operator](../op/example_test.go#L166) | [ExampleToSeqOperator](../op/example_test.go#L176) |
+| Connect function operators within the same sequence type | [ExampleOperator](../op/example_test.go#L79) | [ExampleOperator2](../op/example_test.go#L121) |
+| Extend with custom operators | [ExampleOperator_custom](../op/example_test.go#L105) | [ExampleOperator2](../op/example_test.go#L121) |
 
 To run only the Examples, use the following command.  
 

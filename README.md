@@ -61,7 +61,7 @@ See [channel conversions](doc/guide.md#channel-conversions) for communication wa
 
 - [Usage guide](doc/guide.md): evaluation, stopping, re-evaluation, nil, conversions, connection types, and custom operators
 - GoDoc: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) for individual API contracts and boundary conditions
-- Go Examples: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) with expected output ([seq source](seq/example_test.go), [op source](op/example_test.go))
+- Go Examples: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) ([seq source](seq/example_test.go), [op source](op/example_test.go))
 - [Performance summary](benchmarks/REPORT.md): measured results and conditions
 
 ## License
