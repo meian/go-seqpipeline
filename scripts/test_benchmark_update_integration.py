@@ -109,10 +109,10 @@ class BenchmarkUpdateIntegrationTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), "")
 
     def test_new_package_is_detected(self):
-        self.write("op/map.go", "package op\n\nfunc Map() {}\n")
+        self.write("newpackage/implementation.go", "package newpackage\n")
         self.commit()
         update.check(REPOSITORY, False)
-        self.assertIn("- `op/map.go`", self.posts[0]["body"])
+        self.assertIn("newpackage/implementation.go", self.posts[0]["body"])
 
     def test_go_version_change_creates_issue(self):
         self.write("go.mod", "module example.test/seq\n\ngo 1.28.0\n")

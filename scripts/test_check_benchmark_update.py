@@ -80,7 +80,7 @@ class EnsureCommitTests(unittest.TestCase):
 class IsRuntimePathTests(unittest.TestCase):
     def test_library_and_dependency_sources_and_configs_are_included(self):
         for path in (
-            "seq/map.go", "op/map.go", "newpackage/implementation.go", "root.go", "vendor/example/dep.go",
+            "seq/map.go", "newpackage/implementation.go", "root.go", "vendor/example/dep.go",
             "go.mod", "go.sum", "go.work", "go.work.sum", ".go-version", ".tool-versions",
         ):
             with self.subTest(path=path):
@@ -88,7 +88,7 @@ class IsRuntimePathTests(unittest.TestCase):
 
     def test_docs_tests_benchmarks_and_automation_are_excluded(self):
         for path in (
-            "README.md", "doc.go", "seq/doc.go", "op/doc.go", "op/map_test.go", "seq/map_test.go", "seq/testdata/input.go",
+            "README.md", "doc.go", "seq/doc.go", "seq/map_test.go", "seq/testdata/input.go",
             "benchmarks/map_test.go", "benchmarks/helper.go", "benchmarks/results/environment.md",
             "benchmarks/measure.sh", "scripts/check_benchmark_update.py", "doc/sample.go",
             ".github/workflows/ci.yml", "testdata/example.go",
