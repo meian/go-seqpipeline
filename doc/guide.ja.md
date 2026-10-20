@@ -144,20 +144,20 @@ go-seqpipeline では、`iter.Seq` / `iter.Seq2` を変換して新しいシー�
 
 ### 実行可能な利用例
 
-`Pipe` / `Pipe2` でオペレーターを接続する使い方は、期待出力を持つ [seq](../seq/example_test.go) / [op](../op/example_test.go) の Go Example にまとめています。  
+`Pipe` / `Pipe2` でオペレーターを接続する使い方は、[seq](../seq/example_test.go) / [op](../op/example_test.go) の Go Example にまとめています。  
 
 | 利用例 | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
 | 要素・キーと値の変換 | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L20) |
 | 条件による選別 | [ExampleFilter](../op/example_test.go#L31) | [ExampleFilter2](../op/example_test.go#L38) |
 | 取得件数の制限と型推論（.Operator / .Operator2） | [ExampleTake](../op/example_test.go#L47) | [ExampleTake_pairs](../op/example_test.go#L53) |
-| 先頭の要素・組の読み飛ばし | [ExampleSkip](../op/example_test.go#L213) | [ExampleSkip](../op/example_test.go#L213) |
+| 先頭の要素・組の読み飛ばし | [ExampleSkip](../op/example_test.go#L208) | [ExampleSkip](../op/example_test.go#L208) |
 | 型を変換する処理の接続 | [ExampleSeq_Pipe](../seq/example_test.go#L14) | [ExampleSeq2_Pipe2](../seq/example_test.go#L60) |
 | `seq.Seq` と `seq.Seq2` をまたぐ接続 | [ExampleSeq_Pipe2](../seq/example_test.go#L40) | [ExampleSeq2_Pipe](../seq/example_test.go#L52) |
-| `seq.Seq2` からキー・値を取り出す | — | [ExampleKeys](../op/example_test.go#L134)、[ExampleValues](../op/example_test.go#L143) |
-| `seq.Seq` と `seq.Seq2` をまたぐ関数オペレーターの接続 | [ExampleToSeq2Operator](../op/example_test.go#L169) | [ExampleToSeqOperator](../op/example_test.go#L180) |
-| 同じシーケンス型の間での関数オペレーターの接続 | [ExampleOperator](../op/example_test.go#L79) | [ExampleOperator2](../op/example_test.go#L123) |
-| 独自オペレーターによる拡張 | [ExampleOperator_custom](../op/example_test.go#L106) | [ExampleOperator2](../op/example_test.go#L123) |
+| `seq.Seq2` からキー・値を取り出す | — | [ExampleKeys](../op/example_test.go#L131)、[ExampleValues](../op/example_test.go#L140) |
+| `seq.Seq` と `seq.Seq2` をまたぐ関数オペレーターの接続 | [ExampleToSeq2Operator](../op/example_test.go#L166) | [ExampleToSeqOperator](../op/example_test.go#L176) |
+| 同じシーケンス型の間での関数オペレーターの接続 | [ExampleOperator](../op/example_test.go#L79) | [ExampleOperator2](../op/example_test.go#L121) |
+| 独自オペレーターによる拡張 | [ExampleOperator_custom](../op/example_test.go#L105) | [ExampleOperator2](../op/example_test.go#L121) |
 
 Example のみを実行するには、次のコマンドを使います。  
 

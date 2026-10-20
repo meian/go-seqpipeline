@@ -143,20 +143,20 @@ For operations whose factory arguments carry no type information, provide a conf
 
 ### Executable examples
 
-Go Examples for [seq](../seq/example_test.go) / [op](../op/example_test.go) demonstrate operators connected through `Pipe` / `Pipe2` with expected output.  
+Go Examples for [seq](../seq/example_test.go) / [op](../op/example_test.go) demonstrate operators connected through `Pipe` / `Pipe2`.  
 
 | Example | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
 | Transform elements or keys and values | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L20) |
 | Filter by a condition | [ExampleFilter](../op/example_test.go#L31) | [ExampleFilter2](../op/example_test.go#L38) |
 | Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../op/example_test.go#L47) | [ExampleTake_pairs](../op/example_test.go#L53) |
-| Skip leading elements or pairs | [ExampleSkip](../op/example_test.go#L213) | [ExampleSkip](../op/example_test.go#L213) |
+| Skip leading elements or pairs | [ExampleSkip](../op/example_test.go#L208) | [ExampleSkip](../op/example_test.go#L208) |
 | Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L14) | [ExampleSeq2_Pipe2](../seq/example_test.go#L60) |
 | Connect between `seq.Seq` and `seq.Seq2` | [ExampleSeq_Pipe2](../seq/example_test.go#L40) | [ExampleSeq2_Pipe](../seq/example_test.go#L52) |
-| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../op/example_test.go#L134), [ExampleValues](../op/example_test.go#L143) |
-| Connect function operators between `seq.Seq` and `seq.Seq2` | [ExampleToSeq2Operator](../op/example_test.go#L169) | [ExampleToSeqOperator](../op/example_test.go#L180) |
-| Connect function operators within the same sequence type | [ExampleOperator](../op/example_test.go#L79) | [ExampleOperator2](../op/example_test.go#L123) |
-| Extend with custom operators | [ExampleOperator_custom](../op/example_test.go#L106) | [ExampleOperator2](../op/example_test.go#L123) |
+| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../op/example_test.go#L131), [ExampleValues](../op/example_test.go#L140) |
+| Connect function operators between `seq.Seq` and `seq.Seq2` | [ExampleToSeq2Operator](../op/example_test.go#L166) | [ExampleToSeqOperator](../op/example_test.go#L176) |
+| Connect function operators within the same sequence type | [ExampleOperator](../op/example_test.go#L79) | [ExampleOperator2](../op/example_test.go#L121) |
+| Extend with custom operators | [ExampleOperator_custom](../op/example_test.go#L105) | [ExampleOperator2](../op/example_test.go#L121) |
 
 To run only the Examples, use the following command.  
 

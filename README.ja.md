@@ -61,7 +61,7 @@ channel の受信を途中でやめる場合は、渡したコンテキストを
 
 - [利用ガイド](doc/guide.ja.md)：評価・停止・再評価・nil、入出力、接続型、独自オペレーター
 - GoDoc：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) の個別 API の契約と境界条件
-- Go Example：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) の期待出力を持つ利用例（[seq のソース](seq/example_test.go)、[op のソース](op/example_test.go)）
+- Go Example：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) の利用例（[seq のソース](seq/example_test.go)、[op のソース](op/example_test.go)）
 - [性能概要](benchmarks/REPORT.md)：測定結果と適用条件
 
 ## ライセンス
