@@ -136,11 +136,51 @@ go-seqpipeline では、`iter.Seq` / `iter.Seq2` を変換して新しいシー�
 入力の評価と停止伝播は、変換関数の実装に従います。  
 `Zip` などの追加入力にライブラリ型を渡す場合は、`ToSeq` / `ToSeq2` で変換します。  
 
+### オペレーターの合成
+
+入力を決める前に変換処理を組み立てるには、単一値入力なら `op.Compose()`、キーと値の組の入力なら `op.Compose2()` を使います。  
+最初の `Pipe` / `Pipe2` に渡す処理から、入出力の型を推論します。  
+空の開始値はまだ入力型を持たず、オペレーターでも恒等変換でもありません。  
+
+```go
+transform := op.Compose().
+    Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+    Pipe(op.Map(strconv.Itoa)).
+    Pipe(op.Take(2).Operator)
+
+first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform)
+second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform)
+fmt.Println(seq.ToSlice(first))  // [2 4]
+fmt.Println(seq.ToSlice(second)) // [8 10]
+```
+
+4種類のOperator関数型はすべて `Pipe` / `Pipe2` メソッドを持ち、単一値を出力する処理は `Pipe`、キーと値の組を出力する処理は `Pipe2` で追加します。  
+各段階で合成全体の入力型を保ち、途中の出力型に次の処理を接続できるため、単一値と組を行き来する合成もできます。  
+結果はOperator関数型なので、Buildなどを挟まず `seq.Seq` / `seq.Seq2` のメソッドに渡したり、標準イテレーターへ直接適用したりできます。  
+`op.Map(strconv.Itoa).Pipe(op.Take(2).Operator)` のように、名前付きのオペレーターから直接合成を始めることもできます。  
+
+先頭の処理だけでは型情報が不足する場合、最初のメソッドで不足する型引数を指定します。  
+2段目以降は途中の出力型から推論できます。  
+
+```go
+firstTwo := op.Compose().Pipe[int](op.Take(2).Operator)
+firstTwoPairs := op.Compose2().Pipe2[int, string](op.Take(2).Operator2)
+values := op.Compose2().Pipe[int, string](op.Values)
+```
+
+合成の組み立て時には変換関数を呼び出さず、入力も評価しません。  
+合成結果を入力へ適用すると接続順に変換関数を呼び出し、各処理の評価・停止の仕様に従います。  
+`Cache` / `Cache2` は適用時に呼び出しごとのキャッシュを作り、以降の反復ではそのキャッシュを再利用します。  
+入力・コールバック・`Zip` の右側などの追加入力は、それぞれの再利用・状態共有の条件に従います。  
+
+実行可能な利用例は [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose)、[ExampleCompose2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2)、[ExampleCompose2_values](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2-Values) を参照してください。  
+
 ### 独自オペレーターの実装
 
 入出力に `iter.Seq` / `iter.Seq2` を使う変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に渡します。  
 変換関数は、呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
 生成時の引数に型情報を持たない処理には、設定値と型パラメーターを持つ変換メソッドを用意し、そのメソッド値を出力型に応じて `Pipe` / `Pipe2` に渡します。  
+独自実装の内部でオペレーターを組み合わせる場合も、入出力を標準イテレーターのまま保ち、`op` 内の合成を使えます。  
 
 ### 実行可能な利用例
 

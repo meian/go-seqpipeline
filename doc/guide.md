@@ -135,11 +135,51 @@ These type conversions preserve nil without evaluating or copying elements.
 Input evaluation and stop propagation depend on the transformation function.  
 Use `ToSeq` / `ToSeq2` when passing library types as additional inputs to operators such as `Zip`.  
 
+### Composing operators
+
+Use `op.Compose()` for single-value input or `op.Compose2()` for key-value input to assemble a transformation before choosing its input.  
+The first `Pipe` / `Pipe2` infers the input and output types from the transformation you pass.  
+The empty start value has no input type yet and is not an operator or an identity transformation.  
+
+```go
+transform := op.Compose().
+    Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+    Pipe(op.Map(strconv.Itoa)).
+    Pipe(op.Take(2).Operator)
+
+first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform)
+second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform)
+fmt.Println(seq.ToSlice(first))  // [2 4]
+fmt.Println(seq.ToSlice(second)) // [8 10]
+```
+
+All four operator function types have `Pipe` / `Pipe2` methods: `Pipe` adds a single-value output, and `Pipe2` adds a key-value output.  
+Each step retains the original input type and connects the next transformation to the current output type, including transitions between single values and pairs.  
+The result is an operator function type that can be passed directly to `seq.Seq` / `seq.Seq2` methods or called with a standard iterator, without a build step.  
+You can also start from a named operator, such as `op.Map(strconv.Itoa).Pipe(op.Take(2).Operator)`.  
+
+When the first transformation carries insufficient type information, specify the missing type arguments on the first method.  
+Later steps can infer types from the current output.  
+
+```go
+firstTwo := op.Compose().Pipe[int](op.Take(2).Operator)
+firstTwoPairs := op.Compose2().Pipe2[int, string](op.Take(2).Operator2)
+values := op.Compose2().Pipe[int, string](op.Values)
+```
+
+Composition does not call the transformation functions or evaluate input.  
+Applying the result to an input calls transformations in connection order; their evaluation and stopping semantics remain unchanged.  
+`Cache` / `Cache2` create a cache at application time, independently for each application, and later iterations reuse that cache.  
+Inputs, callbacks, and additional inputs such as the right side of `Zip` still follow their own rules for reuse and shared state.  
+
+See [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose), [ExampleCompose2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2), and [ExampleCompose2_values](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2-Values) for executable examples.  
+
 ### Implementing custom operators
 
 Implement a transformation function using `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
+To combine operators within a custom implementation, use composition in `op` while keeping input and output as standard iterators.  
 
 ### Executable examples
 
