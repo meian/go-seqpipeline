@@ -10,7 +10,7 @@ import (
 func zipOperatorLibrary(values []int) int64 {
 	inputSeq := seq.FromSlice(values)
 	source := inputSeq.
-		Pipe2(seq.Zip(inputSeq).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(inputSeq)).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -87,7 +87,7 @@ func TestZipOperatorGo(t *testing.T) {
 func zipAlignByLibrary(values []int) int64 {
 	short := seq.FromSlice(values[:len(values)/2])
 	source := seq.FromSlice(values).
-		Pipe2(seq.Zip(short).AlignBy(seq.AlignLeft).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(short)).AlignBy(seq.AlignLeft).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -169,7 +169,7 @@ func TestZipAlignByGo(t *testing.T) {
 func zipWithDefaultValueLibrary(values []int) int64 {
 	short := seq.FromSlice(values[:len(values)/2])
 	source := seq.FromSlice(values).
-		Pipe2(seq.Zip(short).AlignBy(seq.AlignLeft).WithDefaultValue(7).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(short)).AlignBy(seq.AlignLeft).WithDefaultValue(7).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -252,7 +252,7 @@ func zipWithDefaultKeyLibrary(values []int) int64 {
 	inputSeq := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
 	source := short.
-		Pipe2(seq.Zip(inputSeq).AlignBy(seq.AlignRight).WithDefaultKey(7).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(inputSeq)).AlignBy(seq.AlignRight).WithDefaultKey(7).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -334,7 +334,7 @@ func TestZipWithDefaultKeyGo(t *testing.T) {
 func zipKeyOperatorLibrary(values []int) int64 {
 	inputSeq := seq.FromSlice(values)
 	source := inputSeq.
-		Pipe2(seq.Zip(inputSeq).WithDefaultKey(7).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(inputSeq)).WithDefaultKey(7).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -412,7 +412,7 @@ func zipKeyAlignByLibrary(values []int) int64 {
 	inputSeq := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
 	source := short.
-		Pipe2(seq.Zip(inputSeq).WithDefaultKey(7).AlignBy(seq.AlignRight).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(inputSeq)).WithDefaultKey(7).AlignBy(seq.AlignRight).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -494,7 +494,7 @@ func TestZipKeyAlignByGo(t *testing.T) {
 func zipKeyWithDefaultValueLibrary(values []int) int64 {
 	short := seq.FromSlice(values[:len(values)/2])
 	source := seq.FromSlice(values).
-		Pipe2(seq.Zip(short).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultValue(9).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(short)).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultValue(9).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -577,7 +577,7 @@ func zipKeyWithDefaultKeyLibrary(values []int) int64 {
 	inputSeq := seq.FromSlice(values)
 	short := seq.FromSlice(values[:len(values)/2])
 	source := short.
-		Pipe2(seq.Zip(inputSeq).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultKey(9).Operator)
+		Pipe2(seq.Zip(seq.ToSeq(inputSeq)).WithDefaultKey(7).AlignBy(seq.AlignLongest).WithDefaultKey(9).Operator)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)

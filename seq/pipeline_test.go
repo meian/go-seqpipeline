@@ -1,6 +1,7 @@
 package seq_test
 
 import (
+	"iter"
 	"slices"
 	"strconv"
 	"testing"
@@ -26,7 +27,7 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	}
 }
 
-// TestLazyEvaluationAndStopPropagation は、Seq の構築時に上流を実行せず、下流の途中終了が Map と Filter を経由して上流へ伝播することを確認する。
+// TestLazyEvaluationAndStopPropagation は、seq.Seq の構築時に上流を実行せず、下流の途中終了が Map と Filter を経由して上流へ伝播することを確認する。
 func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
 	src := func(yield func(int) bool) {
@@ -78,7 +79,7 @@ func TestTakeAfterFilterAndDownstreamStop(t *testing.T) {
 	assertEqual(t, reads, 2)
 }
 
-// TestEmptyAndZeroValues は、Seq のゼロ値・nil・空のスライスでは Map と Filter を呼び出さず、空として評価することを確認する。
+// TestEmptyAndZeroValues は、seq.Seq のゼロ値・nil・空のスライスでは Map と Filter を呼び出さず、空として評価することを確認する。
 func TestEmptyAndZeroValues(t *testing.T) {
 	var zero seq.Seq[int]
 	for _, src := range []seq.Seq[int]{
@@ -157,7 +158,7 @@ func TestTransformPipeline(t *testing.T) {
 	}
 }
 
-// TestSeq2Pipeline は、Seq2 の Map2 と Filter2 を接続し、再評価と重複キーの保持、ToMap の後勝ちを確認する。
+// TestSeq2Pipeline は、seq.Seq2 の Map2 と Filter2 を接続し、再評価と重複キーの保持、ToMap の後勝ちを確認する。
 func TestSeq2Pipeline(t *testing.T) {
 	src := func(yield func(int, string) bool) {
 		for _, p := range []pair[int, string]{{Key: 1, Value: "a"}, {Key: 1, Value: "bbb"}, {Key: 2, Value: "cc"}} {
@@ -175,7 +176,7 @@ func TestSeq2Pipeline(t *testing.T) {
 	assertEqual(t, seq.ToMap(pipeline), map[string]int{"1": 3})
 }
 
-// TestSeq2LazyAndStop は、Seq2 の構築時に上流を実行せず、途中終了が上流へ伝播し、再評価でも同じ動作になることを確認する。
+// TestSeq2LazyAndStop は、seq.Seq2 の構築時に上流を実行せず、途中終了が上流へ伝播し、再評価でも同じ動作になることを確認する。
 func TestSeq2LazyAndStop(t *testing.T) {
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
 	src := func(yield func(int, int) bool) {
@@ -209,7 +210,7 @@ func TestSeq2LazyAndStop(t *testing.T) {
 	}
 }
 
-// TestSeq2EmptyAndZero は、Seq2 のゼロ値・nil・空の map では Map2 と Filter2 を呼び出さず、空として評価することを確認する。
+// TestSeq2EmptyAndZero は、seq.Seq2 のゼロ値・nil・空の map では Map2 と Filter2 を呼び出さず、空として評価することを確認する。
 func TestSeq2EmptyAndZero(t *testing.T) {
 	var zero seq.Seq2[string, int]
 	for _, src := range []seq.Seq2[string, int]{
@@ -231,7 +232,7 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 	}
 }
 
-// TestNonComparableKeys は、比較できないキーを持つ Seq2 も、Map2 と標準の iter.Seq2 への変換で扱えることを確認する。
+// TestNonComparableKeys は、比較できないキーを持つ seq.Seq2 も、Map2 と iter.Seq2 への変換で扱えることを確認する。
 func TestNonComparableKeys(t *testing.T) {
 	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
 	pipeline := seq.FromSeq2(src).Pipe2(seq.Map2(func(k []int, v string) ([]int, int) {
@@ -241,9 +242,9 @@ func TestNonComparableKeys(t *testing.T) {
 	assertEqual(t, got, []pair[[]int, int]{{Key: []int{1, 2}, Value: 5}})
 }
 
-// TestExternalTransforms2 は、独自の Seq2 変換関数を接続し、遅延評価・途中終了・再評価が成立することを確認する。
+// TestExternalTransforms2 は、独自の iter.Seq2 変換関数を接続し、遅延評価・途中終了・再評価が成立することを確認する。
 func TestExternalTransforms2(t *testing.T) {
-	op := func(src seq.Seq2[string, int]) seq.Seq2[string, string] {
+	op := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
 		return func(yield func(string, string) bool) {
 			for k, v := range src {
 				if !yield(k, strconv.Itoa(v)) {
@@ -252,8 +253,8 @@ func TestExternalTransforms2(t *testing.T) {
 			}
 		}
 	}
-	direct := op(seq.FromMap(map[string]int{"1": 10}))
-	assertEqual(t, collectPairs(seq.ToSeq2(direct)), []pair[string, string]{{Key: "1", Value: "10"}})
+	direct := op(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))
+	assertEqual(t, collectPairs(direct), []pair[string, string]{{Key: "1", Value: "10"}})
 	reads := 0
 	src := func(yield func(int, int) bool) {
 		for i := 1; i <= 3; i++ {
@@ -279,7 +280,7 @@ func TestExternalTransforms2(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 }
 
-// TestDirectTransform2Pipeline は、独自の Seq2 変換関数と Filter2、Take.Operator2 を Operator2 として接続し、型推論と再評価を確認する。
+// TestDirectTransform2Pipeline は、独自の iter.Seq2 変換関数と Filter2、Take.Operator2 を Operator2 として接続し、型推論と再評価を確認する。
 func TestDirectTransform2Pipeline(t *testing.T) {
 	op := keyText
 	var transform seq.Operator2[string, int, string, int] = seq.Filter2(func(k string, v int) bool {
@@ -409,7 +410,7 @@ func TestSkip2AfterFilter(t *testing.T) {
 	}
 }
 
-// TestTakeSharedConfigurationPipeline は、共通設定を型変換の前後と Seq・Seq2 間で接続し、再評価時も独立して制限することを確認する。
+// TestTakeSharedConfigurationPipeline は、共通設定を型変換の前後と seq.Seq・seq.Seq2 間で接続し、再評価時も独立して制限することを確認する。
 func TestTakeSharedConfigurationPipeline(t *testing.T) {
 	take := seq.Take(2)
 	values := seq.FromSlice([]int{1, 22, 333}).
@@ -457,7 +458,7 @@ func TestValuesPipeline(t *testing.T) {
 	}
 }
 
-// TestProjectionWithSkip は、Seq2 と Seq の両側の Skip、射影、Take を接続して評価と停止を確認する。
+// TestProjectionWithSkip は、seq.Seq2 と seq.Seq の両側の Skip、射影、Take を接続して評価と停止を確認する。
 func TestProjectionWithSkip(t *testing.T) {
 	for _, projection := range []struct {
 		name string

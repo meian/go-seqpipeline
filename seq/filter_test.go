@@ -1,6 +1,8 @@
 package seq_test
 
 import (
+	"iter"
+	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -44,7 +46,7 @@ func TestFilter(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reads, calls := 0, 0
-			src := seq.Seq[int](func(yield func(int) bool) {
+			src := iter.Seq[int](func(yield func(int) bool) {
 				for _, v := range []int{1, 3, 3} {
 					reads++
 					if !yield(v) {
@@ -58,7 +60,7 @@ func TestFilter(t *testing.T) {
 			})(src)
 			assertEqual(t, []int{reads, calls}, []int{0, 0})
 			for round := 1; round <= 2; round++ {
-				assertEqual(t, seq.ToSlice(filtered), tc.want)
+				assertEqual(t, slices.Collect(filtered), tc.want)
 				assertEqual(t, []int{reads, calls}, []int{3 * round, 3 * round})
 			}
 			reads, calls = 0, 0
@@ -95,7 +97,7 @@ func TestFilter2(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reads, calls := 0, 0
-			src := seq.Seq2[int, string](func(yield func(int, string) bool) {
+			src := iter.Seq2[int, string](func(yield func(int, string) bool) {
 				for _, p := range []pair[int, string]{{1, "aa"}, {3, "b"}, {3, "cc"}, {3, "cc"}} {
 					reads++
 					if !yield(p.Key, p.Value) {
@@ -109,7 +111,7 @@ func TestFilter2(t *testing.T) {
 			})(src)
 			assertEqual(t, []int{reads, calls}, []int{0, 0})
 			for round := 1; round <= 2; round++ {
-				assertEqual(t, collectPairs(seq.ToSeq2(filtered)), tc.want)
+				assertEqual(t, collectPairs(filtered), tc.want)
 				assertEqual(t, []int{reads, calls}, []int{4 * round, 4 * round})
 			}
 			reads, calls = 0, 0

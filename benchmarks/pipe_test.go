@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"iter"
 	"slices"
 	"testing"
 
@@ -85,7 +86,7 @@ func TestSeqPipeGo(t *testing.T) {
 
 func seqPipe2Library(values []int) int64 {
 	source := seq.FromSlice(values).
-		Pipe2(func(input seq.Seq[int]) seq.Seq2[int, int] {
+		Pipe2(func(input iter.Seq[int]) iter.Seq2[int, int] {
 			return func(yield func(int, int) bool) {
 				for v := range input {
 					if !yield(v, (v+1)&65535) {

@@ -33,9 +33,9 @@ Go は標準 iterator による同一処理、Library は各 API を使った処
 | 先頭8件 | Take の接続から先頭 8 件の反復・加算まで |
 
 Map は値に 1 を加算し、Filter は 3 の倍数を除き、Skip は先頭 8 件を除外する。  
-Keys / Values は map のキー / 値を取り出し、`slices.All` を入力元とする Seq2 のキーはスライスの添字とする。  
+Keys / Values は map のキー / 値を取り出し、`slices.All` を入力元とする `seq.Seq2` のキーはスライスの添字とする。  
 Zip の既定ケースは等長入力、補完設定のケースは片側を半分の件数にし、出力はいずれも N 件とする。  
-Seq.Pipe は Map、Seq.Pipe2 は単一入力の値 `v` から `(v, (v+1)&65535)` を返す変換、Seq2.Pipe / Pipe2 は Values / Map2 を接続した費用を含む。  
+`seq.Seq.Pipe` は Map、`seq.Seq.Pipe2` は単一入力の値 `v` から `(v, (v+1)&65535)` を返す変換、`seq.Seq2.Pipe` / `Pipe2` は Values / Map2 を接続した費用を含む。  
 設定・型変換も反復まで含むため、呼び出し単独の費用ではない。  
 
 ## 利用場面別結果（Scenario）
@@ -59,4 +59,4 @@ Direct / FromChannel / ToChannel は送信用 1 goroutine、RoundTrip は 2 goro
 
 Cache の負荷 0 は軽い上流、32 は整数の乗算・加算を繰り返す上流を表す。  
 同じ利用回数の Uncached / Cached は初回保存も含む合計時間で、保存済みの反復だけの Warm とは区別する。  
-保持する値データは 1 件につき Seq が 8 bytes、Seq2 がキーを含め 16 bytes で、余剰容量等は別に必要になる。  
+保持する値データは 1 件につき `seq.Seq` が 8 bytes、`seq.Seq2` がキーを含め 16 bytes で、余剰容量等は別に必要になる。  

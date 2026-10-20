@@ -15,14 +15,12 @@ go get github.com/meian/go-seqpipeline
 ## Usage
 
 Use functions starting with `From` to wrap input, then connect operators with `Pipe` / `Pipe2`.  
-`Seq[T]` / `Seq2[K, V]` extend the standard `iter.Seq` / `iter.Seq2` types with connection methods.  
-For either input type, `Pipe` returns `Seq` and `Pipe2` returns `Seq2`.  
-Types are inferred from connected inputs and outputs; incompatible operations cannot be connected.  
+`seq.Seq[T]` / `seq.Seq2[K, V]` extend the `iter.Seq` / `iter.Seq2` types with connection methods.  
+For either input type, `Pipe` returns `seq.Seq` and `Pipe2` returns `seq.Seq2`.  
+Operators transform standard iterators; `Pipe` / `Pipe2` infer their input and output types.  
 Iterate directly with `for range`, or collect results with `ToSlice` / `ToMap`.  
 
 ### Single-value pipeline
-
-Use this example with imports for `fmt`, `strconv`, and `github.com/meian/go-seqpipeline/seq`.  
 
 ```go
 pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
@@ -33,8 +31,6 @@ fmt.Println(seq.ToSlice(pipeline)) // [333]
 ```
 
 ### Key-value pipeline
-
-Use this example with imports for `fmt`, `slices`, `strconv`, and `github.com/meian/go-seqpipeline/seq`.  
 
 ```go
 pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).

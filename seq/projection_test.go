@@ -2,6 +2,7 @@ package seq_test
 
 import (
 	"iter"
+	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -21,10 +22,10 @@ func TestKeys(t *testing.T) {
 		}
 	})
 	var op seq.ToSeqOperator[int, int, int] = seq.Keys[int, int]
-	projected := op(src)
+	projected := op(seq.ToSeq2(src))
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
-		assertEqual(t, seq.ToSlice(projected), want)
+		assertEqual(t, slices.Collect(projected), want)
 	}
 	assertEqual(t, started, 2)
 	assertEqual(t, visited, 8)
@@ -46,7 +47,7 @@ func TestKeys(t *testing.T) {
 					break
 				}
 			case "Take":
-				got = seq.ToSlice(projected.Pipe(seq.Take(1).Operator))
+				got = slices.Collect(seq.Take(1).Operator(projected))
 			}
 			assertEqual(t, got, want[:1])
 			assertEqual(t, visited, 1)
@@ -55,7 +56,7 @@ func TestKeys(t *testing.T) {
 	}
 
 	visited, stopped = 0, 0
-	assertEqual(t, seq.ToSlice(projected.Pipe(seq.Take(0).Operator)), []int(nil))
+	assertEqual(t, slices.Collect(seq.Take(0).Operator(projected)), []int(nil))
 	assertEqual(t, visited, 0)
 	assertEqual(t, stopped, 0)
 
@@ -64,11 +65,11 @@ func TestKeys(t *testing.T) {
 		seq.FromSeq2(iter.Seq2[int, int](nil)),
 		func(func(int, int) bool) {},
 	} {
-		output := seq.Keys(input)
+		output := seq.Keys(seq.ToSeq2(input))
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
 		}
-		assertEqual(t, seq.ToSlice(output), []int(nil))
+		assertEqual(t, slices.Collect(output), []int(nil))
 	}
 }
 
@@ -86,10 +87,10 @@ func TestValues(t *testing.T) {
 		}
 	})
 	var op seq.ToSeqOperator[int, int, int] = seq.Values[int, int]
-	projected := op(src)
+	projected := op(seq.ToSeq2(src))
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
-		assertEqual(t, seq.ToSlice(projected), want)
+		assertEqual(t, slices.Collect(projected), want)
 	}
 	assertEqual(t, started, 2)
 	assertEqual(t, visited, 8)
@@ -111,7 +112,7 @@ func TestValues(t *testing.T) {
 					break
 				}
 			case "Take":
-				got = seq.ToSlice(projected.Pipe(seq.Take(1).Operator))
+				got = slices.Collect(seq.Take(1).Operator(projected))
 			}
 			assertEqual(t, got, want[:1])
 			assertEqual(t, visited, 1)
@@ -120,7 +121,7 @@ func TestValues(t *testing.T) {
 	}
 
 	visited, stopped = 0, 0
-	assertEqual(t, seq.ToSlice(projected.Pipe(seq.Take(0).Operator)), []int(nil))
+	assertEqual(t, slices.Collect(seq.Take(0).Operator(projected)), []int(nil))
 	assertEqual(t, visited, 0)
 	assertEqual(t, stopped, 0)
 
@@ -129,11 +130,11 @@ func TestValues(t *testing.T) {
 		seq.FromSeq2(iter.Seq2[int, int](nil)),
 		func(func(int, int) bool) {},
 	} {
-		output := seq.Values(input)
+		output := seq.Values(seq.ToSeq2(input))
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
 		}
-		assertEqual(t, seq.ToSlice(output), []int(nil))
+		assertEqual(t, slices.Collect(output), []int(nil))
 	}
 }
 
