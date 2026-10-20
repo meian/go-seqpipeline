@@ -1,0 +1,44 @@
+name: Benchmark update
+
+on:
+  schedule:
+    - cron: '17 9 * * 1'
+      timezone: Asia/Tokyo
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 判定と作成予定の本文だけ確認する
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: benchmark-update
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Check implementation changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+        run: |
+          args=()
+          if [ "$DRY_RUN" = true ]; then
+            args+=(--dry-run)
+          fi
+          python3 scripts/check_benchmark_update.py --repo "$GITHUB_REPOSITORY" "${args[@]}"
