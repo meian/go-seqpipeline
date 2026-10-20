@@ -15,7 +15,7 @@ go get github.com/meian/go-seqpipeline
 ## 使い方
 
 `From` で始まる関数で入力を取り込み、`Pipe` / `Pipe2` でオペレーターを接続します。  
-`seq.Seq[T]` / `seq.Seq2[K, V]` は、標準の `iter.Seq` / `iter.Seq2` に接続メソッドを追加した型です。  
+`seq.Seq[T]` / `seq.Seq2[K, V]` は、`iter.Seq` / `iter.Seq2` に接続メソッドを追加した型です。  
 どちらの入力でも、`Pipe` は `seq.Seq`、`Pipe2` は `seq.Seq2` を返します。  
 オペレーターの入出力は標準イテレーター型で、`Pipe` / `Pipe2` への接続時に型が推論されます。  
 結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  

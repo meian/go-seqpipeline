@@ -232,7 +232,7 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 	}
 }
 
-// TestNonComparableKeys は、比較できないキーを持つ seq.Seq2 も、Map2 と標準の iter.Seq2 への変換で扱えることを確認する。
+// TestNonComparableKeys は、比較できないキーを持つ seq.Seq2 も、Map2 と iter.Seq2 への変換で扱えることを確認する。
 func TestNonComparableKeys(t *testing.T) {
 	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
 	pipeline := seq.FromSeq2(src).Pipe2(seq.Map2(func(k []int, v string) ([]int, int) {

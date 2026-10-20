@@ -7,7 +7,7 @@
 
 ## seq.Seq / seq.Seq2
 
-`seq.Seq[T]` / `seq.Seq2[K, V]` は、Go 標準の [`iter`](https://pkg.go.dev/iter) の関数型に、加工処理を接続する `Pipe` / `Pipe2` メソッドを追加した型です。  
+`seq.Seq[T]` / `seq.Seq2[K, V]` は、[`iter`](https://pkg.go.dev/iter) の関数型に、加工処理を接続する `Pipe` / `Pipe2` メソッドを追加した型です。  
 結果は標準イテレーターと同様に、`for v := range pipeline` / `for k, v := range pipeline` で直接反復できます。  
 `seq.Seq2[K, V]` の `K` と `V` に型の制限はありませんが、map との相互変換を伴う `FromMap` / `ToMap` では、`K` が `comparable` に制限されます。  
 `seq.Seq2` から単一値の `seq.Seq` へ変換し、そのままパイプラインを続けることもできます。  
@@ -94,7 +94,7 @@ fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 | 標準イテレーターへ変換 | `ToSeq` | `ToSeq2` |
 | channel から入力 / channel へ出力 | `FromChannel` / `ToChannel` | — |
 
-標準の `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
+`iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
 
 ### channel との相互変換
 
@@ -112,7 +112,7 @@ channel の通信待ちを含めて途中の中断をサポートするため、
 
 ## オペレーター
 
-go-seqpipeline では、標準の `iter.Seq` / `iter.Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  
+go-seqpipeline では、`iter.Seq` / `iter.Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  
 
 ### ライブラリが提供するオペレーター
 
@@ -139,7 +139,7 @@ go-seqpipeline では、標準の `iter.Seq` / `iter.Seq2` を変換して新し
 
 ### 独自オペレーターの実装
 
-入出力に標準の `iter.Seq` / `iter.Seq2` を使う変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に渡します。  
+入出力に `iter.Seq` / `iter.Seq2` を使う変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に渡します。  
 変換関数は、呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
 既存のオペレーターは `next(previous(src))` のような関数呼び出しで合成できます。  
 生成時の引数に型情報を持たない処理には、設定値と型パラメーターを持つ変換メソッドを用意し、そのメソッド値を出力型に応じて `Pipe` / `Pipe2` に渡します。  
@@ -148,7 +148,7 @@ go-seqpipeline では、標準の `iter.Seq` / `iter.Seq2` を変換して新し
 
 各オペレーターの使い方は、期待出力を持つ [Go Example](../seq/example_test.go) にまとめています。  
 
-| 利用例 | 単一値 | キーと値 |
+| 利用例 | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
 | 要素・キーと値の変換 | [ExampleMap](../seq/example_test.go#L13) | [ExampleMap2](../seq/example_test.go#L19) |
 | 条件による選別 | [ExampleFilter](../seq/example_test.go#L29) | [ExampleFilter2](../seq/example_test.go#L35) |

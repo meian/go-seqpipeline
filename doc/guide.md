@@ -7,7 +7,7 @@ See the [README](../README.md#type-inference) for basic type inference and [GoDo
 
 ## seq.Seq / seq.Seq2
 
-`seq.Seq[T]` / `seq.Seq2[K, V]` extend the function types from Go's standard [`iter`](https://pkg.go.dev/iter) package with `Pipe` / `Pipe2` methods for connecting transformations.  
+`seq.Seq[T]` / `seq.Seq2[K, V]` extend the function types from the [`iter`](https://pkg.go.dev/iter) package with `Pipe` / `Pipe2` methods for connecting transformations.  
 Like standard iterators, the results can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
 `seq.Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
 A `seq.Seq2` can also be converted into a single-value `seq.Seq` to continue the pipeline.  
@@ -93,7 +93,7 @@ Functions starting with `To` collect results into collections or convert them to
 | Convert to a standard iterator | `ToSeq` | `ToSeq2` |
 | Input from / output to a channel | `FromChannel` / `ToChannel` | — |
 
-Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the standard `iter.Seq` / `iter.Seq2` types.  
+Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the `iter.Seq` / `iter.Seq2` types.  
 
 ### Channel conversions
 
@@ -111,7 +111,7 @@ To also interrupt upstream communication waits, pass the same context upstream.
 
 ## Operators
 
-In go-seqpipeline, an operator is an operation that transforms standard `iter.Seq` / `iter.Seq2` to produce a new sequence.  
+In go-seqpipeline, an operator is an operation that transforms `iter.Seq` / `iter.Seq2` to produce a new sequence.  
 
 ### Built-in operators
 
@@ -137,7 +137,7 @@ All four operator types can be called directly as `op(src)`; use `ToSeq` / `ToSe
 
 ### Implementing custom operators
 
-Implement a transformation function using standard `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
+Implement a transformation function using `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
 Compose existing operators with function calls such as `next(previous(src))`.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
@@ -146,7 +146,7 @@ For operations whose factory arguments carry no type information, provide a conf
 
 [Go Examples](../seq/example_test.go) demonstrate each operator with expected output.  
 
-| Example | Single values | Key-value pairs |
+| Example | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
 | Transform elements or keys and values | [ExampleMap](../seq/example_test.go#L13) | [ExampleMap2](../seq/example_test.go#L19) |
 | Filter by a condition | [ExampleFilter](../seq/example_test.go#L29) | [ExampleFilter2](../seq/example_test.go#L35) |

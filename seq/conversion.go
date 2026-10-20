@@ -20,12 +20,12 @@ func ToSlice[T any](s Seq[T]) []T {
 	return slices.Collect(ToSeq(s))
 }
 
-// FromSeq は標準の iter.Seq を、パイプラインを構築するための seq.Seq に変換する。
+// FromSeq は iter.Seq を、パイプラインを構築するための seq.Seq に変換する。
 func FromSeq[T any](src iter.Seq[T]) Seq[T] {
 	return Seq[T](src)
 }
 
-// ToSeq は seq.Seq を標準の iter.Seq に変換する。
+// ToSeq は seq.Seq を iter.Seq に変換する。
 // この時点では要素を評価しない。
 func ToSeq[T any](s Seq[T]) iter.Seq[T] {
 	return iter.Seq[T](s)
@@ -46,12 +46,12 @@ func ToMap[K comparable, V any](s Seq2[K, V]) map[K]V {
 	return maps.Collect(ToSeq2(s))
 }
 
-// FromSeq2 は標準の iter.Seq2 を、パイプラインを構築するための seq.Seq2 に変換する。
+// FromSeq2 は iter.Seq2 を、パイプラインを構築するための seq.Seq2 に変換する。
 func FromSeq2[K, V any](src iter.Seq2[K, V]) Seq2[K, V] {
 	return Seq2[K, V](src)
 }
 
-// ToSeq2 は seq.Seq2 を標準の iter.Seq2 に変換する。
+// ToSeq2 は seq.Seq2 を iter.Seq2 に変換する。
 // この時点では要素を評価しない。
 func ToSeq2[K, V any](s Seq2[K, V]) iter.Seq2[K, V] {
 	return iter.Seq2[K, V](s)
