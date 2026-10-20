@@ -51,7 +51,7 @@ func TestSeq2DefinedFunctionType(t *testing.T) {
 	assertEqual(t, got, want)
 }
 
-// TestSeqPipe は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+// 独自オペレーターが接続時に入力を評価する場合も、Pipe は呼び出しを遅延させない。
 func TestSeqPipe(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
@@ -85,7 +85,6 @@ func TestSeqPipe(t *testing.T) {
 	}
 }
 
-// TestSeqPipe2 は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
 func TestSeqPipe2(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
@@ -119,7 +118,6 @@ func TestSeqPipe2(t *testing.T) {
 	}
 }
 
-// TestSeq2Pipe は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
 func TestSeq2Pipe(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
@@ -154,7 +152,6 @@ func TestSeq2Pipe(t *testing.T) {
 	}
 }
 
-// TestSeq2Pipe2 は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
 func TestSeq2Pipe2(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {

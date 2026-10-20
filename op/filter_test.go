@@ -32,7 +32,6 @@ func TestFilter2NilInput(t *testing.T) {
 	}
 }
 
-// TestFilter は条件ごとの選別・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
 func TestFilter(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -73,7 +72,6 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-// TestFilter2 は両引数による選別・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
 func TestFilter2(t *testing.T) {
 	for _, tc := range []struct {
 		name      string

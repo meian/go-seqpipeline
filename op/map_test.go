@@ -33,7 +33,6 @@ func TestMap2NilInput(t *testing.T) {
 	}
 }
 
-// TestMap は型変換・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
 func TestMap(t *testing.T) {
 	reads, calls := 0, 0
 	src := iter.Seq[int](func(yield func(int) bool) {
@@ -61,7 +60,6 @@ func TestMap(t *testing.T) {
 	assertEqual(t, []int{reads, calls}, []int{1, 1})
 }
 
-// TestMap2 はキーと値の型変換・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
 func TestMap2(t *testing.T) {
 	reads, calls := 0, 0
 	src := iter.Seq2[int, string](func(yield func(int, string) bool) {

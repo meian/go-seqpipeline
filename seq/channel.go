@@ -4,8 +4,7 @@ import "context"
 
 // FromChannel は反復時に channel から受信する seq.Seq を返す。
 // 元の channel を close して残りの値を読み終えるか、ctx をキャンセルするか、break することで反復を終了する。
-// 入力 channel は、外部で明示的に close しない限り close されない。
-// 再評価では先頭に戻らず、後続の値を受信する。
+// 入力 channel は close しない。受信済みの値は再取得できない。
 // 同じ channel から複数の seq.Seq を作ると、受信タイミングに応じて値が分配される。
 // ctx に nil を渡すと呼び出し時に panic する。
 // nil の channel はキャンセルまで待機する。
@@ -30,7 +29,7 @@ func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 }
 
 // ToChannel は呼び出し時に goroutine で seq.Seq を評価し、バッファなしの channel へ順に送信する。
-// 出力は評価終了時に close し、nil の入力は空として扱う。
+// 出力は評価終了時に close する。
 // ctx に nil を渡すと呼び出し時に panic する。
 // 受信を途中でやめる場合は ctx をキャンセルして送信待ちを解除する。
 // キャンセルと競合した送信は完了することがある。
