@@ -137,9 +137,10 @@ Use `ToSeq` / `ToSeq2` when passing library types as additional inputs to operat
 
 ### Composing operators
 
-Use `op.Compose()` for single-value input or `op.Compose2()` for key-value input to assemble a transformation before choosing its input.  
+Use `seq.Seq` / `seq.Seq2` methods to connect operations to an input.  
+To define a reusable composite operator before choosing its input, use `op.Compose()` for single-value input or `op.Compose2()` for key-value input.  
 The first `Pipe` / `Pipe2` infers the input and output types from the transformation you pass.  
-The empty start value has no input type yet and is not an operator or an identity transformation.  
+The empty start value has no input type yet; the first connection returns a dedicated composition value.  
 
 ```go
 transform := op.Compose().
@@ -147,16 +148,16 @@ transform := op.Compose().
     Pipe(op.Map(strconv.Itoa)).
     Pipe(op.Take(2).Operator)
 
-first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform)
-second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform)
+first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform.Operator)
+second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform.Operator)
 fmt.Println(seq.ToSlice(first))  // [2 4]
 fmt.Println(seq.ToSlice(second)) // [8 10]
 ```
 
-All four operator function types have `Pipe` / `Pipe2` methods: `Pipe` adds a single-value output, and `Pipe2` adds a key-value output.  
+Composition values provide `Pipe` / `Pipe2`: `Pipe` adds a single-value output, and `Pipe2` adds a key-value output.  
 Each step retains the original input type and connects the next transformation to the current output type, including transitions between single values and pairs.  
-The result is an operator function type that can be passed directly to `seq.Seq` / `seq.Seq2` methods or called with a standard iterator.  
-You can also start from a named operator, such as `op.Map(strconv.Itoa).Pipe(op.Take(2).Operator)`.  
+Pass the composition's `.Operator` method value to `seq.Seq` / `seq.Seq2` methods according to the final output type.  
+It also matches the corresponding `op.Operator`, `op.ToSeq2Operator`, `op.ToSeqOperator`, or `op.Operator2` function type, so you can use it as a transformation inside another composition.  
 
 When the first transformation carries insufficient type information, specify the missing type arguments on the first method.  
 Later steps can infer types from the current output.  

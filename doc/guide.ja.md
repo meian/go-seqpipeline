@@ -138,9 +138,10 @@ go-seqpipeline では、`iter.Seq` / `iter.Seq2` を変換して新しいシー�
 
 ### オペレーターの合成
 
-入力を決める前に変換処理を組み立てるには、単一値入力なら `op.Compose()`、キーと値の組の入力なら `op.Compose2()` を使います。  
+入力に処理をつなぐ場合は、`seq.Seq` / `seq.Seq2` のメソッドを使います。  
+再利用する複合オペレーターを入力の選択前に定義するには、単一値入力なら `op.Compose()`、キーと値の組の入力なら `op.Compose2()` を使います。  
 最初の `Pipe` / `Pipe2` に渡す処理から、入出力の型を推論します。  
-空の開始値はまだ入力型を持たず、オペレーターでも恒等変換でもありません。  
+空の開始値はまだ入力型を持たず、最初の接続で専用の合成値を返します。  
 
 ```go
 transform := op.Compose().
@@ -148,16 +149,16 @@ transform := op.Compose().
     Pipe(op.Map(strconv.Itoa)).
     Pipe(op.Take(2).Operator)
 
-first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform)
-second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform)
+first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform.Operator)
+second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform.Operator)
 fmt.Println(seq.ToSlice(first))  // [2 4]
 fmt.Println(seq.ToSlice(second)) // [8 10]
 ```
 
-4種類のOperator関数型はすべて `Pipe` / `Pipe2` メソッドを持ち、単一値を出力する処理は `Pipe`、キーと値の組を出力する処理は `Pipe2` で追加します。  
+合成値の `Pipe` / `Pipe2` で、単一値を出力する処理は `Pipe`、キーと値の組を出力する処理は `Pipe2` で追加します。  
 各段階で合成全体の入力型を保ち、途中の出力型に次の処理を接続できるため、単一値と組を行き来する合成もできます。  
-結果はOperator関数型なので、そのまま `seq.Seq` / `seq.Seq2` のメソッドに渡したり、標準イテレーターへ直接適用したりできます。  
-`op.Map(strconv.Itoa).Pipe(op.Take(2).Operator)` のように、名前付きのオペレーターから直接合成を始めることもできます。  
+合成値の `.Operator` メソッド値を、最終出力の型に応じて `seq.Seq` / `seq.Seq2` のメソッドに渡します。  
+このメソッド値は対応する `op.Operator`、`op.ToSeq2Operator`、`op.ToSeqOperator`、`op.Operator2` の関数型にも合うため、別の合成の変換処理としても使えます。  
 
 先頭の処理だけでは型情報が不足する場合、最初のメソッドで不足する型引数を指定します。  
 2段目以降は途中の出力型から推論できます。  
