@@ -112,7 +112,7 @@ channel の通信待ちを含めて途中の中断をサポートするため、
 
 ## オペレーター
 
-go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  
+go-seqpipeline では、標準の `iter.Seq` / `iter.Seq2` を変換して新しいシーケンスを生成する処理をオペレーターと定義しています。  
 
 ### ライブラリが提供するオペレーター
 
@@ -121,25 +121,27 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 
 ### 接続
 
-`Seq` と `Seq2` には `Pipe` / `Pipe2` が定義されており、それぞれ `Seq` / `Seq2` に変換するオペレーター関数を受け取ります。  
+`Seq` と `Seq2` の `Pipe` / `Pipe2` は、標準イテレーターを扱うオペレーターを接続し、それぞれ `Seq` / `Seq2` を返します。  
 関数型 `Operator`、`ToSeq2Operator`、`ToSeqOperator`、`Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
 
 | 入力 | メソッド | 変換関数 | 出力 |
 | --- | --- | --- | --- |
-| `Seq[I]` | `Pipe` | `Operator[I, O]`（`func(Seq[I]) Seq[O]`） | `Seq[O]` |
-| `Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]`（`func(Seq[I]) Seq2[K, V]`） | `Seq2[K, V]` |
-| `Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]`（`func(Seq2[K, V]) Seq[O]`） | `Seq[O]` |
-| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]`（`func(Seq2[K, V]) Seq2[K2, V2]`） | `Seq2[K2, V2]` |
+| `Seq[I]` | `Pipe` | `Operator[I, O]` | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]` | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]` | `Seq[O]` |
+| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` | `Seq2[K2, V2]` |
 
-`Pipe` / `Pipe2` は変換関数をその場で呼び出し、nil を含めて戻り値をそのまま返します。  
+`Pipe` / `Pipe2` は入力を標準型へ変換して変換関数をその場で呼び出し、戻り値をライブラリ型へ戻します。  
+この型変換では要素を評価・コピーせず、nil を保持します。  
 入力の評価と停止伝播は、変換関数の実装に従います。  
-4 種類のオペレーターは関数型なので、`op(src)` の形でも直接呼び出せます。  
+4 種類のオペレーターは `op(src)` でも呼び出せます。  
+直接呼び出しや `Zip` などの追加入力にライブラリ型を渡す場合は `ToSeq` / `ToSeq2`、結果を再びチェーンする場合は `FromSeq` / `FromSeq2` で変換します。  
 
 ### 独自オペレーターの実装
 
-入出力にこのライブラリの `Seq` / `Seq2` を使う変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に直接渡します。  
+入出力に標準の `iter.Seq` / `iter.Seq2` を使う変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に渡します。  
 変換関数は、呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
-関数内で `src.Pipe(...)` / `src.Pipe2(...)` を使い、既存のオペレーターを合成することもできます。  
+既存のオペレーターは `next(previous(src))` のような関数呼び出しで合成できます。  
 生成時の引数に型情報を持たない処理には、設定値と型パラメーターを持つ変換メソッドを用意し、そのメソッド値を出力型に応じて `Pipe` / `Pipe2` に渡します。  
 
 ### 実行可能な利用例
@@ -148,16 +150,16 @@ go-seqpipeline では、`Seq` / `Seq2` を変換して新しいシーケンス�
 
 | 利用例 | Seq | Seq2 |
 | --- | --- | --- |
-| 要素・キーと値の変換 | [ExampleMap](../seq/example_test.go#L12) | [ExampleMap2](../seq/example_test.go#L18) |
-| 条件による選別 | [ExampleFilter](../seq/example_test.go#L28) | [ExampleFilter2](../seq/example_test.go#L34) |
-| 取得件数の制限と型推論（.Operator / .Operator2） | [ExampleTake](../seq/example_test.go#L42) | [ExampleTake_pairs](../seq/example_test.go#L48) |
-| 先頭の要素・組の読み飛ばし | [ExampleSkip](../seq/example_test.go#L256) | [ExampleSkip](../seq/example_test.go#L256) |
-| 型を変換する処理の接続 | [ExampleSeq_Pipe](../seq/example_test.go#L58) | [ExampleSeq2_Pipe2](../seq/example_test.go#L200) |
-| Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](../seq/example_test.go#L180) | [ExampleSeq2_Pipe](../seq/example_test.go#L192) |
-| Seq2 からキー・値を取り出す | — | [ExampleKeys](../seq/example_test.go#L145)、[ExampleValues](../seq/example_test.go#L154) |
-| Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](../seq/example_test.go#L212) | [ExampleToSeqOperator](../seq/example_test.go#L223) |
-| 関数オペレーターの接続と直接呼び出し | [ExampleOperator](../seq/example_test.go#L82) | [ExampleOperator2](../seq/example_test.go#L129) |
-| 独自オペレーターによる拡張 | [ExampleOperator_custom](../seq/example_test.go#L112) | [ExampleOperator2](../seq/example_test.go#L129) |
+| 要素・キーと値の変換 | [ExampleMap](../seq/example_test.go#L13) | [ExampleMap2](../seq/example_test.go#L19) |
+| 条件による選別 | [ExampleFilter](../seq/example_test.go#L29) | [ExampleFilter2](../seq/example_test.go#L35) |
+| 取得件数の制限と型推論（.Operator / .Operator2） | [ExampleTake](../seq/example_test.go#L43) | [ExampleTake_pairs](../seq/example_test.go#L49) |
+| 先頭の要素・組の読み飛ばし | [ExampleSkip](../seq/example_test.go#L257) | [ExampleSkip](../seq/example_test.go#L257) |
+| 型を変換する処理の接続 | [ExampleSeq_Pipe](../seq/example_test.go#L59) | [ExampleSeq2_Pipe2](../seq/example_test.go#L201) |
+| Seq と Seq2 をまたぐ接続 | [ExampleSeq_Pipe2](../seq/example_test.go#L181) | [ExampleSeq2_Pipe](../seq/example_test.go#L193) |
+| Seq2 からキー・値を取り出す | — | [ExampleKeys](../seq/example_test.go#L146)、[ExampleValues](../seq/example_test.go#L155) |
+| Seq と Seq2 をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](../seq/example_test.go#L213) | [ExampleToSeqOperator](../seq/example_test.go#L224) |
+| 関数オペレーターの接続と直接呼び出し | [ExampleOperator](../seq/example_test.go#L83) | [ExampleOperator2](../seq/example_test.go#L130) |
+| 独自オペレーターによる拡張 | [ExampleOperator_custom](../seq/example_test.go#L113) | [ExampleOperator2](../seq/example_test.go#L130) |
 
 Example のみを実行するには、次のコマンドを使います。  
 

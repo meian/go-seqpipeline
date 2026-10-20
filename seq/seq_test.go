@@ -57,7 +57,8 @@ func TestSeqPipe(t *testing.T) {
 		reads++
 		yield(7)
 	}
-	var result seq.Seq[string] = src.Pipe(func(got seq.Seq[int]) seq.Seq[string] {
+	var pipe func(seq.Operator[int, string]) seq.Seq[string] = src.Pipe
+	var result seq.Seq[string] = pipe(func(got iter.Seq[int]) iter.Seq[string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for v := range got {
@@ -70,7 +71,7 @@ func TestSeqPipe(t *testing.T) {
 	assertEqual(t, seq.ToSlice(result), []string{"ok"})
 	var zero seq.Seq[int]
 	var nilCalls int
-	nilResult := zero.Pipe(func(got seq.Seq[int]) seq.Seq[string] {
+	nilResult := zero.Pipe(func(got iter.Seq[int]) iter.Seq[string] {
 		nilCalls++
 		if got != nil {
 			t.Fatal("nil input changed")
@@ -90,7 +91,8 @@ func TestSeqPipe2(t *testing.T) {
 		reads++
 		yield(7)
 	}
-	var result seq.Seq2[[]int, string] = src.Pipe2(func(got seq.Seq[int]) seq.Seq2[[]int, string] {
+	var pipe func(seq.ToSeq2Operator[int, []int, string]) seq.Seq2[[]int, string] = src.Pipe2
+	var result seq.Seq2[[]int, string] = pipe(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for v := range got {
@@ -103,7 +105,7 @@ func TestSeqPipe2(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(result)), []pair[[]int, string]{{Key: []int{1}, Value: "ok"}})
 	var zero seq.Seq[int]
 	var nilCalls int
-	nilResult := zero.Pipe2(func(got seq.Seq[int]) seq.Seq2[[]int, string] {
+	nilResult := zero.Pipe2(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
 		nilCalls++
 		if got != nil {
 			t.Fatal("nil input changed")
@@ -123,7 +125,8 @@ func TestSeq2Pipe(t *testing.T) {
 		reads++
 		yield(7, true)
 	}
-	var result seq.Seq[string] = src.Pipe(func(got seq.Seq2[int, bool]) seq.Seq[string] {
+	var pipe func(seq.ToSeqOperator[int, bool, string]) seq.Seq[string] = src.Pipe
+	var result seq.Seq[string] = pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for k, v := range got {
@@ -137,7 +140,7 @@ func TestSeq2Pipe(t *testing.T) {
 	assertEqual(t, seq.ToSlice(result), []string{"ok"})
 	var zero seq.Seq2[int, bool]
 	var nilCalls int
-	nilResult := zero.Pipe(func(got seq.Seq2[int, bool]) seq.Seq[string] {
+	nilResult := zero.Pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
 		nilCalls++
 		if got != nil {
 			t.Fatal("nil input changed")
@@ -157,7 +160,8 @@ func TestSeq2Pipe2(t *testing.T) {
 		reads++
 		yield(7, true)
 	}
-	var result seq.Seq2[[]int, string] = src.Pipe2(func(got seq.Seq2[int, bool]) seq.Seq2[[]int, string] {
+	var pipe func(seq.Operator2[int, bool, []int, string]) seq.Seq2[[]int, string] = src.Pipe2
+	var result seq.Seq2[[]int, string] = pipe(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for k, v := range got {
@@ -171,7 +175,7 @@ func TestSeq2Pipe2(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(result)), []pair[[]int, string]{{Key: []int{1}, Value: "ok"}})
 	var zero seq.Seq2[int, bool]
 	var nilCalls int
-	nilResult := zero.Pipe2(func(got seq.Seq2[int, bool]) seq.Seq2[[]int, string] {
+	nilResult := zero.Pipe2(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
 		nilCalls++
 		if got != nil {
 			t.Fatal("nil input changed")

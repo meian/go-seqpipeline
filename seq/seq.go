@@ -11,13 +11,13 @@ type Seq[T any] iter.Seq[T]
 // Pipe は、このシーケンスにオペレーターを適用し、単一値のシーケンスを返す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq[T]) Pipe[U any](op Operator[T, U]) Seq[U] {
-	return op(s)
+	return Seq[U](op(iter.Seq[T](s)))
 }
 
 // Pipe2 は、このシーケンスにオペレーターを適用し、キーと値の組のシーケンスを返す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq[T]) Pipe2[K, V any](op ToSeq2Operator[T, K, V]) Seq2[K, V] {
-	return op(s)
+	return Seq2[K, V](op(iter.Seq[T](s)))
 }
 
 // Seq2 は、iter.Seq2 に Pipeline 操作を追加した関数型である。
@@ -29,11 +29,11 @@ type Seq2[K, V any] iter.Seq2[K, V]
 // Pipe は、このシーケンスにオペレーターを適用し、単一値のシーケンスを返す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq2[K, V]) Pipe[U any](op ToSeqOperator[K, V, U]) Seq[U] {
-	return op(s)
+	return Seq[U](op(iter.Seq2[K, V](s)))
 }
 
 // Pipe2 は、このシーケンスにオペレーターを適用し、キーと値の組のシーケンスを返す。
 // op はその場で呼び出すが、入力の評価と停止伝播は op の実装に従う。
 func (s Seq2[K, V]) Pipe2[K2, V2 any](op Operator2[K, V, K2, V2]) Seq2[K2, V2] {
-	return op(s)
+	return Seq2[K2, V2](op(iter.Seq2[K, V](s)))
 }

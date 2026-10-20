@@ -17,7 +17,7 @@ go get github.com/meian/go-seqpipeline
 Use functions starting with `From` to wrap input, then connect operators with `Pipe` / `Pipe2`.  
 `Seq[T]` / `Seq2[K, V]` extend the standard `iter.Seq` / `iter.Seq2` types with connection methods.  
 For either input type, `Pipe` returns `Seq` and `Pipe2` returns `Seq2`.  
-Types are inferred from connected inputs and outputs; incompatible operations cannot be connected.  
+Operators transform standard iterators; `Pipe` / `Pipe2` infer their input and output types.  
 Iterate directly with `for range`, or collect results with `ToSlice` / `ToMap`.  
 
 ### Single-value pipeline

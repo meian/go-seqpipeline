@@ -28,12 +28,12 @@ const (
 // AlignRight では右から、それ以外では左から要素を取得する。
 // AlignShortest では右の終了検出時に左を1要素余分に取得することがある。
 // Operator の接続時に元の Seq からキー型を推論する。
-func Zip[V any](values Seq[V]) zipOperator[V] {
+func Zip[V any](values iter.Seq[V]) zipOperator[V] {
 	return zipOperator[V]{values: values}
 }
 
 type zipOperator[V any] struct {
-	values       Seq[V]
+	values       iter.Seq[V]
 	alignment    ZipAlign
 	defaultValue V
 }
@@ -63,7 +63,7 @@ func (z zipOperator[V]) WithDefaultKey[K any](defaultKey K) zipKeyOperator[K, V]
 // この時点では入力を評価せず、nil の入力は空として扱う。
 // 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
 // 再評価できるかどうかは両方の元の Iterator に従う。
-func (z zipOperator[V]) Operator[K any](src Seq[K]) Seq2[K, V] {
+func (z zipOperator[V]) Operator[K any](src iter.Seq[K]) iter.Seq2[K, V] {
 	var defaultKey K
 	return zipSequences(src, z.values, z.alignment, defaultKey, z.defaultValue)
 }
@@ -99,11 +99,11 @@ func (z zipKeyOperator[K, V]) WithDefaultKey(defaultKey K) zipKeyOperator[K, V] 
 // この時点では入力を評価せず、nil の入力は空として扱う。
 // 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
 // 再評価できるかどうかは両方の元の Iterator に従う。
-func (z zipKeyOperator[K, V]) Operator(src Seq[K]) Seq2[K, V] {
+func (z zipKeyOperator[K, V]) Operator(src iter.Seq[K]) iter.Seq2[K, V] {
 	return zipSequences(src, z.zip.values, z.zip.alignment, z.defaultKey, z.zip.defaultValue)
 }
 
-func zipSequences[K, V any](left Seq[K], right Seq[V], alignment ZipAlign, defaultKey K, defaultValue V) Seq2[K, V] {
+func zipSequences[K, V any](left iter.Seq[K], right iter.Seq[V], alignment ZipAlign, defaultKey K, defaultValue V) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if left == nil && alignment <= AlignLeft {
 			return
@@ -111,11 +111,11 @@ func zipSequences[K, V any](left Seq[K], right Seq[V], alignment ZipAlign, defau
 		if right == nil && (alignment == AlignShortest || alignment == AlignRight) {
 			return
 		}
-		keys := iter.Seq[K](left)
+		keys := left
 		if keys == nil {
 			keys = func(func(K) bool) {}
 		}
-		values := iter.Seq[V](right)
+		values := right
 		if values == nil {
 			values = func(func(V) bool) {}
 		}

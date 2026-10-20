@@ -1,6 +1,7 @@
 package seq_test
 
 import (
+	"iter"
 	"slices"
 	"strconv"
 	"testing"
@@ -9,8 +10,8 @@ import (
 )
 
 func takeWith[T any](n int, predicate func(T) bool) seq.Operator[T, T] {
-	return func(src seq.Seq[T]) seq.Seq[T] {
-		return src.Pipe(seq.Filter(predicate)).Pipe(seq.Take(n).Operator)
+	return func(src iter.Seq[T]) iter.Seq[T] {
+		return seq.Take(n).Operator(seq.Filter(predicate)(src))
 	}
 }
 
@@ -23,7 +24,7 @@ func TestOperatorDirectCall(t *testing.T) {
 	var limit seq.Operator[string, string] = seq.Take(1).Operator
 	var custom seq.Operator[int, string] = repeat
 	src := seq.FromSlice([]int{1, 22, 333})
-	assertEqual(t, seq.ToSlice(limit(filtered(mapped(src)))), []string{"22"})
+	assertEqual(t, slices.Collect(limit(filtered(mapped(seq.ToSeq(src))))), []string{"22"})
 	assertEqual(t, seq.ToSlice(src.Pipe(custom).Pipe(filtered).Pipe(limit)), []string{"22"})
 }
 
@@ -57,8 +58,8 @@ func TestOperator2DirectCall(t *testing.T) {
 	var custom seq.Operator2[int, int, string, int] = keyText
 	src := seq.FromSeq2(slices.All([]int{1, 22, 333}))
 	want := []pair[string, string]{{Key: "1", Value: "22"}}
-	direct := limit(filtered(mapped(src)))
-	assertEqual(t, collectPairs(seq.ToSeq2(direct)), want)
+	direct := limit(filtered(mapped(seq.ToSeq2(src))))
+	assertEqual(t, collectPairs(direct), want)
 	pipeline := src.Pipe2(custom).
 		Pipe2(seq.Map2(func(k string, v int) (string, string) { return k, strconv.Itoa(v) })).
 		Pipe2(filtered).Pipe2(limit)
@@ -67,9 +68,8 @@ func TestOperator2DirectCall(t *testing.T) {
 
 func TestComposedOperator2(t *testing.T) {
 	reads := 0
-	var op seq.Operator2[int, int, int, int] = func(src seq.Seq2[int, int]) seq.Seq2[int, int] {
-		return src.Pipe2(seq.Filter2(func(k, v int) bool { return v%2 == 0 })).
-			Pipe2(seq.Take(2).Operator2)
+	var op seq.Operator2[int, int, int, int] = func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
+		return seq.Take(2).Operator2(seq.Filter2(func(k, v int) bool { return v%2 == 0 })(src))
 	}
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
 		Pipe2(seq.Map2(func(k, v int) (int, int) {
@@ -94,16 +94,16 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 	var op seq.ToSeq2Operator[string, []int, string] = withLength
 	src := seq.FromSlice([]string{"a", "bbb"})
 	want := []pair[[]int, string]{{Key: []int{1}, Value: "a"}, {Key: []int{3}, Value: "bbb"}}
-	assertEqual(t, collectPairs(seq.ToSeq2(op(src))), want)
+	assertEqual(t, collectPairs(op(seq.ToSeq(src))), want)
 	assertEqual(t, collectPairs(seq.ToSeq2(src.Pipe2(op))), want)
-	assertEqual(t, collectPairs(seq.ToSeq2(op(nil))), []pair[[]int, string](nil))
+	assertEqual(t, collectPairs(op(nil)), []pair[[]int, string](nil))
 }
 
 // TestToSeqOperatorDirectCall は、関数の代入、直接呼び出し、Pipe 接続を確認する。
 func TestToSeqOperatorDirectCall(t *testing.T) {
 	var op seq.ToSeqOperator[int, string, string] = seq.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
-	assertEqual(t, seq.ToSlice(op(src)), []string{"a", "bbb"})
+	assertEqual(t, slices.Collect(op(seq.ToSeq2(src))), []string{"a", "bbb"})
 	assertEqual(t, seq.ToSlice(src.Pipe(op)), []string{"a", "bbb"})
-	assertEqual(t, seq.ToSlice(op(nil)), []string(nil))
+	assertEqual(t, slices.Collect(op(nil)), []string(nil))
 }

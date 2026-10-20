@@ -1,6 +1,8 @@
 package seq_test
 
 import (
+	"iter"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -34,7 +36,7 @@ func TestMap2NilInput(t *testing.T) {
 // TestMap は型変換・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
 func TestMap(t *testing.T) {
 	reads, calls := 0, 0
-	src := seq.Seq[int](func(yield func(int) bool) {
+	src := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{3, 1, 3} {
 			reads++
 			if !yield(v) {
@@ -48,7 +50,7 @@ func TestMap(t *testing.T) {
 	})(src)
 	assertEqual(t, []int{reads, calls}, []int{0, 0})
 	for round := 1; round <= 2; round++ {
-		assertEqual(t, seq.ToSlice(mapped), []string{"3", "1", "3"})
+		assertEqual(t, slices.Collect(mapped), []string{"3", "1", "3"})
 		assertEqual(t, []int{reads, calls}, []int{3 * round, 3 * round})
 	}
 	reads, calls = 0, 0
@@ -62,7 +64,7 @@ func TestMap(t *testing.T) {
 // TestMap2 はキーと値の型変換・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
 func TestMap2(t *testing.T) {
 	reads, calls := 0, 0
-	src := seq.Seq2[int, string](func(yield func(int, string) bool) {
+	src := iter.Seq2[int, string](func(yield func(int, string) bool) {
 		for _, p := range []pair[int, string]{{3, "aaa"}, {1, "b"}, {3, "cc"}} {
 			reads++
 			if !yield(p.Key, p.Value) {
@@ -77,7 +79,7 @@ func TestMap2(t *testing.T) {
 	assertEqual(t, []int{reads, calls}, []int{0, 0})
 	want := []pair[string, int]{{"3", 3}, {"1", 1}, {"3", 2}}
 	for round := 1; round <= 2; round++ {
-		assertEqual(t, collectPairs(seq.ToSeq2(mapped)), want)
+		assertEqual(t, collectPairs(mapped), want)
 		assertEqual(t, []int{reads, calls}, []int{3 * round, 3 * round})
 	}
 	reads, calls = 0, 0

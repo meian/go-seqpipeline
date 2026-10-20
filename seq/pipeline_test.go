@@ -1,6 +1,7 @@
 package seq_test
 
 import (
+	"iter"
 	"slices"
 	"strconv"
 	"testing"
@@ -243,7 +244,7 @@ func TestNonComparableKeys(t *testing.T) {
 
 // TestExternalTransforms2 は、独自の Seq2 変換関数を接続し、遅延評価・途中終了・再評価が成立することを確認する。
 func TestExternalTransforms2(t *testing.T) {
-	op := func(src seq.Seq2[string, int]) seq.Seq2[string, string] {
+	op := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
 		return func(yield func(string, string) bool) {
 			for k, v := range src {
 				if !yield(k, strconv.Itoa(v)) {
@@ -252,8 +253,8 @@ func TestExternalTransforms2(t *testing.T) {
 			}
 		}
 	}
-	direct := op(seq.FromMap(map[string]int{"1": 10}))
-	assertEqual(t, collectPairs(seq.ToSeq2(direct)), []pair[string, string]{{Key: "1", Value: "10"}})
+	direct := op(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))
+	assertEqual(t, collectPairs(direct), []pair[string, string]{{Key: "1", Value: "10"}})
 	reads := 0
 	src := func(yield func(int, int) bool) {
 		for i := 1; i <= 3; i++ {

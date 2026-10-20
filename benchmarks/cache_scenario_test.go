@@ -27,7 +27,7 @@ func cacheSeq2(values []int, work int) seq.Seq2[int, int] {
 var scenarioCacheSeqResult seq.Seq[int]
 
 func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
-	return seq.Cache(cacheSeq(values, work))
+	return cacheSeq(values, work).Pipe(seq.Cache)
 }
 
 func BenchmarkScenarioCacheSeqFill(b *testing.B) {
@@ -369,7 +369,7 @@ func TestScenarioCacheSeqUncached(t *testing.T) {
 var scenarioCacheSeq2Result seq.Seq2[int, int]
 
 func scenarioCacheSeq2Fill(values []int, work int) seq.Seq2[int, int] {
-	return seq.Cache2(cacheSeq2(values, work))
+	return cacheSeq2(values, work).Pipe2(seq.Cache2)
 }
 
 func BenchmarkScenarioCacheSeq2Fill(b *testing.B) {

@@ -1,10 +1,12 @@
 package seq
 
+import "iter"
+
 // Filter は条件に一致する要素だけを取り出す Operator を返す。
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
 func Filter[T any](predicate func(T) bool) Operator[T, T] {
-	return func(src Seq[T]) Seq[T] {
+	return func(src iter.Seq[T]) iter.Seq[T] {
 		return func(yield func(T) bool) {
 			if src == nil {
 				return
@@ -22,7 +24,7 @@ func Filter[T any](predicate func(T) bool) Operator[T, T] {
 // 変換関数は入力を評価せず、返すシーケンスの実行時に処理する。
 // nil の入力は空のシーケンスとして扱う。
 func Filter2[K, V any](predicate func(K, V) bool) Operator2[K, V, K, V] {
-	return func(src Seq2[K, V]) Seq2[K, V] {
+	return func(src iter.Seq2[K, V]) iter.Seq2[K, V] {
 		return func(yield func(K, V) bool) {
 			if src == nil {
 				return

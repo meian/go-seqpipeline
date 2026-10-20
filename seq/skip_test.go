@@ -1,7 +1,9 @@
 package seq_test
 
 import (
+	"iter"
 	"math"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -25,7 +27,7 @@ func TestSkipOperator(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			starts, reads := 0, 0
-			src := seq.Seq[int](func(yield func(int) bool) {
+			src := iter.Seq[int](func(yield func(int) bool) {
 				starts++
 				for _, v := range values {
 					reads++
@@ -37,7 +39,7 @@ func TestSkipOperator(t *testing.T) {
 			iterator := seq.Skip(tc.n).Operator(src)
 			assertEqual(t, []int{starts, reads}, []int{0, 0})
 			for round := 1; round <= 2; round++ {
-				assertEqual(t, seq.ToSlice(iterator), tc.want)
+				assertEqual(t, slices.Collect(iterator), tc.want)
 				assertEqual(t, []int{starts, reads}, []int{round, len(values) * round})
 			}
 		})
@@ -66,7 +68,7 @@ func TestSkipOperator2(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			starts, reads := 0, 0
-			src := seq.Seq2[int, string](func(yield func(int, string) bool) {
+			src := iter.Seq2[int, string](func(yield func(int, string) bool) {
 				starts++
 				for _, p := range pairs {
 					reads++
@@ -78,7 +80,7 @@ func TestSkipOperator2(t *testing.T) {
 			iterator := seq.Skip(tc.n).Operator2(src)
 			assertEqual(t, []int{starts, reads}, []int{0, 0})
 			for round := 1; round <= 2; round++ {
-				assertEqual(t, collectPairs(seq.ToSeq2(iterator)), tc.want)
+				assertEqual(t, collectPairs(iterator), tc.want)
 				assertEqual(t, []int{starts, reads}, []int{round, len(pairs) * round})
 			}
 		})
@@ -87,10 +89,10 @@ func TestSkipOperator2(t *testing.T) {
 
 func TestSkipOperatorEmptyAndNil(t *testing.T) {
 	for _, n := range []int{-1, 0, 1} {
-		for _, src := range []seq.Seq[int]{nil, func(func(int) bool) {}} {
+		for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 			iterator := seq.Skip(n).Operator(src)
 			for round := 0; round < 2; round++ {
-				assertEqual(t, seq.ToSlice(iterator), []int(nil))
+				assertEqual(t, slices.Collect(iterator), []int(nil))
 			}
 		}
 	}
@@ -98,10 +100,10 @@ func TestSkipOperatorEmptyAndNil(t *testing.T) {
 
 func TestSkipOperator2EmptyAndNil(t *testing.T) {
 	for _, n := range []int{-1, 0, 1} {
-		for _, src := range []seq.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
+		for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 			iterator := seq.Skip(n).Operator2(src)
 			for round := 0; round < 2; round++ {
-				assertEqual(t, collectPairs(seq.ToSeq2(iterator)), []pair[int, string](nil))
+				assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
 			}
 		}
 	}
@@ -111,7 +113,7 @@ func TestSkipOperatorDownstreamStop(t *testing.T) {
 	for _, n := range []int{-1, 0, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			reads, stops := 0, 0
-			src := seq.Seq[int](func(yield func(int) bool) {
+			src := iter.Seq[int](func(yield func(int) bool) {
 				for i := 1; i <= 5; i++ {
 					reads++
 					if !yield(i) {
@@ -136,7 +138,7 @@ func TestSkipOperator2DownstreamStop(t *testing.T) {
 	for _, n := range []int{-1, 0, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			reads, stops := 0, 0
-			src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+			src := iter.Seq2[int, int](func(yield func(int, int) bool) {
 				for i := 1; i <= 5; i++ {
 					reads++
 					if !yield(i, i*10) {
@@ -162,30 +164,30 @@ func TestSkipConfigurationReuse(t *testing.T) {
 	skip := seq.Skip(1)
 	var op seq.Operator[int, int] = skip.Operator
 	var op2 seq.Operator2[[]int, string, []int, string] = skip.Operator2
-	values := seq.Seq[int](func(yield func(int) bool) {
+	values := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{1, 2, 3} {
 			if !yield(v) {
 				return
 			}
 		}
 	})
-	pairs := seq.Seq2[[]int, string](func(yield func([]int, string) bool) {
+	pairs := iter.Seq2[[]int, string](func(yield func([]int, string) bool) {
 		if yield([]int{1}, "a") {
 			yield([]int{2}, "b")
 		}
 	})
 	first, second := op(values), skip.Operator(values)
 	paired := op2(pairs)
-	texts := skip.Operator(seq.Seq[string](func(yield func(string) bool) {
+	texts := skip.Operator(iter.Seq[string](func(yield func(string) bool) {
 		if yield("a") {
 			yield("b")
 		}
 	}))
 	for round := 0; round < 2; round++ {
-		assertEqual(t, seq.ToSlice(first), []int{2, 3})
-		assertEqual(t, seq.ToSlice(second), []int{2, 3})
-		assertEqual(t, seq.ToSlice(texts), []string{"b"})
+		assertEqual(t, slices.Collect(first), []int{2, 3})
+		assertEqual(t, slices.Collect(second), []int{2, 3})
+		assertEqual(t, slices.Collect(texts), []string{"b"})
 		want := []pair[[]int, string]{{Key: []int{2}, Value: "b"}}
-		assertEqual(t, collectPairs(seq.ToSeq2(paired)), want)
+		assertEqual(t, collectPairs(paired), want)
 	}
 }

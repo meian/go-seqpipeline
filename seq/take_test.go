@@ -1,6 +1,8 @@
 package seq_test
 
 import (
+	"iter"
+	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -25,7 +27,7 @@ func TestTakeOperator(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reads, starts, stops := 0, 0, 0
-			src := seq.Seq[int](func(yield func(int) bool) {
+			src := iter.Seq[int](func(yield func(int) bool) {
 				starts++
 				for i := 1; i <= 3; i++ {
 					reads++
@@ -38,7 +40,7 @@ func TestTakeOperator(t *testing.T) {
 			iterator := seq.Take(tc.n).Operator(src)
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
-				assertEqual(t, seq.ToSlice(iterator), tc.want)
+				assertEqual(t, slices.Collect(iterator), tc.want)
 				gotCounts := []int{reads, starts, stops}
 				wantCounts := []int{tc.reads * round, tc.starts * round, tc.stops * round}
 				assertEqual(t, gotCounts, wantCounts)
@@ -49,10 +51,10 @@ func TestTakeOperator(t *testing.T) {
 
 // TestTakeOperatorEmptyAndNilInput は、nil と空入力を再評価しても要素を返さないことを確認する。
 func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
-	for _, src := range []seq.Seq[int]{nil, func(func(int) bool) {}} {
+	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 		iterator := seq.Take(1).Operator(src)
 		for round := 0; round < 2; round++ {
-			assertEqual(t, seq.ToSlice(iterator), []int(nil))
+			assertEqual(t, slices.Collect(iterator), []int(nil))
 		}
 	}
 }
@@ -81,7 +83,7 @@ func TestTakeOperator2(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reads, starts, stops := 0, 0, 0
-			src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+			src := iter.Seq2[int, int](func(yield func(int, int) bool) {
 				starts++
 				for i := 1; i <= 3; i++ {
 					reads++
@@ -92,7 +94,7 @@ func TestTakeOperator2(t *testing.T) {
 				}
 			})
 			pipeline := seq.Take(tc.n).Operator2(src)
-			iterator := seq.ToSeq2(pipeline)
+			iterator := pipeline
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, collectPairs(iterator), tc.want)
@@ -106,10 +108,10 @@ func TestTakeOperator2(t *testing.T) {
 
 // TestTakeOperator2EmptyAndNilInput は、nil と空入力を再評価しても組を返さないことを確認する。
 func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
-	for _, src := range []seq.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
+	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 		iterator := seq.Take(1).Operator2(src)
 		for round := 0; round < 2; round++ {
-			assertEqual(t, collectPairs(seq.ToSeq2(iterator)), []pair[int, string](nil))
+			assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
 		}
 	}
 }
@@ -117,7 +119,7 @@ func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
 // TestTakeOperator2DownstreamStop は、下流の途中終了が上流へ伝播することを確認する。
 func TestTakeOperator2DownstreamStop(t *testing.T) {
 	reads, stops := 0, 0
-	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
 		for i := 1; i <= 3; i++ {
 			reads++
 			if !yield(i, i*10) {
@@ -127,7 +129,7 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 		}
 	})
 	pipeline := seq.Take(3).Operator2(src)
-	for k, v := range seq.ToSeq2(pipeline) {
+	for k, v := range pipeline {
 		assertEqual(t, k, 1)
 		assertEqual(t, v, 10)
 		break
@@ -138,7 +140,7 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 // TestTakeOperatorDownstreamStop は、指定数より先に下流が停止した場合も上流を停止することを確認する。
 func TestTakeOperatorDownstreamStop(t *testing.T) {
 	reads, stops := 0, 0
-	src := seq.Seq[int](func(yield func(int) bool) {
+	src := iter.Seq[int](func(yield func(int) bool) {
 		for i := 1; i <= 3; i++ {
 			reads++
 			if !yield(i) {
@@ -162,14 +164,14 @@ func TestTakeConfigurationReuse(t *testing.T) {
 	take := seq.Take(2)
 	var op seq.Operator[int, int] = take.Operator
 	var op2 seq.Operator2[[]int, string, []int, string] = take.Operator2
-	values := seq.Seq[int](func(yield func(int) bool) {
+	values := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{3, 3, 1} {
 			if !yield(v) {
 				return
 			}
 		}
 	})
-	pairs := seq.Seq2[[]int, string](func(yield func([]int, string) bool) {
+	pairs := iter.Seq2[[]int, string](func(yield func([]int, string) bool) {
 		for _, p := range []pair[[]int, string]{
 			{Key: []int{1}, Value: "a"},
 			{Key: []int{1}, Value: "a"},
@@ -183,12 +185,12 @@ func TestTakeConfigurationReuse(t *testing.T) {
 	first, second := op(values), take.Operator(values)
 	paired := op2(pairs)
 	for round := 0; round < 2; round++ {
-		assertEqual(t, seq.ToSlice(first), []int{3, 3})
-		assertEqual(t, seq.ToSlice(second), []int{3, 3})
+		assertEqual(t, slices.Collect(first), []int{3, 3})
+		assertEqual(t, slices.Collect(second), []int{3, 3})
 		want := []pair[[]int, string]{
 			{Key: []int{1}, Value: "a"},
 			{Key: []int{1}, Value: "a"},
 		}
-		assertEqual(t, collectPairs(seq.ToSeq2(paired)), want)
+		assertEqual(t, collectPairs(paired), want)
 	}
 }

@@ -111,7 +111,7 @@ To also interrupt upstream communication waits, pass the same context upstream.
 
 ## Operators
 
-In go-seqpipeline, an operator is an operation that transforms `Seq` / `Seq2` to produce a new sequence.  
+In go-seqpipeline, an operator is an operation that transforms standard `iter.Seq` / `iter.Seq2` to produce a new sequence.  
 
 ### Built-in operators
 
@@ -120,25 +120,26 @@ For operations with separate functions for single values and key-value pairs, th
 
 ### Connecting operators
 
-Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which accept operator functions that return `Seq` / `Seq2`, respectively.  
+Both `Seq` and `Seq2` define `Pipe` / `Pipe2`, which connect operators using standard iterators and return `Seq` / `Seq2`, respectively.  
 The function types `Operator`, `ToSeq2Operator`, `ToSeqOperator`, and `Operator2` represent the four combinations of input and output types.  
 
 | Input | Method | Transformation function | Output |
 | --- | --- | --- | --- |
-| `Seq[I]` | `Pipe` | `Operator[I, O]` (`func(Seq[I]) Seq[O]`) | `Seq[O]` |
-| `Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]` (`func(Seq[I]) Seq2[K, V]`) | `Seq2[K, V]` |
-| `Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]` (`func(Seq2[K, V]) Seq[O]`) | `Seq[O]` |
-| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` (`func(Seq2[K, V]) Seq2[K2, V2]`) | `Seq2[K2, V2]` |
+| `Seq[I]` | `Pipe` | `Operator[I, O]` | `Seq[O]` |
+| `Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]` | `Seq2[K, V]` |
+| `Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]` | `Seq[O]` |
+| `Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` | `Seq2[K2, V2]` |
 
-`Pipe` / `Pipe2` call the supplied transformation function immediately and return its result unchanged, including nil.  
+`Pipe` / `Pipe2` convert the input to a standard iterator, call the transformation immediately, and convert the result back to the library type.  
+These type conversions preserve nil without evaluating or copying elements.  
 Input evaluation and stop propagation depend on the transformation function.  
-Because all four operator types are function types, they can also be called directly as `op(src)`.  
+All four operator types can be called directly as `op(src)`; use `ToSeq` / `ToSeq2` to pass library types to direct calls or additional inputs such as `Zip`, and `FromSeq` / `FromSeq2` to continue chaining the result.  
 
 ### Implementing custom operators
 
-Implement a transformation function using this library's `Seq` / `Seq2` types for input and output, and pass it directly to `Pipe` / `Pipe2` according to the output type.  
+Implement a transformation function using standard `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
-You can also compose existing operators by calling `src.Pipe(...)` / `src.Pipe2(...)` inside the function.  
+Compose existing operators with function calls such as `next(previous(src))`.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 
 ### Executable examples
@@ -147,16 +148,16 @@ For operations whose factory arguments carry no type information, provide a conf
 
 | Example | Seq | Seq2 |
 | --- | --- | --- |
-| Transform elements or keys and values | [ExampleMap](../seq/example_test.go#L12) | [ExampleMap2](../seq/example_test.go#L18) |
-| Filter by a condition | [ExampleFilter](../seq/example_test.go#L28) | [ExampleFilter2](../seq/example_test.go#L34) |
-| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../seq/example_test.go#L42) | [ExampleTake_pairs](../seq/example_test.go#L48) |
-| Skip leading elements or pairs | [ExampleSkip](../seq/example_test.go#L256) | [ExampleSkip](../seq/example_test.go#L256) |
-| Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L58) | [ExampleSeq2_Pipe2](../seq/example_test.go#L200) |
-| Connect between Seq and Seq2 | [ExampleSeq_Pipe2](../seq/example_test.go#L180) | [ExampleSeq2_Pipe](../seq/example_test.go#L192) |
-| Extract keys / values from Seq2 | — | [ExampleKeys](../seq/example_test.go#L145), [ExampleValues](../seq/example_test.go#L154) |
-| Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](../seq/example_test.go#L212) | [ExampleToSeqOperator](../seq/example_test.go#L223) |
-| Connect and directly call function operators | [ExampleOperator](../seq/example_test.go#L82) | [ExampleOperator2](../seq/example_test.go#L129) |
-| Extend with custom operators | [ExampleOperator_custom](../seq/example_test.go#L112) | [ExampleOperator2](../seq/example_test.go#L129) |
+| Transform elements or keys and values | [ExampleMap](../seq/example_test.go#L13) | [ExampleMap2](../seq/example_test.go#L19) |
+| Filter by a condition | [ExampleFilter](../seq/example_test.go#L29) | [ExampleFilter2](../seq/example_test.go#L35) |
+| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../seq/example_test.go#L43) | [ExampleTake_pairs](../seq/example_test.go#L49) |
+| Skip leading elements or pairs | [ExampleSkip](../seq/example_test.go#L257) | [ExampleSkip](../seq/example_test.go#L257) |
+| Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L59) | [ExampleSeq2_Pipe2](../seq/example_test.go#L201) |
+| Connect between Seq and Seq2 | [ExampleSeq_Pipe2](../seq/example_test.go#L181) | [ExampleSeq2_Pipe](../seq/example_test.go#L193) |
+| Extract keys / values from Seq2 | — | [ExampleKeys](../seq/example_test.go#L146), [ExampleValues](../seq/example_test.go#L155) |
+| Directly call operators between Seq and Seq2 | [ExampleToSeq2Operator](../seq/example_test.go#L213) | [ExampleToSeqOperator](../seq/example_test.go#L224) |
+| Connect and directly call function operators | [ExampleOperator](../seq/example_test.go#L83) | [ExampleOperator2](../seq/example_test.go#L130) |
+| Extend with custom operators | [ExampleOperator_custom](../seq/example_test.go#L113) | [ExampleOperator2](../seq/example_test.go#L130) |
 
 To run only the Examples, use the following command.  
 

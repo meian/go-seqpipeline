@@ -12,7 +12,7 @@ import (
 func TestCache(t *testing.T) {
 	values := []int{3, 1, 1, 2}
 	starts, reads, finishes := 0, 0, 0
-	src := seq.Seq[int](func(yield func(int) bool) {
+	src := iter.Seq[int](func(yield func(int) bool) {
 		starts++
 		if starts > 1 {
 			t.Fatal("single-use source restarted")
@@ -36,19 +36,19 @@ func TestCache(t *testing.T) {
 	})
 	assertEqual(t, yields, 1)
 	for round := 0; round < 2; round++ {
-		assertEqual(t, seq.ToSlice(cached), []int{3, 1, 1, 2})
+		assertEqual(t, slices.Collect(cached), []int{3, 1, 1, 2})
 	}
 	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
 }
 
 func TestCacheEmptyAndNil(t *testing.T) {
-	for _, src := range []seq.Seq[int]{nil, func(func(int) bool) {}} {
+	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 		cached := seq.Cache(src)
 		if cached == nil {
 			t.Fatal("Cache returned nil")
 		}
 		for round := 0; round < 2; round++ {
-			assertEqual(t, seq.ToSlice(cached), []int(nil))
+			assertEqual(t, slices.Collect(cached), []int(nil))
 		}
 	}
 }
@@ -56,28 +56,28 @@ func TestCacheEmptyAndNil(t *testing.T) {
 func TestCacheShallowCopy(t *testing.T) {
 	value := 1
 	values := []*int{&value}
-	cached := seq.Cache(seq.FromSlice(values))
+	cached := seq.Cache(slices.Values(values))
 	other := 2
 	values[0] = &other
 	value = 3
-	assertEqual(t, seq.ToSlice(cached), []*int{&value})
-	assertEqual(t, *seq.ToSlice(cached)[0], 3)
+	assertEqual(t, slices.Collect(cached), []*int{&value})
+	assertEqual(t, *slices.Collect(cached)[0], 3)
 }
 
 func TestCacheInterleavedAndConcurrent(t *testing.T) {
-	cached := seq.Cache(seq.FromSlice([]int{3, 1, 1, 2}))
-	next, stop := iter.Pull(seq.ToSeq(cached))
+	cached := seq.Cache(slices.Values([]int{3, 1, 1, 2}))
+	next, stop := iter.Pull(cached)
 	defer stop()
 	v, ok := next()
 	assertEqual(t, v, 3)
 	assertEqual(t, ok, true)
-	assertEqual(t, seq.ToSlice(cached), []int{3, 1, 1, 2})
+	assertEqual(t, slices.Collect(cached), []int{3, 1, 1, 2})
 	v, ok = next()
 	assertEqual(t, v, 1)
 	assertEqual(t, ok, true)
 	var wg sync.WaitGroup
 	for i := 0; i < 4; i++ {
-		wg.Go(func() { assertEqual(t, seq.ToSlice(cached), []int{3, 1, 1, 2}) })
+		wg.Go(func() { assertEqual(t, slices.Collect(cached), []int{3, 1, 1, 2}) })
 	}
 	wg.Wait()
 }
@@ -88,7 +88,7 @@ func TestCache2(t *testing.T) {
 		{Key: 1, Value: "a"}, {Key: 1, Value: "b"},
 	}
 	starts, reads, finishes := 0, 0, 0
-	src := seq.Seq2[int, string](func(yield func(int, string) bool) {
+	src := iter.Seq2[int, string](func(yield func(int, string) bool) {
 		starts++
 		if starts > 1 {
 			t.Fatal("single-use source restarted")
@@ -113,50 +113,50 @@ func TestCache2(t *testing.T) {
 	})
 	assertEqual(t, yields, 1)
 	for round := 0; round < 2; round++ {
-		assertEqual(t, collectPairs(seq.ToSeq2(cached)), want)
+		assertEqual(t, collectPairs(cached), want)
 	}
 	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
 }
 
 func TestCache2EmptyAndNil(t *testing.T) {
-	for _, src := range []seq.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
+	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 		cached := seq.Cache2(src)
 		if cached == nil {
 			t.Fatal("Cache2 returned nil")
 		}
 		for round := 0; round < 2; round++ {
-			assertEqual(t, collectPairs(seq.ToSeq2(cached)), []pair[int, string](nil))
+			assertEqual(t, collectPairs(cached), []pair[int, string](nil))
 		}
 	}
 }
 
 func TestCache2ShallowCopyAndNonComparableKeys(t *testing.T) {
 	keys, values := [][]int{{1}}, [][]int{{10}}
-	cached := seq.Cache2(seq.Seq2[[]int, []int](func(yield func([]int, []int) bool) {
+	cached := seq.Cache2(iter.Seq2[[]int, []int](func(yield func([]int, []int) bool) {
 		yield(keys[0], values[0])
 	}))
 	key, value := keys[0], values[0]
 	keys[0], values[0] = []int{2}, []int{20}
 	key[0], value[0] = 3, 30
 	want := []pair[[]int, []int]{{Key: []int{3}, Value: []int{30}}}
-	assertEqual(t, collectPairs(seq.ToSeq2(cached)), want)
+	assertEqual(t, collectPairs(cached), want)
 }
 
 func TestCache2InterleavedAndConcurrent(t *testing.T) {
-	cached := seq.Cache2(seq.FromSeq2(slices.All([]string{"a", "b"})))
+	cached := seq.Cache2(slices.All([]string{"a", "b"}))
 	want := []pair[int, string]{{Key: 0, Value: "a"}, {Key: 1, Value: "b"}}
-	next, stop := iter.Pull2(seq.ToSeq2(cached))
+	next, stop := iter.Pull2(cached)
 	defer stop()
 	k, v, ok := next()
 	assertEqual(t, pair[int, string]{Key: k, Value: v}, want[0])
 	assertEqual(t, ok, true)
-	assertEqual(t, collectPairs(seq.ToSeq2(cached)), want)
+	assertEqual(t, collectPairs(cached), want)
 	k, v, ok = next()
 	assertEqual(t, pair[int, string]{Key: k, Value: v}, want[1])
 	assertEqual(t, ok, true)
 	var wg sync.WaitGroup
 	for i := 0; i < 4; i++ {
-		wg.Go(func() { assertEqual(t, collectPairs(seq.ToSeq2(cached)), want) })
+		wg.Go(func() { assertEqual(t, collectPairs(cached), want) })
 	}
 	wg.Wait()
 }

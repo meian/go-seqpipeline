@@ -17,7 +17,7 @@ go get github.com/meian/go-seqpipeline
 `From` で始まる関数で入力を取り込み、`Pipe` / `Pipe2` でオペレーターを接続します。  
 `Seq[T]` / `Seq2[K, V]` は、標準の `iter.Seq` / `iter.Seq2` に接続メソッドを追加した型です。  
 どちらの入力でも、`Pipe` は `Seq`、`Pipe2` は `Seq2` を返します。  
-接続する処理の入出力から型が推論され、型が一致しない処理は指定できません。  
+オペレーターの入出力は標準イテレーター型で、`Pipe` / `Pipe2` への接続時に型が推論されます。  
 結果は `for range` で直接反復するか、`ToSlice` / `ToMap` でコレクションへ収集します。  
 
 ### 単一値のパイプライン
