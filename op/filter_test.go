@@ -32,7 +32,8 @@ func TestFilter2NilInput(t *testing.T) {
 	}
 }
 
-// TestFilter は条件ごとの選別・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
+// 条件ごとの選別が順序と重複を保ち、入力と条件判定を反復時にだけ実行する。
+// 再評価ごとの呼び出し回数と、下流停止後に余分な要素を取得しないことを確認する。
 func TestFilter(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -73,7 +74,8 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-// TestFilter2 は両引数による選別・順序・重複・遅延評価・再評価・停止伝播を単独で検証する。
+// キーと値による選別が組の順序と重複を保ち、入力と条件判定を反復時にだけ実行する。
+// 再評価ごとの呼び出し回数と、下流停止後に余分な組を取得しないことを確認する。
 func TestFilter2(t *testing.T) {
 	for _, tc := range []struct {
 		name      string

@@ -13,13 +13,11 @@ func assertEqual[T any](t *testing.T, got, want T) {
 	}
 }
 
-// pair はテストで比較するキーと値の組を保持する。
 type pair[K, V any] struct {
 	Key   K
 	Value V
 }
 
-// collectPairs は反復順序と重複を保ち、キーと値の組をスライスへ収集する。
 func collectPairs[K, V any](src iter.Seq2[K, V]) []pair[K, V] {
 	var got []pair[K, V]
 	for k, v := range src {

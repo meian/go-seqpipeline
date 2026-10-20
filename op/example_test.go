@@ -146,10 +146,7 @@ func ExampleValues() {
 	// Output: ["bbb"]
 }
 
-// withLength は各文字列に長さを添え、入力順にキーと値の組を返す。
-// 比較不能なキーを扱う例として、長さはスライスで保持する。
-// iter.Seq から iter.Seq2 に変換する組み込みオペレーターがないため、Example ではこの関数を使用している。
-// TODO: 対応する組み込みオペレーターの追加時に、Example をそのオペレーターを使う例に差し替える。
+// 独自オペレーターの接続と比較不能なキーを示すため、文字列の長さをスライスで添える。
 func withLength[T ~string](src iter.Seq[T]) iter.Seq2[[]int, T] {
 	return func(yield func([]int, T) bool) {
 		if src == nil {

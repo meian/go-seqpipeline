@@ -205,7 +205,7 @@ func TestFromChannelCloseReceive(t *testing.T) {
 	})
 }
 
-// TestFromChannelNilContext は反復前の呼び出し時に nil context が panic することを確認する。
+// nil context の panic は、反復前の呼び出し元で捕捉できる。
 func TestFromChannelNilContext(t *testing.T) {
 	defer func() {
 		if recover() == nil {
@@ -215,7 +215,7 @@ func TestFromChannelNilContext(t *testing.T) {
 	_ = seq.FromChannel[int](nil, make(chan int))
 }
 
-// TestToChannelNilContext は goroutine の開始前に nil context が panic することを確認する。
+// nil context の panic は、goroutine 内ではなく呼び出し元で捕捉できる。
 func TestToChannelNilContext(t *testing.T) {
 	defer func() {
 		if recover() == nil {

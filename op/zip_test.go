@@ -11,7 +11,7 @@ import (
 	"github.com/meian/go-seqpipeline/op"
 )
 
-// TestZip は既定の終了条件と、同じ設定を異なるキー型へ接続できる型推論を検証する。
+// 既定では短い入力で終了し、同じ設定を別のキー型へ接続できることを確認する。
 func TestZip(t *testing.T) {
 	left := slices.Values([]int{3, 1, 3})
 	right := slices.Values([]string{"a", "b"})
@@ -23,7 +23,7 @@ func TestZip(t *testing.T) {
 	assertEqual(t, maps.Collect(stringKeys), map[string]string{"x": "a"})
 }
 
-// TestZipAlignBy は入力の長さ・空・nil と4つの終了条件を組み合わせ、出力の順序と補完を検証する。
+// 入力の長さ・空・nil を組み合わせ、4つの終了条件ごとの出力順序と補完を確認する。
 func TestZipAlignBy(t *testing.T) {
 	both := []pair[int, string]{{3, "a"}, {1, "b"}, {3, "c"}}
 	first := []pair[int, string]{{3, "a"}}
@@ -136,7 +136,7 @@ func TestZipAlignBy(t *testing.T) {
 	}
 }
 
-// TestZipDefaults は既定値の指定有無と設定順序ごとに、不足分だけが補完されることを検証する。
+// 既定値の指定順序にかかわらず、不足分だけを補完し、入力中のゼロ値を保持する。
 func TestZipDefaults(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -192,7 +192,7 @@ func TestZipDefaults(t *testing.T) {
 	}
 }
 
-// TestZipConfigurationCopies は設定変更が元の設定を変えず、再設定した項目だけを置き換えることを検証する。
+// 設定変更が元の設定を変えず、再設定した項目だけが置き換わることを確認する。
 func TestZipConfigurationCopies(t *testing.T) {
 	right := slices.Values([]string{"a"})
 	left := slices.Values([]int{1, 2})
@@ -213,7 +213,7 @@ func TestZipConfigurationCopies(t *testing.T) {
 	assertEqual(t, maps.Collect(typed.WithDefaultValue("").Operator(left)), map[int]string{1: "a", 2: ""})
 }
 
-// TestZipAlignByInvalid は両設定型で不正な終了条件が panic し、メッセージに指定値を含むことを検証する。
+// 両設定型で不正な終了条件を拒否し、panic のメッセージに指定値を含める。
 func TestZipAlignByInvalid(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{-1, op.AlignLongest + 1} {
 		for _, configure := range []func(){
@@ -245,7 +245,7 @@ func trackedZipInput[T any](values []T, started, visited, stopped *int) iter.Seq
 	}
 }
 
-// TestZipEvaluation は両設定型と全終了条件について、遅延評価・再評価・下流停止・panic 時の入力解放を検証する。
+// 両設定型と全終了条件で遅延評価・再評価を確認し、途中終了や panic でも開始した入力を解放する。
 func TestZipEvaluation(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		t.Run(fmt.Sprint(alignment), func(t *testing.T) {
@@ -308,7 +308,7 @@ func testZipEvaluation(t *testing.T, zip func(iter.Seq[int], iter.Seq[string]) i
 	}
 }
 
-// TestZipTakeStopsInputs は Take の指定件数を超えて取得せず、両入力を停止することを検証する。
+// Take の件数制限を両入力に伝え、余分な取得をせずに反復を終了する。
 func TestZipTakeStopsInputs(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		var started, visited, stopped [2]int
@@ -322,7 +322,7 @@ func TestZipTakeStopsInputs(t *testing.T) {
 	}
 }
 
-// TestZipNonComparableAndConcurrentEvaluation は比較不能な型の入力を扱え、同じ出力を並行評価しても反復状態を共有しないことを検証する。
+// 比較不能なキー・値を扱い、同じ出力の並行評価が反復状態を共有しないことを確認する。
 func TestZipNonComparableAndConcurrentEvaluation(t *testing.T) {
 	left := slices.Values([][]int{{1}, {2}})
 	right := slices.Values([]map[string]int{{"a": 1}})
@@ -341,7 +341,7 @@ func TestZipNonComparableAndConcurrentEvaluation(t *testing.T) {
 	wg.Wait()
 }
 
-// TestZipSingleUseInputs は一度だけ使える入力を消費した後の再評価が空になることを検証する。
+// 反復状態を外部に持つ両入力を消費した後は、Zip を再評価しても出力が空になる。
 func TestZipSingleUseInputs(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		keys, values := []int{1, 2}, []string{"a", "b"}
@@ -369,7 +369,7 @@ func TestZipSingleUseInputs(t *testing.T) {
 	}
 }
 
-// TestZipInputPanic は左右いずれかの入力の panic が伝播し、両入力が解放されることを検証する。
+// 左右どちらの入力の panic も呼び出し元へ伝わり、開始した両入力を解放する。
 func TestZipInputPanic(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		for _, panicIndex := range []int{0, 1} {
@@ -402,7 +402,7 @@ func TestZipInputPanic(t *testing.T) {
 	}
 }
 
-// TestZipInputTermination は入力終了時の出力件数・左右の取得件数・開始した入力の解放を検証する。
+// 不等長・空入力で、出力件数と左右の取得件数、開始した入力の解放を確認する。
 func TestZipInputTermination(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		for _, lengths := range [][2]int{{0, 3}, {3, 0}, {1, 3}, {3, 1}, {2, 2}} {
@@ -411,6 +411,7 @@ func TestZipInputTermination(t *testing.T) {
 			right := trackedZipInput(make([]string, lengths[1]), &started[1], &visited[1], &stopped[1])
 			got := collectPairs(op.Zip(right).AlignBy(alignment).Operator(left))
 			count := min(lengths[0], lengths[1])
+			// Shortest では右の終了検出までに左を1要素余分に取得することがある。
 			reads := [2]int{min(lengths[0], lengths[1]+1), count}
 			switch alignment {
 			case op.AlignLeft:
@@ -430,7 +431,7 @@ func TestZipInputTermination(t *testing.T) {
 	}
 }
 
-// TestZipInputOrder は取得・終了検出と出力の順序を、不等長入力と全終了条件で検証する。
+// 不等長入力で、左右の取得・終了検出・出力の順序を終了条件ごとに確認する。
 func TestZipInputOrder(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
@@ -498,7 +499,7 @@ func TestZipInputOrder(t *testing.T) {
 	}
 }
 
-// TestZipStopAfterPadding は不足分の補完を含む反復を Take で制限し、余分な取得なく入力を解放できることを検証する。
+// 不足分の補完中でも Take で停止し、余分な取得をせずに入力を解放する。
 func TestZipStopAfterPadding(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		for _, lengths := range [][2]int{{0, 3}, {3, 0}, {1, 3}, {3, 1}} {
@@ -524,7 +525,7 @@ func TestZipStopAfterPadding(t *testing.T) {
 	}
 }
 
-// TestZipFiniteAndInfinite は有限入力を終了基準にすると、相手が無限でも有限件数で停止することを検証する。
+// 有限入力を終了基準にすると、相手が無限入力でも停止して解放する。
 func TestZipFiniteAndInfinite(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight} {
 		var reads, stops int
@@ -553,7 +554,7 @@ func TestZipFiniteAndInfinite(t *testing.T) {
 	}
 }
 
-// TestZipNonComparableDefaults はスライスや map を既定値にして、不足するキー・値を補完できることを検証する。
+// スライスや map を補完値として使い、キー・値の不足分を補えることを確認する。
 func TestZipNonComparableDefaults(t *testing.T) {
 	left := slices.Values([][]int{{1}})
 	right := slices.Values([]map[string]int{{"a": 1}, {"b": 2}})
@@ -575,7 +576,7 @@ func TestZipNonComparableDefaults(t *testing.T) {
 	assertEqual(t, collectPairs(output), want)
 }
 
-// TestZipNilDoesNotEvaluateOther は nil 入力によって出力が空と決まる場合、もう片方の入力を実行しないことを検証する。
+// nil 入力で出力が空と決まる終了条件では、もう片方の入力を評価しない。
 func TestZipNilDoesNotEvaluateOther(t *testing.T) {
 	unexpected := iter.Seq[int](func(func(int) bool) { t.Fatal("unexpected input evaluation") })
 	empty := iter.Seq[int](nil)

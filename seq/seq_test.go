@@ -51,7 +51,7 @@ func TestSeq2DefinedFunctionType(t *testing.T) {
 	assertEqual(t, got, want)
 }
 
-// TestSeqPipe は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+// 入力を評価する変換関数も接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeqPipe(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
@@ -85,7 +85,7 @@ func TestSeqPipe(t *testing.T) {
 	}
 }
 
-// TestSeqPipe2 は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+// 単一値から組への変換関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeqPipe2(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
@@ -119,7 +119,7 @@ func TestSeqPipe2(t *testing.T) {
 	}
 }
 
-// TestSeq2Pipe は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+// 組から単一値への変換関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeq2Pipe(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
@@ -154,7 +154,7 @@ func TestSeq2Pipe(t *testing.T) {
 	}
 }
 
-// TestSeq2Pipe2 は、変換関数の即時呼び出し、入力の転送、戻り値の保持を単独で確認する。
+// 組を変換する関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeq2Pipe2(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {

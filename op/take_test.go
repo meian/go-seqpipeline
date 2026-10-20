@@ -8,7 +8,8 @@ import (
 	"github.com/meian/go-seqpipeline/op"
 )
 
-// TestTakeOperator は、遅延評価・件数制限・上流停止・再評価・0 以下での非評価を確認する。
+// 遅延評価と指定件数での上流停止を確認し、再評価のたびに件数制限が働く。
+// 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -49,7 +50,6 @@ func TestTakeOperator(t *testing.T) {
 	}
 }
 
-// TestTakeOperatorEmptyAndNilInput は、nil と空入力を再評価しても要素を返さないことを確認する。
 func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
 	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 		iterator := op.Take(1).Operator(src)
@@ -59,7 +59,8 @@ func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
 	}
 }
 
-// TestTakeOperator2 は、組の順序と重複、遅延評価・件数制限・停止・再評価・0 以下での非評価を確認する。
+// 組の順序とキーの重複を保ち、遅延評価・件数制限・上流停止が再評価ごとに働く。
+// 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator2(t *testing.T) {
 	pairs := []pair[int, int]{
 		{Key: 1, Value: 10},
@@ -106,7 +107,6 @@ func TestTakeOperator2(t *testing.T) {
 	}
 }
 
-// TestTakeOperator2EmptyAndNilInput は、nil と空入力を再評価しても組を返さないことを確認する。
 func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
 	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 		iterator := op.Take(1).Operator2(src)
@@ -116,7 +116,7 @@ func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
 	}
 }
 
-// TestTakeOperator2DownstreamStop は、下流の途中終了が上流へ伝播することを確認する。
+// 下流が指定件数より先に終了した場合も、組を生成する上流の反復を停止する。
 func TestTakeOperator2DownstreamStop(t *testing.T) {
 	reads, stops := 0, 0
 	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
@@ -137,7 +137,7 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 	assertEqual(t, []int{reads, stops}, []int{1, 1})
 }
 
-// TestTakeOperatorDownstreamStop は、指定数より先に下流が停止した場合も上流を停止することを確認する。
+// 指定件数に達する前の下流停止が、再評価のたびに上流へ伝わる。
 func TestTakeOperatorDownstreamStop(t *testing.T) {
 	reads, stops := 0, 0
 	src := iter.Seq[int](func(yield func(int) bool) {
@@ -159,7 +159,7 @@ func TestTakeOperatorDownstreamStop(t *testing.T) {
 	}
 }
 
-// TestTakeConfigurationReuse は、同じ設定値を異なる型と複数の入力に適用しても残り件数を共有しないことを確認する。
+// 同じ設定を異なる型と入力に使っても、評価時の残り件数を共有しない。
 func TestTakeConfigurationReuse(t *testing.T) {
 	take := op.Take(2)
 	var ope op.Operator[int, int] = take.Operator
