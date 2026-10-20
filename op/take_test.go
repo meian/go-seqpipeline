@@ -162,8 +162,8 @@ func TestTakeOperatorDownstreamStop(t *testing.T) {
 // TestTakeConfigurationReuse は、同じ設定値を異なる型と複数の入力に適用しても残り件数を共有しないことを確認する。
 func TestTakeConfigurationReuse(t *testing.T) {
 	take := op.Take(2)
-	var transform op.Operator[int, int] = take.Operator
-	var op2 op.Operator2[[]int, string, []int, string] = take.Operator2
+	var ope op.Operator[int, int] = take.Operator
+	var ope2 op.Operator2[[]int, string, []int, string] = take.Operator2
 	values := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{3, 3, 1} {
 			if !yield(v) {
@@ -182,8 +182,8 @@ func TestTakeConfigurationReuse(t *testing.T) {
 			}
 		}
 	})
-	first, second := transform(values), take.Operator(values)
-	paired := op2(pairs)
+	first, second := ope(values), take.Operator(values)
+	paired := ope2(pairs)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, slices.Collect(first), []int{3, 3})
 		assertEqual(t, slices.Collect(second), []int{3, 3})

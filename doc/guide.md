@@ -12,17 +12,6 @@ Like standard iterators, the results can be iterated over directly with `for v :
 `seq.Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
 A `seq.Seq2` can also be converted into a single-value `seq.Seq` to continue the pipeline.  
 
-## Packages and migration
-
-`seq` provides sequences, connection methods, and input/output conversions; `op` provides operator function types, implementations, and settings.  
-Operators accept and return standard iterators, so they can also be used without wrapping inputs in `seq`.  
-For example, `slices.Collect(op.Map(strconv.Itoa)(slices.Values([]int{1, 2})))` directly transforms a standard iterator.  
-
-When migrating from operators in `seq`, add an import of `github.com/meian/go-seqpipeline/op` and change operator references such as `seq.Map` to `op.Map`.  
-The four operator function types and Zip settings and constants also move to `op`; compatibility aliases and wrappers are not provided in `seq`.  
-Keep sequence types, `Pipe` / `Pipe2`, and `From` / `To` conversions in `seq`.  
-For example, `seq.FromSlice(values).Pipe(op.Map(fn))` retains type inference and chaining.  
-
 ## Evaluation and usage semantics
 
 ### Evaluation and stopping
@@ -144,7 +133,7 @@ The function types `op.Operator`, `op.ToSeq2Operator`, `op.ToSeqOperator`, and `
 `Pipe` / `Pipe2` convert the input to a standard iterator, call the transformation immediately, and convert the result back to the library type.  
 These type conversions preserve nil without evaluating or copying elements.  
 Input evaluation and stop propagation depend on the transformation function.  
-All four operator types can be called directly as `transform(src)`; use `ToSeq` / `ToSeq2` to pass library types to direct calls or additional inputs such as `Zip`, and `FromSeq` / `FromSeq2` to continue chaining the result.  
+All four operator types can be called directly as `ope(src)`; use `ToSeq` / `ToSeq2` to pass library types to direct calls or additional inputs such as `Zip`, and `FromSeq` / `FromSeq2` to continue chaining the result.  
 
 ### Implementing custom operators
 

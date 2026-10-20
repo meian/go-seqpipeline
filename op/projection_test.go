@@ -21,8 +21,8 @@ func TestKeys(t *testing.T) {
 			}
 		}
 	})
-	var transform op.ToSeqOperator[int, int, int] = op.Keys[int, int]
-	projected := transform(src)
+	var ope op.ToSeqOperator[int, int, int] = op.Keys[int, int]
+	projected := ope(src)
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, slices.Collect(projected), want)
@@ -86,8 +86,8 @@ func TestValues(t *testing.T) {
 			}
 		}
 	})
-	var transform op.ToSeqOperator[int, int, int] = op.Values[int, int]
-	projected := transform(src)
+	var ope op.ToSeqOperator[int, int, int] = op.Values[int, int]
+	projected := ope(src)
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, slices.Collect(projected), want)

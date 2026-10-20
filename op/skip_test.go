@@ -162,8 +162,8 @@ func TestSkipOperator2DownstreamStop(t *testing.T) {
 
 func TestSkipConfigurationReuse(t *testing.T) {
 	skip := op.Skip(1)
-	var transform op.Operator[int, int] = skip.Operator
-	var op2 op.Operator2[[]int, string, []int, string] = skip.Operator2
+	var ope op.Operator[int, int] = skip.Operator
+	var ope2 op.Operator2[[]int, string, []int, string] = skip.Operator2
 	values := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{1, 2, 3} {
 			if !yield(v) {
@@ -176,8 +176,8 @@ func TestSkipConfigurationReuse(t *testing.T) {
 			yield([]int{2}, "b")
 		}
 	})
-	first, second := transform(values), skip.Operator(values)
-	paired := op2(pairs)
+	first, second := ope(values), skip.Operator(values)
+	paired := ope2(pairs)
 	texts := skip.Operator(iter.Seq[string](func(yield func(string) bool) {
 		if yield("a") {
 			yield("b")

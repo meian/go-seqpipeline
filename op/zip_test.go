@@ -16,8 +16,8 @@ func TestZip(t *testing.T) {
 	left := slices.Values([]int{3, 1, 3})
 	right := slices.Values([]string{"a", "b"})
 	config := op.Zip(right)
-	var transform op.ToSeq2Operator[int, int, string] = config.Operator
-	assertEqual(t, collectPairs(transform(left)), []pair[int, string]{{3, "a"}, {1, "b"}})
+	var ope op.ToSeq2Operator[int, int, string] = config.Operator
+	assertEqual(t, collectPairs(ope(left)), []pair[int, string]{{3, "a"}, {1, "b"}})
 	// 同じ設定から異なるキー型を推論できる。
 	stringKeys := config.Operator(slices.Values([]string{"x"}))
 	assertEqual(t, maps.Collect(stringKeys), map[string]string{"x": "a"})
@@ -117,13 +117,13 @@ func TestZipAlignBy(t *testing.T) {
 				t.Run(align.name, func(t *testing.T) {
 					base := op.Zip(tc.values).AlignBy(align.value)
 					for _, implementation := range []struct {
-						name      string
-						transform op.ToSeq2Operator[int, int, string]
+						name string
+						ope  op.ToSeq2Operator[int, int, string]
 					}{
 						{"inferred key", base.Operator[int]}, {"fixed key", base.WithDefaultKey(0).Operator},
 					} {
 						t.Run(implementation.name, func(t *testing.T) {
-							output := implementation.transform(tc.keys)
+							output := implementation.ope(tc.keys)
 							if output == nil {
 								t.Fatal("Operator must return a non-nil iterator")
 							}

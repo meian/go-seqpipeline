@@ -14,8 +14,7 @@ go get github.com/meian/go-seqpipeline
 
 ## Usage
 
-Use functions starting with `From` to wrap input, then connect operators with `Pipe` / `Pipe2`.  
-Import `github.com/meian/go-seqpipeline/seq` for sequences and conversions, and `github.com/meian/go-seqpipeline/op` for operators.  
+Use functions starting with `From` to create a `seq.Seq` / `seq.Seq2`, then connect operators with `Pipe` / `Pipe2`.  
 `seq.Seq[T]` / `seq.Seq2[K, V]` extend the `iter.Seq` / `iter.Seq2` types with connection methods.  
 For either input type, `Pipe` returns `seq.Seq` and `Pipe2` returns `seq.Seq2`.  
 Operators transform standard iterators; `Pipe` / `Pipe2` infer their input and output types.  

@@ -31,12 +31,12 @@ func TestOperatorDirectCall(t *testing.T) {
 
 func TestComposedOperator(t *testing.T) {
 	reads := 0
-	transform := takeWith(2, func(v int) bool { return v%2 == 0 })
+	ope := takeWith(2, func(v int) bool { return v%2 == 0 })
 	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 5, 6}).
 		Pipe(op.Map(func(v int) int {
 			reads++
 			return v
-		})).Pipe(transform)
+		})).Pipe(ope)
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []int{2, 4})
@@ -69,14 +69,14 @@ func TestOperator2DirectCall(t *testing.T) {
 
 func TestComposedOperator2(t *testing.T) {
 	reads := 0
-	var transform op.Operator2[int, int, int, int] = func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
+	var ope op.Operator2[int, int, int, int] = func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
 		return op.Take(2).Operator2(op.Filter2(func(k, v int) bool { return v%2 == 0 })(src))
 	}
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
 		Pipe2(op.Map2(func(k, v int) (int, int) {
 			reads++
 			return k, v
-		})).Pipe2(transform)
+		})).Pipe2(ope)
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		want := []pair[int, int]{{Key: 1, Value: 2}, {Key: 3, Value: 4}}
@@ -92,21 +92,21 @@ func TestComposedOperator2(t *testing.T) {
 
 // TestToSeq2OperatorDirectCall は、名前付き関数型への代入、直接呼び出し、Pipe2 接続を確認する。
 func TestToSeq2OperatorDirectCall(t *testing.T) {
-	var transform op.ToSeq2Operator[string, []int, string] = withLength
+	var ope op.ToSeq2Operator[string, []int, string] = withLength
 	src := seq.FromSlice([]string{"a", "bbb"})
 	want := []pair[[]int, string]{{Key: []int{1}, Value: "a"}, {Key: []int{3}, Value: "bbb"}}
-	assertEqual(t, collectPairs(transform(seq.ToSeq(src))), want)
-	assertEqual(t, collectPairs(seq.ToSeq2(src.Pipe2(transform))), want)
-	assertEqual(t, collectPairs(transform(nil)), []pair[[]int, string](nil))
+	assertEqual(t, collectPairs(ope(seq.ToSeq(src))), want)
+	assertEqual(t, collectPairs(seq.ToSeq2(src.Pipe2(ope))), want)
+	assertEqual(t, collectPairs(ope(nil)), []pair[[]int, string](nil))
 }
 
 // TestToSeqOperatorDirectCall は、関数の代入、直接呼び出し、Pipe 接続を確認する。
 func TestToSeqOperatorDirectCall(t *testing.T) {
-	var transform op.ToSeqOperator[int, string, string] = op.Values[int, string]
+	var ope op.ToSeqOperator[int, string, string] = op.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
-	assertEqual(t, slices.Collect(transform(seq.ToSeq2(src))), []string{"a", "bbb"})
-	assertEqual(t, seq.ToSlice(src.Pipe(transform)), []string{"a", "bbb"})
-	assertEqual(t, slices.Collect(transform(nil)), []string(nil))
+	assertEqual(t, slices.Collect(ope(seq.ToSeq2(src))), []string{"a", "bbb"})
+	assertEqual(t, seq.ToSlice(src.Pipe(ope)), []string{"a", "bbb"})
+	assertEqual(t, slices.Collect(ope(nil)), []string(nil))
 }
 
 func repeat(src iter.Seq[int]) iter.Seq[string] {

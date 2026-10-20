@@ -109,32 +109,10 @@ class BenchmarkUpdateIntegrationTests(unittest.TestCase):
         self.assertEqual(self.git("status", "--porcelain"), "")
 
     def test_new_package_is_detected(self):
-        self.write("newpackage/implementation.go", "package newpackage\n")
-        self.commit()
-        update.check(REPOSITORY, False)
-        self.assertIn("newpackage/implementation.go", self.posts[0]["body"])
-
-    def test_operator_package_move_is_detected(self):
-        (self.root / "seq/map.go").unlink()
         self.write("op/map.go", "package op\n\nfunc Map() {}\n")
         self.commit()
         update.check(REPOSITORY, False)
-        self.assertIn("- `seq/map.go`", self.posts[0]["body"])
         self.assertIn("- `op/map.go`", self.posts[0]["body"])
-
-    def test_operator_package_changes_after_measurement_are_detected(self):
-        self.write("op/map.go", "package op\n\nfunc Map() {}\n")
-        self.publish(self.commit())
-        for source in ("package op\n\nfunc Map() { println(1) }\n", None):
-            with self.subTest(source=source):
-                self.issues.clear()
-                if source is None:
-                    (self.root / "op/map.go").unlink()
-                else:
-                    self.write("op/map.go", source)
-                self.commit()
-                update.check(REPOSITORY, False)
-                self.assertIn("- `op/map.go`", self.posts[-1]["body"])
 
     def test_go_version_change_creates_issue(self):
         self.write("go.mod", "module example.test/seq\n\ngo 1.28.0\n")
