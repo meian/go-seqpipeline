@@ -51,7 +51,7 @@ func TestSeq2DefinedFunctionType(t *testing.T) {
 	assertEqual(t, got, want)
 }
 
-// 独自オペレーターが接続時に入力を評価する場合も、Pipe は呼び出しを遅延させない。
+// 入力を評価する変換関数も接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeqPipe(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
@@ -85,6 +85,7 @@ func TestSeqPipe(t *testing.T) {
 	}
 }
 
+// 単一値から組への変換関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeqPipe2(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
@@ -118,6 +119,7 @@ func TestSeqPipe2(t *testing.T) {
 	}
 }
 
+// 組から単一値への変換関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeq2Pipe(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
@@ -152,6 +154,7 @@ func TestSeq2Pipe(t *testing.T) {
 	}
 }
 
+// 組を変換する関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeq2Pipe2(t *testing.T) {
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {

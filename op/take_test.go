@@ -8,6 +8,8 @@ import (
 	"github.com/meian/go-seqpipeline/op"
 )
 
+// 遅延評価と指定件数での上流停止を確認し、再評価のたびに件数制限が働く。
+// 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -57,6 +59,8 @@ func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
 	}
 }
 
+// 組の順序とキーの重複を保ち、遅延評価・件数制限・上流停止が再評価ごとに働く。
+// 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator2(t *testing.T) {
 	pairs := []pair[int, int]{
 		{Key: 1, Value: 10},

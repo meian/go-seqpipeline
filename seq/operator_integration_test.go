@@ -16,6 +16,7 @@ func takeWith[T any](n int, predicate func(T) bool) op.Operator[T, T] {
 	}
 }
 
+// Map・Filter の生成関数の戻り値の型を確認し、名前付き関数型を直接適用・Pipe 接続する。
 func TestOperatorDirectCall(t *testing.T) {
 	var mapFactory func(func(int) string) op.Operator[int, string] = op.Map[int, string]
 	var filterFactory func(func(string) bool) op.Operator[string, string] = op.Filter[string]
@@ -48,6 +49,7 @@ func TestComposedOperator(t *testing.T) {
 	assertEqual(t, reads, 2)
 }
 
+// Map2・Filter2 の生成関数の戻り値の型を確認し、名前付き関数型を直接適用・Pipe2 接続する。
 func TestOperator2DirectCall(t *testing.T) {
 	var mapFactory func(func(int, int) (string, string)) op.Operator2[int, int, string, string] = op.Map2[int, int, string, string]
 	var filterFactory func(func(string, string) bool) op.Operator2[string, string, string, string] = op.Filter2[string, string]
@@ -88,6 +90,7 @@ func TestComposedOperator2(t *testing.T) {
 	assertEqual(t, reads, 2)
 }
 
+// 単一値を組に変換する名前付き関数型を直接適用・Pipe2 接続し、nil 入力も確認する。
 func TestToSeq2OperatorDirectCall(t *testing.T) {
 	var ope op.ToSeq2Operator[string, []int, string] = withLength
 	src := seq.FromSlice([]string{"a", "bbb"})
@@ -97,6 +100,7 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 	assertEqual(t, collectPairs(ope(nil)), []pair[[]int, string](nil))
 }
 
+// 組を単一値に変換する名前付き関数型を直接適用・Pipe 接続し、nil 入力も確認する。
 func TestToSeqOperatorDirectCall(t *testing.T) {
 	var ope op.ToSeqOperator[int, string, string] = op.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))

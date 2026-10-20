@@ -33,6 +33,8 @@ func TestMap2NilInput(t *testing.T) {
 	}
 }
 
+// 型変換後も入力の順序と重複を保ち、反復時にだけ入力と変換関数を実行する。
+// 再評価と下流の途中終了でも、取得件数と変換回数が一致することを確認する。
 func TestMap(t *testing.T) {
 	reads, calls := 0, 0
 	src := iter.Seq[int](func(yield func(int) bool) {
@@ -60,6 +62,8 @@ func TestMap(t *testing.T) {
 	assertEqual(t, []int{reads, calls}, []int{1, 1})
 }
 
+// キーと値の型変換後も組の順序とキーの重複を保ち、反復時にだけ入力と変換関数を実行する。
+// 再評価と下流の途中終了でも、取得件数と変換回数が一致することを確認する。
 func TestMap2(t *testing.T) {
 	reads, calls := 0, 0
 	src := iter.Seq2[int, string](func(yield func(int, string) bool) {
