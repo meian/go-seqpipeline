@@ -27,7 +27,7 @@ func Cache[T any](src iter.Seq[T]) iter.Seq[T] {
 }
 
 // Cache2 は入力を呼び出し時に全件評価し、その結果を繰り返し反復できる iter.Seq2 を返す。
-// キーと値の組の順序と重複を保ち、キーに comparable を要求しない。
+// キーと値の組の順序と重複を保つ。
 // 入力の有限性、保存方式、反復時の動作と同期の条件は [Cache] と同じ。
 func Cache2[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
 	type pair struct {

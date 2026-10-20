@@ -112,6 +112,7 @@ func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
 	}
 }
 
+// 下流が指定件数より先に終了した場合も、組を生成する上流の反復を停止する。
 func TestTakeOperator2DownstreamStop(t *testing.T) {
 	reads, stops := 0, 0
 	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
@@ -132,6 +133,7 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 	assertEqual(t, []int{reads, stops}, []int{1, 1})
 }
 
+// 指定件数に達する前の下流停止が、再評価のたびに上流へ伝わる。
 func TestTakeOperatorDownstreamStop(t *testing.T) {
 	reads, stops := 0, 0
 	src := iter.Seq[int](func(yield func(int) bool) {

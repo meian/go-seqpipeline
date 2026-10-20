@@ -10,6 +10,7 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
+// 型変換の前後で Take を型引数なしに接続し、遅延評価と再評価ごとの件数制限を確認する。
 func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0
 	var pipeline seq.Seq[string] = seq.FromSlice([]int{1, 22, 333, 4444}).
@@ -27,6 +28,7 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	}
 }
 
+// 構築時には入力を評価せず、下流の途中終了が Map・Filter を経由して上流へ伝わる。
 func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
 	src := func(yield func(int) bool) {
@@ -59,6 +61,7 @@ func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 	assertEqual(t, []int{starts, reads, maps, filters, stops}, []int{1, 2, 2, 2, 1})
 }
 
+// Filter 後の Take が指定件数で停止し、下流が先に終了した場合も上流の取得を止める。
 func TestTakeAfterFilterAndDownstreamStop(t *testing.T) {
 	reads := 0
 	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 5, 6}).
@@ -77,6 +80,7 @@ func TestTakeAfterFilterAndDownstreamStop(t *testing.T) {
 	assertEqual(t, reads, 2)
 }
 
+// Seq のゼロ値・nil・空入力では、接続した Map・Filter のコールバックを呼び出さない。
 func TestEmptyAndZeroValues(t *testing.T) {
 	var zero seq.Seq[int]
 	for _, src := range []seq.Seq[int]{
@@ -99,6 +103,7 @@ func TestEmptyAndZeroValues(t *testing.T) {
 	}
 }
 
+// 再評価時に元のスライスの変更を反映し、Take の件数制限も毎回適用する。
 func TestRepeatAndSourceChanges(t *testing.T) {
 	values := []int{1, 2, 3}
 	pipeline := seq.FromSlice(values).Pipe(op.Map(func(v int) int { return v * 10 })).
@@ -128,6 +133,7 @@ func TestSingleUseSource(t *testing.T) {
 	assertEqual(t, seq.ToSlice(pipeline), []int(nil))
 }
 
+// 名前付き関数型に代入したオペレーターを接続し、型推論と再評価を確認する。
 func TestDirectTransformPipeline(t *testing.T) {
 	var ope op.Operator[int, string] = op.Map(strconv.Itoa)
 	var limit op.Operator[string, string] = op.Take(2).Operator
@@ -137,6 +143,7 @@ func TestDirectTransformPipeline(t *testing.T) {
 	}
 }
 
+// 独自の変換関数を Map・Take に接続し、遅延評価と再評価ごとの上流停止を確認する。
 func TestTransformPipeline(t *testing.T) {
 	ope := repeat
 	calls := 0
@@ -170,6 +177,7 @@ func TestSeq2Pipeline(t *testing.T) {
 	assertEqual(t, seq.ToMap(pipeline), map[string]int{"1": 3})
 }
 
+// 組のパイプラインでも遅延評価と下流からの停止伝播が働き、再評価で状態を共有しない。
 func TestSeq2LazyAndStop(t *testing.T) {
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
 	src := func(yield func(int, int) bool) {
@@ -203,6 +211,7 @@ func TestSeq2LazyAndStop(t *testing.T) {
 	}
 }
 
+// Seq2 のゼロ値・nil・空入力では、接続した Map2・Filter2 のコールバックを呼び出さない。
 func TestSeq2EmptyAndZero(t *testing.T) {
 	var zero seq.Seq2[string, int]
 	for _, src := range []seq.Seq2[string, int]{
@@ -224,6 +233,7 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 	}
 }
 
+// スライスをキーに持つ Seq2 を変換し、標準の iter.Seq2 として取り出せる。
 func TestNonComparableKeys(t *testing.T) {
 	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
 	pipeline := seq.FromSeq2(src).Pipe2(op.Map2(func(k []int, v string) ([]int, int) {
@@ -233,6 +243,7 @@ func TestNonComparableKeys(t *testing.T) {
 	assertEqual(t, got, []pair[[]int, int]{{Key: []int{1, 2}, Value: 5}})
 }
 
+// 独自の組変換を直接適用・Pipe2 接続でき、接続時の遅延評価と下流の停止を保つ。
 func TestExternalTransforms2(t *testing.T) {
 	ope := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
 		return func(yield func(string, string) bool) {
@@ -270,6 +281,7 @@ func TestExternalTransforms2(t *testing.T) {
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 }
 
+// 独自の組変換・Filter2・Take を名前付き関数型で接続し、型推論と再評価を確認する。
 func TestDirectTransform2Pipeline(t *testing.T) {
 	ope := keyText
 	var filtered op.Operator2[string, int, string, int] = op.Filter2(func(k string, v int) bool {
@@ -282,6 +294,7 @@ func TestDirectTransform2Pipeline(t *testing.T) {
 	}
 }
 
+// 比較不能なキーを経由する型変換でも、Take の型推論・件数制限・再評価・途中終了が働く。
 func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0
 	var pipeline seq.Seq2[string, int] = seq.FromSeq2(slices.All([]int{1, 22, 333, 4444})).
@@ -351,6 +364,7 @@ func TestCrossTypePipeline(t *testing.T) {
 	}
 }
 
+// 選別後の要素を Skip で読み飛ばし、Take の件数制限が再評価ごとに上流へ伝わる。
 func TestSkipAfterFilter(t *testing.T) {
 	reads := 0
 	src := seq.Seq[int](func(yield func(int) bool) {
@@ -373,6 +387,7 @@ func TestSkipAfterFilter(t *testing.T) {
 	}
 }
 
+// 選別後の組を Skip で読み飛ばし、型変換と Take を通して再評価できる。
 func TestSkip2AfterFilter(t *testing.T) {
 	reads := 0
 	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
@@ -418,6 +433,7 @@ func TestTakeSharedConfigurationPipeline(t *testing.T) {
 	}
 }
 
+// 変換後の組からキーを取り出し、単一値の選別・変換・件数制限へ接続する。
 func TestKeysPipeline(t *testing.T) {
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(op.Map2(func(k int, v string) (int, int) { return k + 1, len(v) }))
@@ -430,6 +446,7 @@ func TestKeysPipeline(t *testing.T) {
 	}
 }
 
+// 選別後の組から値を取り出し、単一値の選別・変換・件数制限へ接続する。
 func TestValuesPipeline(t *testing.T) {
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(op.Filter2(func(k int, v string) bool { return k > 0 }))
@@ -442,6 +459,7 @@ func TestValuesPipeline(t *testing.T) {
 	}
 }
 
+// 射影の前後の Skip と末尾の Take を接続し、評価・停止と Take(0) の上流非評価を確認する。
 func TestProjectionWithSkip(t *testing.T) {
 	for _, projection := range []struct {
 		name string
@@ -513,6 +531,7 @@ func TestCachePipeline(t *testing.T) {
 	assertEqual(t, seq.ToSlice(cached.Pipe(op.Cache)), []int{10, 20, 30})
 }
 
+// 組のキャッシュ後に異なる変換へ分岐し、下流を再評価しても上流を再実行しない。
 func TestCache2Pipeline(t *testing.T) {
 	upstream, downstream := 0, 0
 	var cache op.Operator2[int, int, int, int] = op.Cache2
