@@ -14,7 +14,7 @@ go get github.com/meian/go-seqpipeline
 
 ## Usage
 
-Use functions starting with `From` to wrap input, then connect operators with `Pipe` / `Pipe2`.  
+Use functions starting with `From` to create a `seq.Seq` / `seq.Seq2`, then connect operators with `Pipe` / `Pipe2`.  
 `seq.Seq[T]` / `seq.Seq2[K, V]` extend the `iter.Seq` / `iter.Seq2` types with connection methods.  
 For either input type, `Pipe` returns `seq.Seq` and `Pipe2` returns `seq.Seq2`.  
 Operators transform standard iterators; `Pipe` / `Pipe2` infer their input and output types.  
@@ -24,9 +24,9 @@ Iterate directly with `for range`, or collect results with `ToSlice` / `ToMap`.
 
 ```go
 pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
-    Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
-    Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
-    Pipe(seq.Take(1).Operator)
+    Pipe(op.Map(func(v int) string { return strconv.Itoa(v) })).
+    Pipe(op.Filter(func(v string) bool { return len(v) > 2 })).
+    Pipe(op.Take(1).Operator)
 fmt.Println(seq.ToSlice(pipeline)) // [333]
 ```
 
@@ -34,11 +34,11 @@ fmt.Println(seq.ToSlice(pipeline)) // [333]
 
 ```go
 pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-    Pipe2(seq.Map2(func(k int, v string) (string, int) {
+    Pipe2(op.Map2(func(k int, v string) (string, int) {
         return strconv.Itoa(k), len(v)
     })).
-    Pipe2(seq.Filter2(func(k string, v int) bool { return v > 1 })).
-    Pipe2(seq.Take(1).Operator2)
+    Pipe2(op.Filter2(func(k string, v int) bool { return v > 1 })).
+    Pipe2(op.Take(1).Operator2)
 for k, v := range pairs {
     fmt.Println(k, v) // 1 3
 }
@@ -60,8 +60,8 @@ See [channel conversions](doc/guide.md#channel-conversions) for communication wa
 ## Further reading
 
 - [Usage guide](doc/guide.md): evaluation, stopping, re-evaluation, nil, conversions, connection types, and custom operators
-- [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq): individual API contracts and boundary conditions
-- [Go Examples](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples): executable usage with expected output ([source](seq/example_test.go))
+- GoDoc: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) for individual API contracts and boundary conditions
+- Go Examples: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) with expected output ([seq source](seq/example_test.go), [op source](op/example_test.go))
 - [Performance summary](benchmarks/REPORT.md): measured results and conditions
 
 ## License

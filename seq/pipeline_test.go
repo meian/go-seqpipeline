@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
@@ -13,13 +14,13 @@ import (
 func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0
 	var pipeline seq.Seq[string] = seq.FromSlice([]int{1, 22, 333, 4444}).
-		Pipe(seq.Take(10).Operator).
-		Pipe(seq.Map(func(v int) string {
+		Pipe(op.Take(10).Operator).
+		Pipe(op.Map(func(v int) string {
 			reads++
 			return strconv.Itoa(v)
 		})).
-		Pipe(seq.Filter(func(v string) bool { return len(v) > 1 })).
-		Pipe(seq.Take(2).Operator)
+		Pipe(op.Filter(func(v string) bool { return len(v) > 1 })).
+		Pipe(op.Take(2).Operator)
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"22", "333"})
@@ -41,11 +42,11 @@ func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 		}
 	}
 	pipeline := seq.FromSeq(src).
-		Pipe(seq.Map(func(v int) int {
+		Pipe(op.Map(func(v int) int {
 			maps++
 			return v * 2
 		})).
-		Pipe(seq.Filter(func(v int) bool {
+		Pipe(op.Filter(func(v int) bool {
 			filters++
 			return v%4 == 0
 		}))
@@ -64,12 +65,12 @@ func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 func TestTakeAfterFilterAndDownstreamStop(t *testing.T) {
 	reads := 0
 	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 5, 6}).
-		Pipe(seq.Map(func(v int) int {
+		Pipe(op.Map(func(v int) int {
 			reads++
 			return v
 		})).
-		Pipe(seq.Filter(func(v int) bool { return v%2 == 0 })).
-		Pipe(seq.Take(2).Operator)
+		Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(op.Take(2).Operator)
 	assertEqual(t, seq.ToSlice(pipeline), []int{2, 4})
 	assertEqual(t, reads, 4)
 	reads = 0
@@ -88,15 +89,15 @@ func TestEmptyAndZeroValues(t *testing.T) {
 		seq.FromSlice([]int(nil)),
 		seq.FromSeq[int](nil),
 	} {
-		pipeline := src.Pipe(seq.Map(func(int) int {
+		pipeline := src.Pipe(op.Map(func(int) int {
 			t.Fatal("Map called")
 			return 0
 		})).
-			Pipe(seq.Filter(func(int) bool {
+			Pipe(op.Filter(func(int) bool {
 				t.Fatal("Filter called")
 				return true
 			})).
-			Pipe(seq.Take(1).Operator)
+			Pipe(op.Take(1).Operator)
 		got := seq.ToSlice(pipeline)
 		assertEqual(t, got, []int(nil))
 	}
@@ -105,8 +106,8 @@ func TestEmptyAndZeroValues(t *testing.T) {
 // TestRepeatAndSourceChanges は、パイプラインの再評価時に元のスライスの変更を反映し、Take の件数制限も評価ごとに適用することを確認する。
 func TestRepeatAndSourceChanges(t *testing.T) {
 	values := []int{1, 2, 3}
-	pipeline := seq.FromSlice(values).Pipe(seq.Map(func(v int) int { return v * 10 })).
-		Pipe(seq.Filter(func(v int) bool { return v >= 20 })).Pipe(seq.Take(2).Operator)
+	pipeline := seq.FromSlice(values).Pipe(op.Map(func(v int) int { return v * 10 })).
+		Pipe(op.Filter(func(v int) bool { return v >= 20 })).Pipe(op.Take(2).Operator)
 	assertEqual(t, seq.ToSlice(pipeline), []int{20, 30})
 	values[0] = 4
 	assertEqual(t, seq.ToSlice(pipeline), []int{40, 20})
@@ -125,7 +126,7 @@ func TestSingleUseSource(t *testing.T) {
 			}
 		}
 	}
-	pipeline := seq.FromSeq(src).Pipe(seq.Take(1).Operator)
+	pipeline := seq.FromSeq(src).Pipe(op.Take(1).Operator)
 	assertEqual(t, seq.ToSlice(pipeline), []int{1})
 	assertEqual(t, seq.ToSlice(pipeline), []int{2})
 	assertEqual(t, seq.ToSlice(pipeline), []int{3})
@@ -134,9 +135,9 @@ func TestSingleUseSource(t *testing.T) {
 
 // TestDirectTransformPipeline は、Map と Take.Operator を Operator へ代入して直接接続し、型推論と再評価を確認する。
 func TestDirectTransformPipeline(t *testing.T) {
-	var transform seq.Operator[int, string] = seq.Map(strconv.Itoa)
-	var limit seq.Operator[string, string] = seq.Take(2).Operator
-	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(transform).Pipe(limit)
+	var ope op.Operator[int, string] = op.Map(strconv.Itoa)
+	var limit op.Operator[string, string] = op.Take(2).Operator
+	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(ope).Pipe(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1", "2"})
 	}
@@ -144,13 +145,13 @@ func TestDirectTransformPipeline(t *testing.T) {
 
 // TestTransformPipeline は、独自の変換関数を Map と Take に接続し、遅延評価・件数制限による停止・再評価を確認する。
 func TestTransformPipeline(t *testing.T) {
-	op := repeat
+	ope := repeat
 	calls := 0
 	pipeline := seq.FromSlice([]int{1, 2, 3}).
-		Pipe(seq.Map(func(v int) int {
+		Pipe(op.Map(func(v int) int {
 			calls++
 			return v
-		})).Pipe(op).Pipe(seq.Take(1).Operator)
+		})).Pipe(ope).Pipe(op.Take(1).Operator)
 	assertEqual(t, calls, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"1"})
@@ -168,8 +169,8 @@ func TestSeq2Pipeline(t *testing.T) {
 		}
 	}
 	var pipeline seq.Seq2[string, int] = seq.FromSeq2(src).
-		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
-		Pipe2(seq.Filter2(func(k string, v int) bool { return k == "1" && v > 0 }))
+		Pipe2(op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
+		Pipe2(op.Filter2(func(k string, v int) bool { return k == "1" && v > 0 }))
 	want := []pair[string, int]{{Key: "1", Value: 1}, {Key: "1", Value: 3}}
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
@@ -190,11 +191,11 @@ func TestSeq2LazyAndStop(t *testing.T) {
 		}
 	}
 	pipeline := seq.FromSeq2(src).
-		Pipe2(seq.Map2(func(k, v int) (string, int) {
+		Pipe2(op.Map2(func(k, v int) (string, int) {
 			maps++
 			return strconv.Itoa(k), v
 		})).
-		Pipe2(seq.Filter2(func(k string, v int) bool {
+		Pipe2(op.Filter2(func(k string, v int) bool {
 			filters++
 			return v%20 == 0
 		}))
@@ -219,11 +220,11 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 		seq.FromMap(map[string]int{}),
 		seq.FromMap(map[string]int(nil)),
 	} {
-		pipeline := src.Pipe2(seq.Map2(func(string, int) (string, int) {
+		pipeline := src.Pipe2(op.Map2(func(string, int) (string, int) {
 			t.Fatal("Map2 called")
 			return "", 0
 		})).
-			Pipe2(seq.Filter2(func(string, int) bool {
+			Pipe2(op.Filter2(func(string, int) bool {
 				t.Fatal("Filter2 called")
 				return true
 			}))
@@ -235,7 +236,7 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 // TestNonComparableKeys は、比較できないキーを持つ seq.Seq2 も、Map2 と iter.Seq2 への変換で扱えることを確認する。
 func TestNonComparableKeys(t *testing.T) {
 	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
-	pipeline := seq.FromSeq2(src).Pipe2(seq.Map2(func(k []int, v string) ([]int, int) {
+	pipeline := seq.FromSeq2(src).Pipe2(op.Map2(func(k []int, v string) ([]int, int) {
 		return k, len(v)
 	}))
 	got := collectPairs(seq.ToSeq2(pipeline))
@@ -244,7 +245,7 @@ func TestNonComparableKeys(t *testing.T) {
 
 // TestExternalTransforms2 は、独自の iter.Seq2 変換関数を接続し、遅延評価・途中終了・再評価が成立することを確認する。
 func TestExternalTransforms2(t *testing.T) {
-	op := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
+	ope := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
 		return func(yield func(string, string) bool) {
 			for k, v := range src {
 				if !yield(k, strconv.Itoa(v)) {
@@ -253,7 +254,7 @@ func TestExternalTransforms2(t *testing.T) {
 			}
 		}
 	}
-	direct := op(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))
+	direct := ope(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))
 	assertEqual(t, collectPairs(direct), []pair[string, string]{{Key: "1", Value: "10"}})
 	reads := 0
 	src := func(yield func(int, int) bool) {
@@ -264,7 +265,7 @@ func TestExternalTransforms2(t *testing.T) {
 			}
 		}
 	}
-	pipeline := seq.FromSeq2(src).Pipe2(keyText).Pipe2(op)
+	pipeline := seq.FromSeq2(src).Pipe2(keyText).Pipe2(ope)
 	assertEqual(t, reads, 0)
 	for k, v := range seq.ToSeq2(pipeline) {
 		assertEqual(t, k, "1")
@@ -282,12 +283,12 @@ func TestExternalTransforms2(t *testing.T) {
 
 // TestDirectTransform2Pipeline は、独自の iter.Seq2 変換関数と Filter2、Take.Operator2 を Operator2 として接続し、型推論と再評価を確認する。
 func TestDirectTransform2Pipeline(t *testing.T) {
-	op := keyText
-	var transform seq.Operator2[string, int, string, int] = seq.Filter2(func(k string, v int) bool {
+	ope := keyText
+	var filtered op.Operator2[string, int, string, int] = op.Filter2(func(k string, v int) bool {
 		return v > 1
 	})
-	var limit seq.Operator2[string, int, string, int] = seq.Take(1).Operator2
-	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe2(op).Pipe2(transform).Pipe2(limit)
+	var limit op.Operator2[string, int, string, int] = op.Take(1).Operator2
+	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe2(ope).Pipe2(filtered).Pipe2(limit)
 	for round := 0; round < 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
 	}
@@ -297,14 +298,14 @@ func TestDirectTransform2Pipeline(t *testing.T) {
 func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0
 	var pipeline seq.Seq2[string, int] = seq.FromSeq2(slices.All([]int{1, 22, 333, 4444})).
-		Pipe2(seq.Take(10).Operator2).
-		Pipe2(seq.Map2(func(k, v int) ([]int, string) {
+		Pipe2(op.Take(10).Operator2).
+		Pipe2(op.Map2(func(k, v int) ([]int, string) {
 			reads++
 			return []int{k}, strconv.Itoa(v)
 		})).
-		Pipe2(seq.Filter2(func(k []int, v string) bool { return len(v) > 1 })).
-		Pipe2(seq.Take(2).Operator2).
-		Pipe2(seq.Map2(func(k []int, v string) (string, int) { return strconv.Itoa(k[0]), len(v) }))
+		Pipe2(op.Filter2(func(k []int, v string) bool { return len(v) > 1 })).
+		Pipe2(op.Take(2).Operator2).
+		Pipe2(op.Map2(func(k []int, v string) (string, int) { return strconv.Itoa(k[0]), len(v) }))
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToMap(pipeline), map[string]int{"1": 2, "2": 3})
@@ -318,8 +319,8 @@ func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 
 // TestCrossTypePipeline は、4通りの接続、型推論、遅延評価、停止伝播、再評価を確認する。
 func TestCrossTypePipeline(t *testing.T) {
-	var toPairs seq.ToSeq2Operator[string, []int, string] = withLength
-	var toValues seq.ToSeqOperator[[]int, string, string] = seq.Values[[]int, string]
+	var toPairs op.ToSeq2Operator[string, []int, string] = withLength
+	var toValues op.ToSeqOperator[[]int, string, string] = op.Values[[]int, string]
 	for _, n := range []int{0, 1, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			starts, reads, stops := 0, 0, 0
@@ -334,12 +335,12 @@ func TestCrossTypePipeline(t *testing.T) {
 				}
 			})
 			var pipeline seq.Seq[string] = src.
-				Pipe(seq.Map(strconv.Itoa)).
+				Pipe(op.Map(strconv.Itoa)).
 				Pipe2(toPairs).
-				Pipe2(seq.Filter2(func(k []int, v string) bool { return k[0] > 1 })).
-				Pipe2(seq.Take(2).Operator2).
+				Pipe2(op.Filter2(func(k []int, v string) bool { return k[0] > 1 })).
+				Pipe2(op.Take(2).Operator2).
 				Pipe(toValues).
-				Pipe(seq.Take(n).Operator)
+				Pipe(op.Take(n).Operator)
 			assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
 			want := []string{"22", "333"}[:n]
 			if n == 0 {
@@ -375,10 +376,10 @@ func TestSkipAfterFilter(t *testing.T) {
 		}
 	})
 	var pipeline seq.Seq[string] = src.
-		Pipe(seq.Filter(func(v int) bool { return v%2 == 0 })).
-		Pipe(seq.Skip(1).Operator).
-		Pipe(seq.Map(strconv.Itoa)).
-		Pipe(seq.Take(2).Operator)
+		Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(op.Skip(1).Operator).
+		Pipe(op.Map(strconv.Itoa)).
+		Pipe(op.Take(2).Operator)
 	assertEqual(t, reads, 0)
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"4", "6"})
@@ -398,10 +399,10 @@ func TestSkip2AfterFilter(t *testing.T) {
 		}
 	})
 	var pipeline seq.Seq2[string, int] = src.
-		Pipe2(seq.Filter2(func(k, v int) bool { return k%2 == 0 })).
-		Pipe2(seq.Skip(1).Operator2).
-		Pipe2(seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })).
-		Pipe2(seq.Take(2).Operator2)
+		Pipe2(op.Filter2(func(k, v int) bool { return k%2 == 0 })).
+		Pipe2(op.Skip(1).Operator2).
+		Pipe2(op.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })).
+		Pipe2(op.Take(2).Operator2)
 	assertEqual(t, reads, 0)
 	want := []pair[string, int]{{Key: "4", Value: 40}, {Key: "6", Value: 60}}
 	for round := 1; round <= 2; round++ {
@@ -412,14 +413,14 @@ func TestSkip2AfterFilter(t *testing.T) {
 
 // TestTakeSharedConfigurationPipeline は、共通設定を型変換の前後と seq.Seq・seq.Seq2 間で接続し、再評価時も独立して制限することを確認する。
 func TestTakeSharedConfigurationPipeline(t *testing.T) {
-	take := seq.Take(2)
+	take := op.Take(2)
 	values := seq.FromSlice([]int{1, 22, 333}).
 		Pipe(take.Operator).
-		Pipe(seq.Map(strconv.Itoa)).
+		Pipe(op.Map(strconv.Itoa)).
 		Pipe(take.Operator)
 	pairs := seq.FromSeq2(slices.All([]int{1, 22, 333})).
 		Pipe2(take.Operator2).
-		Pipe2(seq.Map2(func(k, v int) (string, string) {
+		Pipe2(op.Map2(func(k, v int) (string, string) {
 			return strconv.Itoa(k), strconv.Itoa(v)
 		})).
 		Pipe2(take.Operator2)
@@ -435,11 +436,11 @@ func TestTakeSharedConfigurationPipeline(t *testing.T) {
 // TestKeysPipeline は、組の変換後にキーを取り出し、単一値のパイプラインを続ける。
 func TestKeysPipeline(t *testing.T) {
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe2(seq.Map2(func(k int, v string) (int, int) { return k + 1, len(v) }))
-	pipeline := pairs.Pipe(seq.Keys).
-		Pipe(seq.Filter(func(k int) bool { return k > 1 })).
-		Pipe(seq.Map(strconv.Itoa)).
-		Pipe(seq.Take(1).Operator)
+		Pipe2(op.Map2(func(k int, v string) (int, int) { return k + 1, len(v) }))
+	pipeline := pairs.Pipe(op.Keys).
+		Pipe(op.Filter(func(k int) bool { return k > 1 })).
+		Pipe(op.Map(strconv.Itoa)).
+		Pipe(op.Take(1).Operator)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(pipeline), []string{"2"})
 	}
@@ -448,11 +449,11 @@ func TestKeysPipeline(t *testing.T) {
 // TestValuesPipeline は、組の選別後に値を取り出し、単一値のパイプラインを続ける。
 func TestValuesPipeline(t *testing.T) {
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe2(seq.Filter2(func(k int, v string) bool { return k > 0 }))
-	pipeline := pairs.Pipe(seq.Values).
-		Pipe(seq.Filter(func(v string) bool { return len(v) > 1 })).
-		Pipe(seq.Map(func(v string) int { return len(v) })).
-		Pipe(seq.Take(1).Operator)
+		Pipe2(op.Filter2(func(k int, v string) bool { return k > 0 }))
+	pipeline := pairs.Pipe(op.Values).
+		Pipe(op.Filter(func(v string) bool { return len(v) > 1 })).
+		Pipe(op.Map(func(v string) int { return len(v) })).
+		Pipe(op.Take(1).Operator)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(pipeline), []int{3})
 	}
@@ -462,11 +463,11 @@ func TestValuesPipeline(t *testing.T) {
 func TestProjectionWithSkip(t *testing.T) {
 	for _, projection := range []struct {
 		name string
-		op   seq.ToSeqOperator[int, int, int]
+		ope  op.ToSeqOperator[int, int, int]
 		want []int
 	}{
-		{name: "keys", op: seq.Keys[int, int], want: []int{3, 4}},
-		{name: "values", op: seq.Values[int, int], want: []int{30, 40}},
+		{name: "keys", ope: op.Keys[int, int], want: []int{3, 4}},
+		{name: "values", ope: op.Values[int, int], want: []int{30, 40}},
 	} {
 		t.Run(projection.name, func(t *testing.T) {
 			for _, n := range []int{0, 1, 2} {
@@ -482,11 +483,11 @@ func TestProjectionWithSkip(t *testing.T) {
 							}
 						}
 					})
-					skip := seq.Skip(1)
+					skip := op.Skip(1)
 					pipeline := src.Pipe2(skip.Operator2).
-						Pipe(projection.op).
+						Pipe(projection.ope).
 						Pipe(skip.Operator).
-						Pipe(seq.Take(n).Operator)
+						Pipe(op.Take(n).Operator)
 					assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
 					want := projection.want[:n]
 					if n == 0 {
@@ -509,17 +510,17 @@ func TestProjectionWithSkip(t *testing.T) {
 // TestCachePipeline は上流を一度だけ評価し、分岐した下流は反復ごとに実行することを確認する。
 func TestCachePipeline(t *testing.T) {
 	upstream, downstream := 0, 0
-	var cache seq.Operator[int, int] = seq.Cache
+	var cache op.Operator[int, int] = op.Cache
 	cached := seq.FromSlice([]int{1, 2, 3, 4}).
-		Pipe(seq.Map(func(v int) int { upstream++; return v * 10 })).
-		Pipe(seq.Take(3).Operator).
+		Pipe(op.Map(func(v int) int { upstream++; return v * 10 })).
+		Pipe(op.Take(3).Operator).
 		Pipe(cache)
 	assertEqual(t, upstream, 3)
-	first := cached.Pipe(seq.Map(func(v int) string {
+	first := cached.Pipe(op.Map(func(v int) string {
 		downstream++
 		return strconv.Itoa(v)
-	})).Pipe(seq.Take(1).Operator)
-	second := cached.Pipe(seq.Filter(func(v int) bool { return v >= 20 }))
+	})).Pipe(op.Take(1).Operator)
+	second := cached.Pipe(op.Filter(func(v int) bool { return v >= 20 }))
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, seq.ToSlice(first), []string{"10"})
 		assertEqual(t, seq.ToSlice(second), []int{20, 30})
@@ -527,23 +528,23 @@ func TestCachePipeline(t *testing.T) {
 		assertEqual(t, downstream, round)
 	}
 	// 型引数なしの関数値を Pipe に直接渡せることも確認する。
-	assertEqual(t, seq.ToSlice(cached.Pipe(seq.Cache)), []int{10, 20, 30})
+	assertEqual(t, seq.ToSlice(cached.Pipe(op.Cache)), []int{10, 20, 30})
 }
 
 // TestCache2Pipeline は組のキャッシュを分岐し、上流の再計算と下流の再評価を区別する。
 func TestCache2Pipeline(t *testing.T) {
 	upstream, downstream := 0, 0
-	var cache seq.Operator2[int, int, int, int] = seq.Cache2
+	var cache op.Operator2[int, int, int, int] = op.Cache2
 	cached := seq.FromSeq2(slices.All([]int{1, 2, 3, 4})).
-		Pipe2(seq.Map2(func(k, v int) (int, int) { upstream++; return k, v * 10 })).
-		Pipe2(seq.Take(3).Operator2).
+		Pipe2(op.Map2(func(k, v int) (int, int) { upstream++; return k, v * 10 })).
+		Pipe2(op.Take(3).Operator2).
 		Pipe2(cache)
 	assertEqual(t, upstream, 3)
-	first := cached.Pipe2(seq.Map2(func(k, v int) (string, int) {
+	first := cached.Pipe2(op.Map2(func(k, v int) (string, int) {
 		downstream++
 		return strconv.Itoa(k), v
-	})).Pipe2(seq.Take(1).Operator2)
-	second := cached.Pipe(seq.Values).Pipe(seq.Filter(func(v int) bool { return v >= 20 }))
+	})).Pipe2(op.Take(1).Operator2)
+	second := cached.Pipe(op.Values).Pipe(op.Filter(func(v int) bool { return v >= 20 }))
 	want := []pair[string, int]{{Key: "0", Value: 10}}
 	for round := 1; round <= 2; round++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(first)), want)
@@ -551,5 +552,5 @@ func TestCache2Pipeline(t *testing.T) {
 		assertEqual(t, upstream, 3)
 		assertEqual(t, downstream, round)
 	}
-	assertEqual(t, seq.ToSlice(cached.Pipe2(seq.Cache2).Pipe(seq.Values)), []int{10, 20, 30})
+	assertEqual(t, seq.ToSlice(cached.Pipe2(op.Cache2).Pipe(op.Values)), []int{10, 20, 30})
 }

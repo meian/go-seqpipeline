@@ -5,13 +5,14 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func channelTransform(source seq.Seq[int]) seq.Seq[int] {
 	return source.
-		Pipe(seq.Map(mapValue)).
-		Pipe(seq.Filter(keepValue))
+		Pipe(op.Map(mapValue)).
+		Pipe(op.Filter(keepValue))
 }
 
 func scenarioChannelSeq(values []int, capacity int) []pair {

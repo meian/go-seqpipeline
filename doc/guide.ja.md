@@ -3,7 +3,7 @@
 [English](guide.md) | 日本語  
 
 [README](../README.ja.md) の基本例から先へ進むための共通仕様と接続方法を説明します。  
-型推論の基本は [README](../README.ja.md#型推論)、個別 API の契約は [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) を参照してください。  
+型推論の基本は [README](../README.ja.md#型推論)、個別 API の契約は [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) の GoDoc を参照してください。  
 
 ## seq.Seq / seq.Seq2
 
@@ -31,11 +31,11 @@ channel との相互変換以外の組み込み処理は、goroutine や channel
 
 ### 評価結果の再利用
 
-`Pipe(seq.Cache)` / `Pipe2(seq.Cache2)` で途中までの結果を保存し、同じキャッシュから複数の後続処理を組み立てられます。  
+`Pipe(op.Cache)` / `Pipe2(op.Cache2)` で途中までの結果を保存し、同じキャッシュから複数の後続処理を組み立てられます。  
 キャッシュは接続時に上流を一度だけ評価し、順序と重複を保持し、nil・空入力にも非 nil のシーケンスを返します。  
 以降の反復では途中終了後も保存済みの先頭から読み出し、キャッシュより後の処理は反復ごとに実行します。  
 
-利用例は [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-Cache) を参照してください。  
+利用例は [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) を参照してください。  
 
 入力は有限である必要があり、保存する要素数・組数に比例するメモリを使います。  
 無限入力はキャッシュより前で件数を制限してください。  
@@ -57,14 +57,14 @@ naturals := seq.Seq[int](func(yield func(int) bool) {
 後ろの `Take(3)` には到達しません。  
 
 ```go
-naturals.Pipe(seq.Cache).Pipe(seq.Take(3).Operator)
+naturals.Pipe(op.Cache).Pipe(op.Take(3).Operator)
 ```
 
 `Take(3)` を前に置くと、上流を3件で停止してキャッシュを作成でき、繰り返し利用できます。  
 `seq.Seq2` でも `Take(3).Operator2` を `Cache2` より前に接続します。  
 
 ```go
-cached := naturals.Pipe(seq.Take(3).Operator).Pipe(seq.Cache)
+cached := naturals.Pipe(op.Take(3).Operator).Pipe(op.Cache)
 fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 ```
@@ -79,7 +79,7 @@ fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 組み込みオペレーターは nil を空として扱いますが、直接の呼び出し・反復や `ToSlice` / `ToMap` への入力は panic します。  
 空の非 nil イテレーターでは、`ToSlice` は nil、`ToMap` は空の非 nil の map を返します。  
 独自オペレーターの評価・停止・nil の扱いは、その実装に従います。  
-各 API の境界条件は [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) と [テスト](../seq) を参照してください。  
+各 API の境界条件は、GoDoc と [seq](../seq) / [op](../op) のテストを参照してください。  
 
 ## 入力と出力
 
@@ -122,19 +122,19 @@ go-seqpipeline では、`iter.Seq` / `iter.Seq2` を変換して新しいシー�
 ### 接続
 
 `seq.Seq` と `seq.Seq2` の `Pipe` / `Pipe2` は、標準イテレーターを扱うオペレーターを接続し、それぞれ `seq.Seq` / `seq.Seq2` を返します。  
-関数型 `Operator`、`ToSeq2Operator`、`ToSeqOperator`、`Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
+関数型 `op.Operator`、`op.ToSeq2Operator`、`op.ToSeqOperator`、`op.Operator2` で、入出力の型の 4 通りの組み合わせを表します。  
 
 | 入力 | メソッド | 変換関数 | 出力 |
 | --- | --- | --- | --- |
-| `seq.Seq[I]` | `Pipe` | `Operator[I, O]` | `seq.Seq[O]` |
-| `seq.Seq[I]` | `Pipe2` | `ToSeq2Operator[I, K, V]` | `seq.Seq2[K, V]` |
-| `seq.Seq2[K, V]` | `Pipe` | `ToSeqOperator[K, V, O]` | `seq.Seq[O]` |
-| `seq.Seq2[K, V]` | `Pipe2` | `Operator2[K, V, K2, V2]` | `seq.Seq2[K2, V2]` |
+| `seq.Seq[I]` | `Pipe` | `op.Operator[I, O]` | `seq.Seq[O]` |
+| `seq.Seq[I]` | `Pipe2` | `op.ToSeq2Operator[I, K, V]` | `seq.Seq2[K, V]` |
+| `seq.Seq2[K, V]` | `Pipe` | `op.ToSeqOperator[K, V, O]` | `seq.Seq[O]` |
+| `seq.Seq2[K, V]` | `Pipe2` | `op.Operator2[K, V, K2, V2]` | `seq.Seq2[K2, V2]` |
 
 `Pipe` / `Pipe2` は入力を標準型へ変換して変換関数をその場で呼び出し、戻り値をライブラリ型へ戻します。  
 この型変換では要素を評価・コピーせず、nil を保持します。  
 入力の評価と停止伝播は、変換関数の実装に従います。  
-4 種類のオペレーターは `op(src)` でも呼び出せます。  
+4 種類のオペレーターは `ope(src)` でも呼び出せます。  
 直接呼び出しや `Zip` などの追加入力にライブラリ型を渡す場合は `ToSeq` / `ToSeq2`、結果を再びチェーンする場合は `FromSeq` / `FromSeq2` で変換します。  
 
 ### 独自オペレーターの実装
@@ -146,20 +146,20 @@ go-seqpipeline では、`iter.Seq` / `iter.Seq2` を変換して新しいシー�
 
 ### 実行可能な利用例
 
-各オペレーターの使い方は、期待出力を持つ [Go Example](../seq/example_test.go) にまとめています。  
+接続とオペレーターの使い方は、期待出力を持つ [seq](../seq/example_test.go) / [op](../op/example_test.go) の Go Example にまとめています。  
 
 | 利用例 | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
-| 要素・キーと値の変換 | [ExampleMap](../seq/example_test.go#L13) | [ExampleMap2](../seq/example_test.go#L19) |
-| 条件による選別 | [ExampleFilter](../seq/example_test.go#L29) | [ExampleFilter2](../seq/example_test.go#L35) |
-| 取得件数の制限と型推論（.Operator / .Operator2） | [ExampleTake](../seq/example_test.go#L43) | [ExampleTake_pairs](../seq/example_test.go#L49) |
-| 先頭の要素・組の読み飛ばし | [ExampleSkip](../seq/example_test.go#L257) | [ExampleSkip](../seq/example_test.go#L257) |
-| 型を変換する処理の接続 | [ExampleSeq_Pipe](../seq/example_test.go#L59) | [ExampleSeq2_Pipe2](../seq/example_test.go#L201) |
-| `seq.Seq` と `seq.Seq2` をまたぐ接続 | [ExampleSeq_Pipe2](../seq/example_test.go#L181) | [ExampleSeq2_Pipe](../seq/example_test.go#L193) |
-| `seq.Seq2` からキー・値を取り出す | — | [ExampleKeys](../seq/example_test.go#L146)、[ExampleValues](../seq/example_test.go#L155) |
-| `iter.Seq` と `iter.Seq2` をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](../seq/example_test.go#L213) | [ExampleToSeqOperator](../seq/example_test.go#L224) |
-| 関数オペレーターの接続と直接呼び出し | [ExampleOperator](../seq/example_test.go#L83) | [ExampleOperator2](../seq/example_test.go#L130) |
-| 独自オペレーターによる拡張 | [ExampleOperator_custom](../seq/example_test.go#L113) | [ExampleOperator2](../seq/example_test.go#L130) |
+| 要素・キーと値の変換 | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L19) |
+| 条件による選別 | [ExampleFilter](../op/example_test.go#L29) | [ExampleFilter2](../op/example_test.go#L35) |
+| 取得件数の制限と型推論（.Operator / .Operator2） | [ExampleTake](../op/example_test.go#L43) | [ExampleTake_pairs](../op/example_test.go#L49) |
+| 先頭の要素・組の読み飛ばし | [ExampleSkip](../op/example_test.go#L216) | [ExampleSkip](../op/example_test.go#L216) |
+| 型を変換する処理の接続 | [ExampleSeq_Pipe](../seq/example_test.go#L14) | [ExampleSeq2_Pipe2](../seq/example_test.go#L60) |
+| `seq.Seq` と `seq.Seq2` をまたぐ接続 | [ExampleSeq_Pipe2](../seq/example_test.go#L40) | [ExampleSeq2_Pipe](../seq/example_test.go#L52) |
+| `seq.Seq2` からキー・値を取り出す | — | [ExampleKeys](../op/example_test.go#L137)、[ExampleValues](../op/example_test.go#L146) |
+| `iter.Seq` と `iter.Seq2` をまたぐオペレーターの直接呼び出し | [ExampleToSeq2Operator](../op/example_test.go#L172) | [ExampleToSeqOperator](../op/example_test.go#L183) |
+| 関数オペレーターの接続と直接呼び出し | [ExampleOperator](../op/example_test.go#L74) | [ExampleOperator2](../op/example_test.go#L121) |
+| 独自オペレーターによる拡張 | [ExampleOperator_custom](../op/example_test.go#L104) | [ExampleOperator2](../op/example_test.go#L121) |
 
 Example のみを実行するには、次のコマンドを使います。  
 

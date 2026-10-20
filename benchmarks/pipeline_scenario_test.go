@@ -4,17 +4,18 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func scenarioPipelineSeqLibrary(values []int, depth, limit int) []pair {
 	s := seq.FromSlice(values)
 	for j := 1; j < depth; j++ {
-		s = s.Pipe(seq.Map(mapValue))
+		s = s.Pipe(op.Map(mapValue))
 	}
-	s = s.Pipe(seq.Filter(keepValue))
+	s = s.Pipe(op.Filter(keepValue))
 	if limit > 0 {
-		s = s.Pipe(seq.Take(limit).Operator)
+		s = s.Pipe(op.Take(limit).Operator)
 	}
 	var out []pair
 	for v := range s {
@@ -264,11 +265,11 @@ func TestScenarioPipelineSeqFunctions(t *testing.T) {
 func scenarioPipelineSeq2Library(values []int, depth, limit int) []pair {
 	s := seq.FromSeq2(slices.All(values))
 	for j := 1; j < depth; j++ {
-		s = s.Pipe2(seq.Map2(func(k, v int) (int, int) { return k, mapValue(v) }))
+		s = s.Pipe2(op.Map2(func(k, v int) (int, int) { return k, mapValue(v) }))
 	}
-	s = s.Pipe2(seq.Filter2(func(k, v int) bool { return keepValue(v) }))
+	s = s.Pipe2(op.Filter2(func(k, v int) bool { return keepValue(v) }))
 	if limit > 0 {
-		s = s.Pipe2(seq.Take(limit).Operator2)
+		s = s.Pipe2(op.Take(limit).Operator2)
 	}
 	var out []pair
 	for k, v := range s {

@@ -4,12 +4,13 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func skipOperatorLibrary(values []int) int64 {
 	source := seq.FromSlice(values).
-		Pipe(seq.Skip(8).Operator)
+		Pipe(op.Skip(8).Operator)
 	var sum int64
 	for v := range source {
 		sum += int64(v)
@@ -86,7 +87,7 @@ func TestSkipOperatorGo(t *testing.T) {
 
 func skipOperator2Library(values []int) int64 {
 	source := seq.FromSeq2(slices.All(values)).
-		Pipe2(seq.Skip(8).Operator2)
+		Pipe2(op.Skip(8).Operator2)
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)

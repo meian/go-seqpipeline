@@ -5,6 +5,7 @@ import (
 	"testing"
 	"testing/synctest"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
@@ -175,8 +176,8 @@ func TestChannelPipelineCancelReceive(t *testing.T) {
 		defer cancel()
 		input := make(chan int)
 		pipeline := seq.FromChannel(ctx, input).
-			Pipe(seq.Map(func(v int) int { return v * 10 })).
-			Pipe(seq.Take(2).Operator)
+			Pipe(op.Map(func(v int) int { return v * 10 })).
+			Pipe(op.Take(2).Operator)
 		output := seq.ToChannel(ctx, pipeline)
 		input <- 3
 		assertEqual(t, <-output, 30)

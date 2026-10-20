@@ -1,4 +1,4 @@
-package seq_test
+package op_test
 
 import (
 	"iter"
@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/seq"
+	"github.com/meian/go-seqpipeline/op"
 )
 
 func TestSkipOperator(t *testing.T) {
@@ -36,7 +36,7 @@ func TestSkipOperator(t *testing.T) {
 					}
 				}
 			})
-			iterator := seq.Skip(tc.n).Operator(src)
+			iterator := op.Skip(tc.n).Operator(src)
 			assertEqual(t, []int{starts, reads}, []int{0, 0})
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, slices.Collect(iterator), tc.want)
@@ -77,7 +77,7 @@ func TestSkipOperator2(t *testing.T) {
 					}
 				}
 			})
-			iterator := seq.Skip(tc.n).Operator2(src)
+			iterator := op.Skip(tc.n).Operator2(src)
 			assertEqual(t, []int{starts, reads}, []int{0, 0})
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, collectPairs(iterator), tc.want)
@@ -90,7 +90,7 @@ func TestSkipOperator2(t *testing.T) {
 func TestSkipOperatorEmptyAndNil(t *testing.T) {
 	for _, n := range []int{-1, 0, 1} {
 		for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
-			iterator := seq.Skip(n).Operator(src)
+			iterator := op.Skip(n).Operator(src)
 			for round := 0; round < 2; round++ {
 				assertEqual(t, slices.Collect(iterator), []int(nil))
 			}
@@ -101,7 +101,7 @@ func TestSkipOperatorEmptyAndNil(t *testing.T) {
 func TestSkipOperator2EmptyAndNil(t *testing.T) {
 	for _, n := range []int{-1, 0, 1} {
 		for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
-			iterator := seq.Skip(n).Operator2(src)
+			iterator := op.Skip(n).Operator2(src)
 			for round := 0; round < 2; round++ {
 				assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
 			}
@@ -122,7 +122,7 @@ func TestSkipOperatorDownstreamStop(t *testing.T) {
 					}
 				}
 			})
-			iterator := seq.Skip(n).Operator(src)
+			iterator := op.Skip(n).Operator(src)
 			for round := 1; round <= 2; round++ {
 				for v := range iterator {
 					assertEqual(t, v, max(n, 0)+1)
@@ -147,7 +147,7 @@ func TestSkipOperator2DownstreamStop(t *testing.T) {
 					}
 				}
 			})
-			iterator := seq.Skip(n).Operator2(src)
+			iterator := op.Skip(n).Operator2(src)
 			for round := 1; round <= 2; round++ {
 				for k, v := range iterator {
 					assertEqual(t, k, max(n, 0)+1)
@@ -161,9 +161,9 @@ func TestSkipOperator2DownstreamStop(t *testing.T) {
 }
 
 func TestSkipConfigurationReuse(t *testing.T) {
-	skip := seq.Skip(1)
-	var op seq.Operator[int, int] = skip.Operator
-	var op2 seq.Operator2[[]int, string, []int, string] = skip.Operator2
+	skip := op.Skip(1)
+	var ope op.Operator[int, int] = skip.Operator
+	var ope2 op.Operator2[[]int, string, []int, string] = skip.Operator2
 	values := iter.Seq[int](func(yield func(int) bool) {
 		for _, v := range []int{1, 2, 3} {
 			if !yield(v) {
@@ -176,8 +176,8 @@ func TestSkipConfigurationReuse(t *testing.T) {
 			yield([]int{2}, "b")
 		}
 	})
-	first, second := op(values), skip.Operator(values)
-	paired := op2(pairs)
+	first, second := ope(values), skip.Operator(values)
+	paired := ope2(pairs)
 	texts := skip.Operator(iter.Seq[string](func(yield func(string) bool) {
 		if yield("a") {
 			yield("b")

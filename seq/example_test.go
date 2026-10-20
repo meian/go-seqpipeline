@@ -7,158 +7,17 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func ExampleMap() {
-	op := seq.Map(func(v int) string { return strconv.Itoa(v) })
-	fmt.Printf("%q\n", slices.Collect(op(slices.Values([]int{2, 1}))))
-	// Output: ["2" "1"]
-}
-
-func ExampleMap2() {
-	op := seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })
-	for k, v := range op(slices.All([]string{"a", "bbb"})) {
-		fmt.Printf("%q: %d\n", k, v)
-	}
-	// Output:
-	// "0": 1
-	// "1": 3
-}
-
-func ExampleFilter() {
-	op := seq.Filter(func(v int) bool { return v%2 == 0 })
-	fmt.Println(slices.Collect(op(slices.Values([]int{3, 2, 4, 1}))))
-	// Output: [2 4]
-}
-
-func ExampleFilter2() {
-	op := seq.Filter2(func(k int, v string) bool { return k > 0 && len(v) > 1 })
-	for k, v := range op(slices.All([]string{"a", "bbb", "c"})) {
-		fmt.Printf("%d: %q\n", k, v)
-	}
-	// Output: 1: "bbb"
-}
-
-func ExampleTake() {
-	pipeline := seq.FromSlice([]int{3, 2, 1}).Pipe(seq.Take(2).Operator)
-	fmt.Println(seq.ToSlice(pipeline))
-	// Output: [3 2]
-}
-
-func ExampleTake_pairs() {
-	pipeline := seq.FromSeq2(slices.All([]int{3, 2, 1})).Pipe2(seq.Take(2).Operator2)
-	for k, v := range pipeline {
-		fmt.Printf("%d: %d\n", k, v)
-	}
-	// Output:
-	// 0: 3
-	// 1: 2
-}
-
 func ExampleSeq_Pipe() {
 	var pipeline seq.Seq[int] = seq.FromSlice([]int{1, 22, 333, 4444}).
-		Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
-		Pipe(seq.Filter(func(v string) bool { return len(v) > 2 })).
-		Pipe(seq.Map(func(v string) int { return len(v) }))
+		Pipe(op.Map(func(v int) string { return strconv.Itoa(v) })).
+		Pipe(op.Filter(func(v string) bool { return len(v) > 2 })).
+		Pipe(op.Map(func(v string) int { return len(v) }))
 	fmt.Println(seq.ToSlice(pipeline))
 	// Output: [3 4]
-}
-
-func ExampleMap2_directCall() {
-	src := func(yield func(int, int) bool) {
-		if !yield(1, 10) {
-			return
-		}
-		yield(2, 20)
-	}
-	mapped := seq.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })(src)
-	filtered := seq.Filter2(func(k string, v int) bool { return v > 10 })(mapped)
-	for k, v := range filtered {
-		fmt.Printf("%q: %d\n", k, v)
-	}
-	// Output: "2": 20
-}
-
-func ExampleOperator() {
-	op := seq.Operator[int, string](func(src iter.Seq[int]) iter.Seq[string] {
-		return func(yield func(string) bool) {
-			for v := range src {
-				if !yield(strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	})
-	src := seq.FromSlice([]int{1, 2})
-	fmt.Printf("%q\n", seq.ToSlice(src.Pipe(op)))
-	fmt.Printf("%q\n", slices.Collect(op(seq.ToSeq(src))))
-	// Output:
-	// ["1" "2"]
-	// ["1" "2"]
-}
-
-func repeat(src iter.Seq[int]) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for v := range src {
-			for i := 0; i < 2; i++ {
-				if !yield(strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	}
-}
-
-func ExampleOperator_custom() {
-	var op seq.Operator[int, string] = repeat
-	pipeline := seq.FromSlice([]int{1, 2}).Pipe(op).Pipe(seq.Take(3).Operator)
-	fmt.Printf("%q\n", seq.ToSlice(pipeline))
-	// Output: ["1" "1" "2"]
-}
-
-func keyText(src iter.Seq2[int, int]) iter.Seq2[string, int] {
-	return func(yield func(string, int) bool) {
-		for k, v := range src {
-			if !yield(strconv.Itoa(k), v) {
-				return
-			}
-		}
-	}
-}
-
-func ExampleOperator2() {
-	var op seq.Operator2[int, int, string, int] = keyText
-	src := seq.FromSeq2(slices.All([]int{4, 5}))
-	for k, v := range src.Pipe2(op) {
-		fmt.Printf("%q: %d\n", k, v)
-	}
-	for k, v := range op(seq.ToSeq2(src)) {
-		fmt.Printf("%q: %d\n", k, v)
-	}
-	// Output:
-	// "0": 4
-	// "1": 5
-	// "0": 4
-	// "1": 5
-}
-
-func ExampleKeys() {
-	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
-		Pipe(seq.Keys).
-		Pipe(seq.Take(2).Operator)
-	fmt.Printf("%q\n", seq.ToSlice(pipeline))
-	// Output: ["0" "1"]
-}
-
-func ExampleValues() {
-	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe2(seq.Filter2(func(k int, v string) bool { return len(v) > 1 })).
-		Pipe(seq.Values).
-		Pipe(seq.Take(1).Operator)
-	fmt.Printf("%q\n", seq.ToSlice(pipeline))
-	// Output: ["bbb"]
 }
 
 // withLength は各文字列に長さを添え、入力順にキーと値の組を返す。
@@ -181,7 +40,7 @@ func withLength[T ~string](src iter.Seq[T]) iter.Seq2[[]int, T] {
 func ExampleSeq_Pipe2() {
 	pairs := seq.FromSlice([]string{"a", "bbb", "cc"}).
 		Pipe2(withLength).
-		Pipe2(seq.Take(2).Operator2)
+		Pipe2(op.Take(2).Operator2)
 	for k, v := range pairs {
 		fmt.Println(k, v)
 	}
@@ -192,81 +51,22 @@ func ExampleSeq_Pipe2() {
 
 func ExampleSeq2_Pipe() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe(seq.Values).
-		Pipe(seq.Take(2).Operator)
+		Pipe(op.Values).
+		Pipe(op.Take(2).Operator)
 	fmt.Println(seq.ToSlice(pipeline))
 	// Output: [a bbb]
 }
 
 func ExampleSeq2_Pipe2() {
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe2(seq.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
-		Pipe2(seq.Take(2).Operator2)
+		Pipe2(op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
+		Pipe2(op.Take(2).Operator2)
 	for k, v := range pipeline {
 		fmt.Println(k, v)
 	}
 	// Output:
 	// 0 1
 	// 1 3
-}
-
-func ExampleToSeq2Operator() {
-	var op seq.ToSeq2Operator[string, []int, string] = withLength
-	src := seq.FromSlice([]string{"a", "bbb"})
-	for k, v := range op(seq.ToSeq(src)) {
-		fmt.Println(k, v)
-	}
-	// Output:
-	// [1] a
-	// [3] bbb
-}
-
-func ExampleToSeqOperator() {
-	var op seq.ToSeqOperator[int, string, string] = seq.Values[int, string]
-	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
-	fmt.Println(slices.Collect(op(seq.ToSeq2(src))))
-	// Output: [a bbb]
-}
-
-func ExampleZip() {
-	left := seq.FromSlice([]int{1, 2, 3})
-	right := seq.FromSlice([]string{"a", "b"})
-	for k, v := range left.Pipe2(seq.Zip(seq.ToSeq(right)).Operator) {
-		fmt.Println(k, v)
-	}
-	// Output:
-	// 1 a
-	// 2 b
-}
-
-func ExampleZip_alignBy() {
-	left := seq.FromSlice([]int{1, 2})
-	right := seq.FromSlice([]string{"a"})
-	alignLeft := seq.Zip(seq.ToSeq(right)).AlignBy(seq.AlignLeft).WithDefaultValue("missing")
-	alignRight := seq.Zip(seq.ToSeq(right)).WithDefaultKey(-1).AlignBy(seq.AlignRight)
-	alignLongest := seq.Zip(seq.ToSeq(right)).AlignBy(seq.AlignLongest)
-	fmt.Println(seq.ToMap(left.Pipe2(alignLeft.Operator)))
-	fmt.Println(seq.ToMap(seq.Seq[int](nil).Pipe2(alignRight.Operator)))
-	fmt.Println(seq.ToMap(left.Pipe2(alignLongest.Operator)))
-	// Output:
-	// map[1:a 2:missing]
-	// map[-1:a]
-	// map[1:a 2:]
-}
-
-func ExampleSkip() {
-	skip := seq.Skip(1)
-	values := seq.FromSlice([]int{10, 20, 30}).Pipe(skip.Operator)
-	fmt.Println(seq.ToSlice(values))
-
-	pairs := seq.FromSeq2(slices.All([]string{"a", "b", "c"})).Pipe2(skip.Operator2)
-	for k, v := range pairs {
-		fmt.Println(k, v)
-	}
-	// Output:
-	// [20 30]
-	// 1 b
-	// 2 c
 }
 
 func ExampleFromChannel() {
@@ -278,8 +78,8 @@ func ExampleFromChannel() {
 	}
 	close(input)
 	pipeline := seq.FromChannel(ctx, input).
-		Pipe(seq.Filter(func(v int) bool { return v%2 == 0 })).
-		Pipe(seq.Map(func(v int) int { return v * 10 }))
+		Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(op.Map(func(v int) int { return v * 10 }))
 	fmt.Println(seq.ToSlice(pipeline))
 	// Output: [20 20]
 }
@@ -288,7 +88,7 @@ func ExampleToChannel() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // 途中で受信をやめた場合も送信待ちを解除する。
 	pipeline := seq.FromSlice([]int{1, 2, 2, 3}).
-		Pipe(seq.Map(func(v int) int { return v * 10 }))
+		Pipe(op.Map(func(v int) int { return v * 10 }))
 	for v := range seq.ToChannel(ctx, pipeline) {
 		fmt.Println(v)
 		if v == 20 {
@@ -298,53 +98,4 @@ func ExampleToChannel() {
 	// Output:
 	// 10
 	// 20
-}
-
-func ExampleCache() {
-	calls := 0
-	cached := seq.FromSlice([]string{"a", "bbb", "cc"}).
-		Pipe(seq.Map(func(v string) int {
-			calls++
-			return len(v)
-		})).
-		Pipe(seq.Cache)
-	fmt.Println("cached:", calls)
-	first := cached.Pipe(seq.Take(1).Operator)
-	longer := cached.Pipe(seq.Filter(func(v int) bool { return v > 1 }))
-	fmt.Println(seq.ToSlice(first))
-	fmt.Println(seq.ToSlice(longer))
-	fmt.Println(seq.ToSlice(first))
-	fmt.Println("upstream calls:", calls)
-	// Output:
-	// cached: 3
-	// [1]
-	// [3 2]
-	// [1]
-	// upstream calls: 3
-}
-
-func ExampleCache2() {
-	calls := 0
-	cached := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
-		Pipe2(seq.Map2(func(k int, v string) (int, int) {
-			calls++
-			return k, len(v)
-		})).
-		Pipe2(seq.Cache2)
-	fmt.Println("cached:", calls)
-	first := cached.Pipe2(seq.Take(1).Operator2)
-	for k, v := range first {
-		fmt.Println(k, v)
-	}
-	fmt.Println(seq.ToSlice(cached.Pipe(seq.Values)))
-	for k, v := range first {
-		fmt.Println(k, v)
-	}
-	fmt.Println("upstream calls:", calls)
-	// Output:
-	// cached: 3
-	// 0 1
-	// [1 3 2]
-	// 0 1
-	// upstream calls: 3
 }

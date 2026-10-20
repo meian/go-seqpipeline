@@ -1,17 +1,17 @@
-package seq_test
+package op_test
 
 import (
 	"iter"
 	"slices"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/seq"
+	"github.com/meian/go-seqpipeline/op"
 )
 
 func TestKeys(t *testing.T) {
 	want := []int{3, 1, 3, 2}
 	started, visited, stopped := 0, 0, 0
-	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
 		started++
 		defer func() { stopped++ }()
 		for _, p := range []pair[int, int]{{3, 20}, {1, 10}, {3, 30}, {2, 20}} {
@@ -21,8 +21,8 @@ func TestKeys(t *testing.T) {
 			}
 		}
 	})
-	var op seq.ToSeqOperator[int, int, int] = seq.Keys[int, int]
-	projected := op(seq.ToSeq2(src))
+	var ope op.ToSeqOperator[int, int, int] = op.Keys[int, int]
+	projected := ope(src)
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, slices.Collect(projected), want)
@@ -47,7 +47,7 @@ func TestKeys(t *testing.T) {
 					break
 				}
 			case "Take":
-				got = slices.Collect(seq.Take(1).Operator(projected))
+				got = slices.Collect(op.Take(1).Operator(projected))
 			}
 			assertEqual(t, got, want[:1])
 			assertEqual(t, visited, 1)
@@ -56,16 +56,16 @@ func TestKeys(t *testing.T) {
 	}
 
 	visited, stopped = 0, 0
-	assertEqual(t, slices.Collect(seq.Take(0).Operator(projected)), []int(nil))
+	assertEqual(t, slices.Collect(op.Take(0).Operator(projected)), []int(nil))
 	assertEqual(t, visited, 0)
 	assertEqual(t, stopped, 0)
 
-	for _, input := range []seq.Seq2[int, int]{
+	for _, input := range []iter.Seq2[int, int]{
 		nil,
-		seq.FromSeq2(iter.Seq2[int, int](nil)),
+		iter.Seq2[int, int](nil),
 		func(func(int, int) bool) {},
 	} {
-		output := seq.Keys(seq.ToSeq2(input))
+		output := op.Keys(input)
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
 		}
@@ -76,7 +76,7 @@ func TestKeys(t *testing.T) {
 func TestValues(t *testing.T) {
 	want := []int{20, 10, 30, 20}
 	started, visited, stopped := 0, 0, 0
-	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
 		started++
 		defer func() { stopped++ }()
 		for _, p := range []pair[int, int]{{3, 20}, {1, 10}, {3, 30}, {2, 20}} {
@@ -86,8 +86,8 @@ func TestValues(t *testing.T) {
 			}
 		}
 	})
-	var op seq.ToSeqOperator[int, int, int] = seq.Values[int, int]
-	projected := op(seq.ToSeq2(src))
+	var ope op.ToSeqOperator[int, int, int] = op.Values[int, int]
+	projected := ope(src)
 	assertEqual(t, started, 0)
 	for i := 0; i < 2; i++ {
 		assertEqual(t, slices.Collect(projected), want)
@@ -112,7 +112,7 @@ func TestValues(t *testing.T) {
 					break
 				}
 			case "Take":
-				got = slices.Collect(seq.Take(1).Operator(projected))
+				got = slices.Collect(op.Take(1).Operator(projected))
 			}
 			assertEqual(t, got, want[:1])
 			assertEqual(t, visited, 1)
@@ -121,16 +121,16 @@ func TestValues(t *testing.T) {
 	}
 
 	visited, stopped = 0, 0
-	assertEqual(t, slices.Collect(seq.Take(0).Operator(projected)), []int(nil))
+	assertEqual(t, slices.Collect(op.Take(0).Operator(projected)), []int(nil))
 	assertEqual(t, visited, 0)
 	assertEqual(t, stopped, 0)
 
-	for _, input := range []seq.Seq2[int, int]{
+	for _, input := range []iter.Seq2[int, int]{
 		nil,
-		seq.FromSeq2(iter.Seq2[int, int](nil)),
+		iter.Seq2[int, int](nil),
 		func(func(int, int) bool) {},
 	} {
-		output := seq.Values(seq.ToSeq2(input))
+		output := op.Values(input)
 		if output == nil {
 			t.Fatal("projection must return a non-nil iterator")
 		}
@@ -141,25 +141,25 @@ func TestValues(t *testing.T) {
 func TestKeysNonComparable(t *testing.T) {
 	keys := [][]int{{2}, {1}, {2}}
 	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
-	src := seq.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
+	src := iter.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
 		for i, k := range keys {
 			if !yield(k, values[i]) {
 				return
 			}
 		}
 	})
-	assertEqual(t, seq.ToSlice(src.Pipe(seq.Keys)), keys)
+	assertEqual(t, slices.Collect(op.Keys(src)), keys)
 }
 
 func TestValuesNonComparable(t *testing.T) {
 	keys := [][]int{{2}, {1}, {2}}
 	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
-	src := seq.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
+	src := iter.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
 		for i, k := range keys {
 			if !yield(k, values[i]) {
 				return
 			}
 		}
 	})
-	assertEqual(t, seq.ToSlice(src.Pipe(seq.Values)), values)
+	assertEqual(t, slices.Collect(op.Values(src)), values)
 }

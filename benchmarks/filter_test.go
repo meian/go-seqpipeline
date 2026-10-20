@@ -4,12 +4,13 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
 func filterLibrary(values []int) int64 {
 	source := seq.FromSlice(values).
-		Pipe(seq.Filter(func(v int) bool { return v%3 != 0 }))
+		Pipe(op.Filter(func(v int) bool { return v%3 != 0 }))
 	var sum int64
 	for v := range source {
 		sum += int64(v)
@@ -87,7 +88,7 @@ func TestFilterGo(t *testing.T) {
 
 func filter2Library(values []int) int64 {
 	source := seq.FromSeq2(slices.All(values)).
-		Pipe2(seq.Filter2(func(k, v int) bool { return v%3 != 0 }))
+		Pipe2(op.Filter2(func(k, v int) bool { return v%3 != 0 }))
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)

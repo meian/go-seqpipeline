@@ -1,4 +1,4 @@
-package seq_test
+package op_test
 
 import (
 	"iter"
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/seq"
+	"github.com/meian/go-seqpipeline/op"
 )
 
 func TestCache(t *testing.T) {
@@ -25,7 +25,7 @@ func TestCache(t *testing.T) {
 			}
 		}
 	})
-	cached := seq.Cache(src)
+	cached := op.Cache(src)
 	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
 	values[0] = 99
 	yields := 0
@@ -43,7 +43,7 @@ func TestCache(t *testing.T) {
 
 func TestCacheEmptyAndNil(t *testing.T) {
 	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
-		cached := seq.Cache(src)
+		cached := op.Cache(src)
 		if cached == nil {
 			t.Fatal("Cache returned nil")
 		}
@@ -56,7 +56,7 @@ func TestCacheEmptyAndNil(t *testing.T) {
 func TestCacheShallowCopy(t *testing.T) {
 	value := 1
 	values := []*int{&value}
-	cached := seq.Cache(slices.Values(values))
+	cached := op.Cache(slices.Values(values))
 	other := 2
 	values[0] = &other
 	value = 3
@@ -65,7 +65,7 @@ func TestCacheShallowCopy(t *testing.T) {
 }
 
 func TestCacheInterleavedAndConcurrent(t *testing.T) {
-	cached := seq.Cache(slices.Values([]int{3, 1, 1, 2}))
+	cached := op.Cache(slices.Values([]int{3, 1, 1, 2}))
 	next, stop := iter.Pull(cached)
 	defer stop()
 	v, ok := next()
@@ -101,7 +101,7 @@ func TestCache2(t *testing.T) {
 			}
 		}
 	})
-	cached := seq.Cache2(src)
+	cached := op.Cache2(src)
 	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
 	want := slices.Clone(values)
 	values[0] = pair[int, string]{Key: 99, Value: "changed"}
@@ -120,7 +120,7 @@ func TestCache2(t *testing.T) {
 
 func TestCache2EmptyAndNil(t *testing.T) {
 	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
-		cached := seq.Cache2(src)
+		cached := op.Cache2(src)
 		if cached == nil {
 			t.Fatal("Cache2 returned nil")
 		}
@@ -132,7 +132,7 @@ func TestCache2EmptyAndNil(t *testing.T) {
 
 func TestCache2ShallowCopyAndNonComparableKeys(t *testing.T) {
 	keys, values := [][]int{{1}}, [][]int{{10}}
-	cached := seq.Cache2(iter.Seq2[[]int, []int](func(yield func([]int, []int) bool) {
+	cached := op.Cache2(iter.Seq2[[]int, []int](func(yield func([]int, []int) bool) {
 		yield(keys[0], values[0])
 	}))
 	key, value := keys[0], values[0]
@@ -143,7 +143,7 @@ func TestCache2ShallowCopyAndNonComparableKeys(t *testing.T) {
 }
 
 func TestCache2InterleavedAndConcurrent(t *testing.T) {
-	cached := seq.Cache2(slices.All([]string{"a", "b"}))
+	cached := op.Cache2(slices.All([]string{"a", "b"}))
 	want := []pair[int, string]{{Key: 0, Value: "a"}, {Key: 1, Value: "b"}}
 	next, stop := iter.Pull2(cached)
 	defer stop()
