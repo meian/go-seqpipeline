@@ -155,7 +155,7 @@ fmt.Println(seq.ToSlice(second)) // [8 10]
 
 All four operator function types have `Pipe` / `Pipe2` methods: `Pipe` adds a single-value output, and `Pipe2` adds a key-value output.  
 Each step retains the original input type and connects the next transformation to the current output type, including transitions between single values and pairs.  
-The result is an operator function type that can be passed directly to `seq.Seq` / `seq.Seq2` methods or called with a standard iterator, without a build step.  
+The result is an operator function type that can be passed directly to `seq.Seq` / `seq.Seq2` methods or called with a standard iterator.  
 You can also start from a named operator, such as `op.Map(strconv.Itoa).Pipe(op.Take(2).Operator)`.  
 
 When the first transformation carries insufficient type information, specify the missing type arguments on the first method.  
