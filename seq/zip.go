@@ -21,13 +21,13 @@ const (
 
 // Zip は2つのシーケンスの要素を反復順にキーと値の組にする設定値を返す。
 // 接続先のシーケンスをキー、指定したシーケンスを値として使う。
-// Operator を Seq.Pipe2 に渡して使用し、既定では短い方の入力で終了する。
+// Operator を seq.Seq.Pipe2 に渡して使用し、既定では短い方の入力で終了する。
 // AlignBy で終了条件、WithDefaultKey と WithDefaultValue で不足分の既定値を指定する。
 // 未指定の既定値はそれぞれの型のゼロ値を使う。
 // 各設定メソッドはコピーを返す。
 // AlignRight では右から、それ以外では左から要素を取得する。
 // AlignShortest では右の終了検出時に左を1要素余分に取得することがある。
-// Operator の接続時に元の Seq からキー型を推論する。
+// Operator の適用時に入力の iter.Seq からキー型を推論する。
 func Zip[V any](values iter.Seq[V]) zipOperator[V] {
 	return zipOperator[V]{values: values}
 }
