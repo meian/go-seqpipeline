@@ -22,8 +22,6 @@ go get github.com/meian/go-seqpipeline
 
 ### 単一値のパイプライン
 
-次の例は `fmt`、`strconv`、`github.com/meian/go-seqpipeline/seq` をインポートして使います。  
-
 ```go
 pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
     Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
@@ -33,8 +31,6 @@ fmt.Println(seq.ToSlice(pipeline)) // [333]
 ```
 
 ### キーと値のパイプライン
-
-次の例は `fmt`、`slices`、`strconv`、`github.com/meian/go-seqpipeline/seq` をインポートして使います。  
 
 ```go
 pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).

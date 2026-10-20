@@ -22,8 +22,6 @@ Iterate directly with `for range`, or collect results with `ToSlice` / `ToMap`.
 
 ### Single-value pipeline
 
-Use this example with imports for `fmt`, `strconv`, and `github.com/meian/go-seqpipeline/seq`.  
-
 ```go
 pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
     Pipe(seq.Map(func(v int) string { return strconv.Itoa(v) })).
@@ -33,8 +31,6 @@ fmt.Println(seq.ToSlice(pipeline)) // [333]
 ```
 
 ### Key-value pipeline
-
-Use this example with imports for `fmt`, `slices`, `strconv`, and `github.com/meian/go-seqpipeline/seq`.  
 
 ```go
 pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
