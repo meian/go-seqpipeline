@@ -25,9 +25,9 @@ func TestKeys(t *testing.T) {
 	var ope op.ToSeqOperator[int, int, int] = op.Keys[int, int]
 	projected := ope(src)
 	assertEqual(t, started, 0)
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, slices.Collect(projected), want)
-		assertEqual(t, []int{started, visited, stopped}, []int{round, 4 * round, round})
+		assertEqual(t, []int{started, visited, stopped}, []int{i, 4 * i, i})
 	}
 
 	started, visited, stopped = 0, 0, 0
@@ -88,9 +88,9 @@ func TestValues(t *testing.T) {
 	var ope op.ToSeqOperator[int, int, int] = op.Values[int, int]
 	projected := ope(src)
 	assertEqual(t, started, 0)
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, slices.Collect(projected), want)
-		assertEqual(t, []int{started, visited, stopped}, []int{round, 4 * round, round})
+		assertEqual(t, []int{started, visited, stopped}, []int{i, 4 * i, i})
 	}
 
 	started, visited, stopped = 0, 0, 0

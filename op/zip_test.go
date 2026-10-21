@@ -13,11 +13,11 @@ import (
 
 // 既定の終了条件と、同じ設定から異なるキー型を推論できることを確認する。
 func TestZip(t *testing.T) {
-	left := slices.Values([]int{3, 1, 3})
+	left := slices.Values([]int{3, 3, 1})
 	right := slices.Values([]string{"a", "b"})
 	config := op.Zip(right)
 	var ope op.ToSeq2Operator[int, int, string] = config.Operator
-	assertEqual(t, collectPairs(ope(left)), []pair[int, string]{{3, "a"}, {1, "b"}})
+	assertEqual(t, collectPairs(ope(left)), []pair[int, string]{{3, "a"}, {3, "b"}})
 	// 同じ設定から異なるキー型を推論できる。
 	stringKeys := config.Operator(slices.Values([]string{"x"}))
 	assertEqual(t, maps.Collect(stringKeys), map[string]string{"x": "a"})
@@ -68,8 +68,8 @@ func TestZipAlignByInvalid(t *testing.T) {
 // 不等長の左右×4条件で出力・取得数・解放を検証し、順序が異なる経路はイベントも確認する。
 func TestZipAlignBy(t *testing.T) {
 	first := []pair[int, int]{{1, 10}}
-	leftPadded := []pair[int, int]{{1, 10}, {2, -2}}
-	rightPadded := []pair[int, int]{{1, 10}, {-1, 20}}
+	leftPadded := []pair[int, int]{{1, 10}, {2, -2}, {3, -2}}
+	rightPadded := []pair[int, int]{{1, 10}, {-1, 20}, {-1, 30}}
 	for _, tc := range []struct {
 		name    string
 		align   op.ZipAlign
@@ -79,24 +79,24 @@ func TestZipAlignBy(t *testing.T) {
 		events  []string
 	}{
 		{"equal", op.AlignShortest, [2]int{2, 2}, []pair[int, int]{{1, 10}, {2, 20}}, [2]int{2, 2}, nil},
-		{"shortest/left", op.AlignShortest, [2]int{2, 1}, first, [2]int{2, 1},
+		{"shortest/left", op.AlignShortest, [2]int{3, 1}, first, [2]int{2, 1},
 			[]string{"L1", "R10", "out:1,10", "L2", "R:end"}},
-		{"shortest/right", op.AlignShortest, [2]int{1, 2}, first, [2]int{1, 1}, nil},
-		{"left/left", op.AlignLeft, [2]int{2, 1}, leftPadded, [2]int{2, 1},
-			[]string{"L1", "R10", "out:1,10", "L2", "R:end", "out:2,-2", "L:end"}},
-		{"left/right", op.AlignLeft, [2]int{1, 2}, first, [2]int{1, 1}, nil},
-		{"right/left", op.AlignRight, [2]int{2, 1}, first, [2]int{1, 1}, nil},
-		{"right/right", op.AlignRight, [2]int{1, 2}, rightPadded, [2]int{1, 2},
-			[]string{"R10", "L1", "out:1,10", "R20", "L:end", "out:-1,20", "R:end"}},
-		{"longest/left", op.AlignLongest, [2]int{2, 1}, leftPadded, [2]int{2, 1},
-			[]string{"L1", "R10", "out:1,10", "L2", "R:end", "out:2,-2", "L:end"}},
-		{"longest/right", op.AlignLongest, [2]int{1, 2}, rightPadded, [2]int{1, 2},
-			[]string{"L1", "R10", "out:1,10", "L:end", "R20", "out:-1,20", "R:end"}},
+		{"shortest/right", op.AlignShortest, [2]int{1, 3}, first, [2]int{1, 1}, nil},
+		{"left/left", op.AlignLeft, [2]int{3, 1}, leftPadded, [2]int{3, 1},
+			[]string{"L1", "R10", "out:1,10", "L2", "R:end", "out:2,-2", "L3", "out:3,-2", "L:end"}},
+		{"left/right", op.AlignLeft, [2]int{1, 3}, first, [2]int{1, 1}, nil},
+		{"right/left", op.AlignRight, [2]int{3, 1}, first, [2]int{1, 1}, nil},
+		{"right/right", op.AlignRight, [2]int{1, 3}, rightPadded, [2]int{1, 3},
+			[]string{"R10", "L1", "out:1,10", "R20", "L:end", "out:-1,20", "R30", "out:-1,30", "R:end"}},
+		{"longest/left", op.AlignLongest, [2]int{3, 1}, leftPadded, [2]int{3, 1},
+			[]string{"L1", "R10", "out:1,10", "L2", "R:end", "out:2,-2", "L3", "out:3,-2", "L:end"}},
+		{"longest/right", op.AlignLongest, [2]int{1, 3}, rightPadded, [2]int{1, 3},
+			[]string{"L1", "R10", "out:1,10", "L:end", "R20", "out:-1,20", "R30", "out:-1,30", "R:end"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var state zipTrace
-			left := state.input(0, []int{1, 2}[:tc.lengths[0]])
-			right := state.input(1, []int{10, 20}[:tc.lengths[1]])
+			left := state.input(0, []int{1, 2, 3}[:tc.lengths[0]])
+			right := state.input(1, []int{10, 20, 30}[:tc.lengths[1]])
 			output := op.Zip(right).AlignBy(tc.align).WithDefaultKey(-1).WithDefaultValue(-2).Operator(left)
 			var got []pair[int, int]
 			for k, v := range output {
@@ -210,9 +210,9 @@ func TestZipEvaluation(t *testing.T) {
 		var state zipTrace
 		output := op.Zip(state.input(1, []int{10})).Operator(state.input(0, []int{1}))
 		assertEqual(t, state.started, [2]int{})
-		for round := 1; round <= 2; round++ {
+		for i := 1; i <= 2; i++ {
 			assertEqual(t, collectPairs(output), []pair[int, int]{{1, 10}})
-			assertEqual(t, state.started, [2]int{round, round})
+			assertEqual(t, state.started, [2]int{i, i})
 			assertEqual(t, state.reads, state.started)
 			assertEqual(t, state.stopped, state.started)
 		}
