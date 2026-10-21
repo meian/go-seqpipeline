@@ -48,6 +48,12 @@ fmt.Println(seq.ToSlice(pipeline)) // [1 22]
 Pass factory results such as `Map` / `Filter` directly when their callbacks carry type information.  
 For operations such as `Take` / `Skip`, whose factory arguments do not determine types, pass `.Operator` for single values or `.Operator2` for pairs to infer types at connection time.  
 
+`Map` / `Map2` transform values without changing the sequence shape.  
+Use `MapToSeq2` to produce one key-value pair per value, and `MapToSeq` to produce one value per pair.  
+Both infer types from the callback and connect through `Pipe2` / `Pipe`, including in `Compose` / `Compose2`.  
+Keys and values need not be `comparable`; order and duplicates are preserved.  
+See [ExampleMapToSeq2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-MapToSeq2) / [ExampleMapToSeq](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-MapToSeq) for usage.  
+
 The next example uses `Pipe2` to turn single values into key-value pairs, then `Pipe` to extract a single-value sequence.  
 The additional input to `Zip` accepts `iter.Seq`; use `ToSeq` when passing a library sequence as that input.  
 Configuration method names depend on the API: `Zip` uses `.Operator` with `Pipe2` even though it outputs pairs.  

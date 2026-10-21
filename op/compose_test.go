@@ -94,7 +94,7 @@ func TestComposedPipe(t *testing.T) {
 func TestComposedPipe2(t *testing.T) {
 	var calls []string
 	first := op.Compose().Pipe(trackTransform(&calls, "first", op.Map(strconv.Itoa)))
-	transform := first.Pipe2(trackTransform(&calls, "next", withLength[string]))
+	transform := first.Pipe2(trackTransform(&calls, "next", withLength))
 	assertEqual(t, calls, []string(nil))
 	result := transform.Operator(slices.Values([]int{2, 22}))
 	assertEqual(t, calls, []string{"first", "next"})
@@ -124,7 +124,7 @@ func TestComposedOperator(t *testing.T) {
 
 func TestComposedToSeq2Pipe(t *testing.T) {
 	var calls []string
-	first := op.Compose().Pipe2(trackTransform(&calls, "first", withLength[string]))
+	first := op.Compose().Pipe2(trackTransform(&calls, "first", withLength))
 	transform := first.Pipe(trackTransform(&calls, "next", op.Keys[[]int, string]))
 	assertEqual(t, calls, []string(nil))
 	result := transform.Operator(slices.Values([]string{"a", "bbb", "a"}))
@@ -135,7 +135,7 @@ func TestComposedToSeq2Pipe(t *testing.T) {
 
 func TestComposedToSeq2Pipe2(t *testing.T) {
 	var calls []string
-	first := op.Compose().Pipe2(trackTransform(&calls, "first", withLength[string]))
+	first := op.Compose().Pipe2(trackTransform(&calls, "first", withLength))
 	next := op.Map2(func(k []int, v string) (string, int) { return v, k[0] })
 	transform := first.Pipe2(trackTransform(&calls, "next", next))
 	assertEqual(t, calls, []string(nil))
@@ -180,7 +180,7 @@ func TestComposedToSeqPipe(t *testing.T) {
 func TestComposedToSeqPipe2(t *testing.T) {
 	var calls []string
 	first := op.Compose2().Pipe(trackTransform(&calls, "first", op.Values[int, string]))
-	transform := first.Pipe2(trackTransform(&calls, "next", withLength[string]))
+	transform := first.Pipe2(trackTransform(&calls, "next", withLength))
 	assertEqual(t, calls, []string(nil))
 	result := transform.Operator(slices.All([]string{"a", "bbb"}))
 	assertEqual(t, calls, []string{"first", "next"})
