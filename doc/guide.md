@@ -2,19 +2,83 @@
 
 English | [日本語](guide.ja.md)  
 
-This guide covers shared semantics and connections beyond the basic examples in the [README](../README.md).  
-See the [README](../README.md#type-inference) for basic type inference and the GoDoc for [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) for individual API contracts.  
+This guide builds on the basic [README](../README.md) examples to show how to create pipelines for your own data.  
+See the GoDoc for [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) for individual API contracts.  
 
-## seq.Seq / seq.Seq2
+## Roles of seq, op, Seq, and Seq2
+
+`seq` provides input and result conversions and the `seq.Seq` / `seq.Seq2` types for connecting operations.  
+`op` provides operators such as transforming elements, filtering them, and limiting the number of results.  
+An operator transforms `iter.Seq` / `iter.Seq2` to produce a new sequence; connect it through the `seq` methods `Pipe` / `Pipe2`.  
 
 `seq.Seq[T]` / `seq.Seq2[K, V]` extend the function types from the [`iter`](https://pkg.go.dev/iter) package with `Pipe` / `Pipe2` methods for connecting transformations.  
 Like standard iterators, the results can be iterated over directly with `for v := range pipeline` / `for k, v := range pipeline`.  
 `seq.Seq2[K, V]` places no constraints on `K` or `V`, but `FromMap` / `ToMap`, which convert to and from maps, require `K` to be `comparable`.  
 A `seq.Seq2` can also be converted into a single-value `seq.Seq` to continue the pipeline.  
 
-## Evaluation and usage semantics
+For operations with separate functions for single values and key-value pairs, the pair version has a `2` suffix, as in `Filter` and `Filter2`.  
 
-### Evaluation and stopping
+## Input and result collection
+
+Functions starting with `From` convert collections, standard iterators, or channels into pipeline inputs.  
+Functions starting with `To` collect results into collections or convert them to standard iterators or channels.  
+
+| Operation | `seq.Seq` | `seq.Seq2` |
+| --- | --- | --- |
+| Input from a collection | `FromSlice` | `FromMap` |
+| Input from a standard iterator | `FromSeq` | `FromSeq2` |
+| Collect into a collection | `ToSlice` | `ToMap` (keys must be `comparable`) |
+| Convert to a standard iterator | `ToSeq` | `ToSeq2` |
+| Input from / output to a channel | `FromChannel` / `ToChannel` | — |
+
+Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the `iter.Seq` / `iter.Seq2` types.  
+
+## Connecting operations with Pipe / Pipe2
+
+For either `seq.Seq` or `seq.Seq2` input, use `Pipe` for single-value output and `Pipe2` for key-value output.  
+Each subsequent operation accepts the preceding output type, including when element types change.  
+
+```go
+pipeline := seq.FromSlice([]int{1, 22, 333}).
+    Pipe(op.Map(strconv.Itoa)).
+    Pipe(op.Take(2).Operator)
+fmt.Println(seq.ToSlice(pipeline)) // [1 22]
+```
+
+Pass factory results such as `Map` / `Filter` directly when their callbacks carry type information.  
+For operations such as `Take` / `Skip`, whose factory arguments do not determine types, pass `.Operator` for single values or `.Operator2` for pairs to infer types at connection time.  
+
+The next example uses `Pipe2` to turn single values into key-value pairs, then `Pipe` to extract a single-value sequence.  
+The additional input to `Zip` accepts `iter.Seq`; use `ToSeq` when passing a library sequence as that input.  
+Configuration method names depend on the API: `Zip` uses `.Operator` with `Pipe2` even though it outputs pairs.  
+
+```go
+pairs := seq.FromSlice([]int{1, 2, 3}).
+    Pipe2(op.Zip(slices.Values([]string{"a", "b", "c"})).Operator).
+    Pipe2(op.Take(2).Operator2)
+values := pairs.Pipe(op.Values)
+fmt.Println(seq.ToSlice(values)) // [a b]
+```
+
+See [ExampleSeq_Pipe](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-Seq.Pipe) / [ExampleSeq2_Pipe2](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-Seq2.Pipe2) for changing element types, and [ExampleSeq_Pipe2](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-Seq.Pipe2) / [ExampleSeq2_Pipe](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-Seq2.Pipe) for transitions between single values and pairs.  
+The [op Example index](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) covers transformation, filtering, limits, projection, and Zip.  
+
+### Connection function types
+
+Four function types represent the combinations of input and output types.  
+
+| Input | Method | Transformation function | Output |
+| --- | --- | --- | --- |
+| `seq.Seq[I]` | `Pipe` | `op.Operator[I, O]` | `seq.Seq[O]` |
+| `seq.Seq[I]` | `Pipe2` | `op.ToSeq2Operator[I, K, V]` | `seq.Seq2[K, V]` |
+| `seq.Seq2[K, V]` | `Pipe` | `op.ToSeqOperator[K, V, O]` | `seq.Seq[O]` |
+| `seq.Seq2[K, V]` | `Pipe2` | `op.Operator2[K, V, K2, V2]` | `seq.Seq2[K2, V2]` |
+
+`Pipe` / `Pipe2` convert the input to a standard iterator, call the transformation immediately, and convert the result back to the library type.  
+These type conversions preserve nil without evaluating or copying elements.  
+Input evaluation and stop propagation depend on the transformation function.  
+
+## Evaluation and stopping basics
 
 Built-in input conversions and operators are lazy, except for caching; collection or iteration starts processing.  
 `Cache` / `Cache2` evaluate the entire input when called, including when connected with `Pipe` / `Pipe2`.  
@@ -22,20 +86,13 @@ Channel output starts evaluation in a goroutine when called.
 During `seq.Seq` / `seq.Seq2` iteration, a downstream `yield` returning `false` or a `range` loop ending with `break` propagates a stop upstream.  
 Waits inside inputs or callbacks cannot be forcibly interrupted; callers must provide a way to stop them.  
 
-### Input, order, and re-evaluation
-
-Input and output conversions preserve iteration order and duplicates, except that map order is unspecified and `ToMap` keeps the last value for each key.  
-`FromSlice` / `FromMap` reference input elements at evaluation time without copying them.  
-Built-in operators other than caching initialize internal state for each evaluation; repeated or concurrent evaluation depends on the input and callbacks.  
-Built-in operations other than channel conversions do not use goroutines or channels.  
-
-### Reusing evaluated results
+## Reusing evaluated results with Cache
 
 Use `Pipe(op.Cache)` / `Pipe2(op.Cache2)` to save results at a pipeline boundary and build multiple downstream pipelines from them.  
 Caching evaluates upstream once during connection, preserves order and duplicates, and returns a non-nil sequence even for nil or empty input.  
 Later iterations read the saved results from the beginning, including after an early stop; downstream operations run on every iteration.  
 
-See [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) for executable usage.  
+See [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) / [ExampleCache2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache2) for executable usage.  
 
 Input must be finite, and memory use grows with the number of saved elements or pairs.  
 For an unbounded input, limit it before caching; a downstream limit cannot stop the initial evaluation.  
@@ -72,35 +129,12 @@ Elements are saved by value without a deep copy: replacing original elements doe
 Input iteration ends before the caching call returns, and the saved storage can be reclaimed when the cache is no longer used.  
 Cached sequences support interleaved and concurrent iteration; callers must synchronize shared referenced data and downstream callbacks as needed.  
 
-### Nil and empty input
-
-The zero values of `seq.Seq` / `seq.Seq2` are nil, and conversions to and from standard iterators preserve nil.  
-Built-in operators treat nil as empty, but direct calls, iteration, and passing nil to `ToSlice` / `ToMap` panic.  
-For empty non-nil iterators, `ToSlice` returns nil and `ToMap` returns an empty non-nil map.  
-Evaluation, stopping, and nil handling for custom operators depend on their implementation.  
-See GoDoc and the tests for [seq](../seq) / [op](../op) for each API's boundary conditions.  
-
-## Input and output
-
-Functions starting with `From` convert collections, standard iterators, or channels into pipeline inputs.  
-Functions starting with `To` collect results into collections or convert them to standard iterators or channels.  
-
-| Operation | `seq.Seq` | `seq.Seq2` |
-| --- | --- | --- |
-| Input from a collection | `FromSlice` | `FromMap` |
-| Input from a standard iterator | `FromSeq` | `FromSeq2` |
-| Collect into a collection | `ToSlice` | `ToMap` (keys must be `comparable`) |
-| Convert to a standard iterator | `ToSeq` | `ToSeq2` |
-| Input from / output to a channel | `FromChannel` / `ToChannel` | — |
-
-Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the `iter.Seq` / `iter.Seq2` types.  
-
-### Channel conversions
+## Channel conversions
 
 Functions that convert to and from channels take a context to support early cancellation, including channel communication waits.  
 To stop processing early, cancel the context passed to the conversion.  
 
-See [ExampleToChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-ToChannel) for usage with cancellation.  
+See [ExampleFromChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-FromChannel) for input and [ExampleToChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-ToChannel) for output with cancellation.  
 
 Cancellation releases channel communication waits, but cannot forcibly interrupt waits inside inputs or callbacks.  
 However, if a send races with cancellation, the send may be selected, so you may receive the next value depending on timing.  
@@ -109,36 +143,10 @@ However, if a send races with cancellation, the send may be selected, so you may
 `ToChannel(ctx, src)` returns an unbuffered channel and closes it when evaluation ends.  
 To also interrupt upstream communication waits, pass the same context upstream.  
 
-## Operators
-
-In go-seqpipeline, an operator is an operation that transforms `iter.Seq` / `iter.Seq2` to produce a new sequence.  
-
-### Built-in operators
-
-The library provides operations such as transforming elements, filtering them, and limiting the number of results.  
-For operations with separate functions for single values and key-value pairs, the library provides the pair version with a `2` suffix, as in `Filter` and `Filter2`.  
-
-### Connecting operators
-
-Both `seq.Seq` and `seq.Seq2` define `Pipe` / `Pipe2`, which connect operators using standard iterators and return `seq.Seq` / `seq.Seq2`, respectively.  
-The function types `op.Operator`, `op.ToSeq2Operator`, `op.ToSeqOperator`, and `op.Operator2` represent the four combinations of input and output types.  
-
-| Input | Method | Transformation function | Output |
-| --- | --- | --- | --- |
-| `seq.Seq[I]` | `Pipe` | `op.Operator[I, O]` | `seq.Seq[O]` |
-| `seq.Seq[I]` | `Pipe2` | `op.ToSeq2Operator[I, K, V]` | `seq.Seq2[K, V]` |
-| `seq.Seq2[K, V]` | `Pipe` | `op.ToSeqOperator[K, V, O]` | `seq.Seq[O]` |
-| `seq.Seq2[K, V]` | `Pipe2` | `op.Operator2[K, V, K2, V2]` | `seq.Seq2[K2, V2]` |
-
-`Pipe` / `Pipe2` convert the input to a standard iterator, call the transformation immediately, and convert the result back to the library type.  
-These type conversions preserve nil without evaluating or copying elements.  
-Input evaluation and stop propagation depend on the transformation function.  
-Use `ToSeq` / `ToSeq2` when passing library types as additional inputs to operators such as `Zip`.  
-
-### Composing operators
+## Composing operators with Compose
 
 Use `seq.Seq` / `seq.Seq2` methods to connect operations to an input.  
-To define a reusable composite operator before choosing its input, use `op.Compose()` for single-value input or `op.Compose2()` for key-value input.  
+To build a preset from existing operators before applying it to an input, use `op.Compose()` for single-value input or `op.Compose2()` for key-value input.  
 The first `Pipe` / `Pipe2` infers the input and output types from the transformation you pass.  
 The empty start value has no input type yet; the first connection returns a dedicated composition value.  
 
@@ -175,32 +183,35 @@ Inputs, callbacks, and additional inputs such as the right side of `Zip` still f
 
 See [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose), [ExampleCompose2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2), and [ExampleCompose2_values](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2-Values) for executable examples.  
 
-### Implementing custom operators
+## Implementing custom operators
+
+Implement a custom operator when composing existing operators cannot express the operation you need.  
 
 Implement a transformation function using `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
 The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 To combine operators within a custom implementation, use composition in `op` while keeping input and output as standard iterators.  
 
-### Executable examples
+See [ExampleOperator_custom](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Operator-Custom) / [ExampleOperator2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Operator2) for usage, and [ExampleToSeq2Operator](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-ToSeq2Operator) / [ExampleToSeqOperator](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-ToSeqOperator) for function types that cross between single values and pairs.  
 
-Go Examples for [seq](../seq/example_test.go) / [op](../op/example_test.go) demonstrate operators connected through `Pipe` / `Pipe2`.  
+## Shared semantics in detail
 
-| Example | `seq.Seq` | `seq.Seq2` |
-| --- | --- | --- |
-| Transform elements or keys and values | [ExampleMap](../op/example_test.go#L13) | [ExampleMap2](../op/example_test.go#L20) |
-| Filter by a condition | [ExampleFilter](../op/example_test.go#L31) | [ExampleFilter2](../op/example_test.go#L38) |
-| Limit results and infer types (.Operator / .Operator2) | [ExampleTake](../op/example_test.go#L47) | [ExampleTake_pairs](../op/example_test.go#L53) |
-| Skip leading elements or pairs | [ExampleSkip](../op/example_test.go#L208) | [ExampleSkip](../op/example_test.go#L208) |
-| Connect operations that change types | [ExampleSeq_Pipe](../seq/example_test.go#L14) | [ExampleSeq2_Pipe2](../seq/example_test.go#L60) |
-| Connect between `seq.Seq` and `seq.Seq2` | [ExampleSeq_Pipe2](../seq/example_test.go#L40) | [ExampleSeq2_Pipe](../seq/example_test.go#L52) |
-| Extract keys / values from `seq.Seq2` | — | [ExampleKeys](../op/example_test.go#L131), [ExampleValues](../op/example_test.go#L140) |
-| Connect function operators between `seq.Seq` and `seq.Seq2` | [ExampleToSeq2Operator](../op/example_test.go#L166) | [ExampleToSeqOperator](../op/example_test.go#L176) |
-| Connect function operators within the same sequence type | [ExampleOperator](../op/example_test.go#L79) | [ExampleOperator2](../op/example_test.go#L121) |
-| Extend with custom operators | [ExampleOperator_custom](../op/example_test.go#L105) | [ExampleOperator2](../op/example_test.go#L121) |
+### Input, order, and re-evaluation
 
-To run only the Examples, use the following command.  
+Input and output conversions preserve iteration order and duplicates, except that map order is unspecified and `ToMap` keeps the last value for each key.  
+`FromSlice` / `FromMap` reference input elements at evaluation time without copying them.  
+Built-in operators other than caching initialize internal state for each evaluation; repeated or concurrent evaluation depends on the input and callbacks.  
+Built-in operations other than channel conversions do not use goroutines or channels.  
 
-```sh
-go test ./... -run '^Example' -count=1
-```
+### Nil and empty input
+
+The zero values of `seq.Seq` / `seq.Seq2` are nil, and conversions to and from standard iterators preserve nil.  
+Built-in operators treat nil as empty, but direct calls, iteration, and passing nil to `ToSlice` / `ToMap` panic.  
+For empty non-nil iterators, `ToSlice` returns nil and `ToMap` returns an empty non-nil map.  
+Evaluation, stopping, and nil handling for custom operators depend on their implementation.  
+See GoDoc and the tests for [seq](../seq) / [op](../op) for each API's boundary conditions.  
+
+### Example index
+
+- [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples): input, output, and `Pipe` / `Pipe2` ([source](../seq/example_test.go))
+- [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples): built-in, composed, and custom operators ([source](../op/example_test.go))
