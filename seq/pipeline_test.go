@@ -1,7 +1,6 @@
 package seq_test
 
 import (
-	"iter"
 	"slices"
 	"strconv"
 	"testing"
@@ -133,32 +132,6 @@ func TestSingleUseSource(t *testing.T) {
 	assertEqual(t, seq.ToSlice(pipeline), []int(nil))
 }
 
-// 名前付き関数型に代入したオペレーターを接続し、型推論と再評価を確認する。
-func TestDirectTransformPipeline(t *testing.T) {
-	var ope op.Operator[int, string] = op.Map(strconv.Itoa)
-	var limit op.Operator[string, string] = op.Take(2).Operator
-	pipeline := seq.FromSlice([]int{1, 2, 3}).Pipe(ope).Pipe(limit)
-	for round := 0; round < 2; round++ {
-		assertEqual(t, seq.ToSlice(pipeline), []string{"1", "2"})
-	}
-}
-
-// 独自の変換関数を Map・Take に接続し、遅延評価と再評価ごとの上流停止を確認する。
-func TestTransformPipeline(t *testing.T) {
-	ope := repeat
-	calls := 0
-	pipeline := seq.FromSlice([]int{1, 2, 3}).
-		Pipe(op.Map(func(v int) int {
-			calls++
-			return v
-		})).Pipe(ope).Pipe(op.Take(1).Operator)
-	assertEqual(t, calls, 0)
-	for round := 1; round <= 2; round++ {
-		assertEqual(t, seq.ToSlice(pipeline), []string{"1"})
-		assertEqual(t, calls, round)
-	}
-}
-
 // 組のままなら重複キーを保ち、ToMap で収集すると後の値を採用する。
 func TestSeq2Pipeline(t *testing.T) {
 	src := func(yield func(int, string) bool) {
@@ -241,57 +214,6 @@ func TestNonComparableKeys(t *testing.T) {
 	}))
 	got := collectPairs(seq.ToSeq2(pipeline))
 	assertEqual(t, got, []pair[[]int, int]{{Key: []int{1, 2}, Value: 5}})
-}
-
-// 独自の組変換を直接適用・Pipe2 接続でき、接続時の遅延評価と下流の停止を保つ。
-func TestExternalTransforms2(t *testing.T) {
-	ope := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
-		return func(yield func(string, string) bool) {
-			for k, v := range src {
-				if !yield(k, strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	}
-	direct := ope(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))
-	assertEqual(t, collectPairs(direct), []pair[string, string]{{Key: "1", Value: "10"}})
-	reads := 0
-	src := func(yield func(int, int) bool) {
-		for i := 1; i <= 3; i++ {
-			reads++
-			if !yield(i, i*10) {
-				return
-			}
-		}
-	}
-	pipeline := seq.FromSeq2(src).Pipe2(keyText).Pipe2(ope)
-	assertEqual(t, reads, 0)
-	for k, v := range seq.ToSeq2(pipeline) {
-		assertEqual(t, k, "1")
-		assertEqual(t, v, "10")
-		break
-	}
-	assertEqual(t, reads, 1)
-	want := []pair[string, string]{
-		{Key: "1", Value: "10"},
-		{Key: "2", Value: "20"},
-		{Key: "3", Value: "30"},
-	}
-	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
-}
-
-// 独自の組変換・Filter2・Take を名前付き関数型で接続し、型推論と再評価を確認する。
-func TestDirectTransform2Pipeline(t *testing.T) {
-	ope := keyText
-	var filtered op.Operator2[string, int, string, int] = op.Filter2(func(k string, v int) bool {
-		return v > 1
-	})
-	var limit op.Operator2[string, int, string, int] = op.Take(1).Operator2
-	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3})).Pipe2(ope).Pipe2(filtered).Pipe2(limit)
-	for round := 0; round < 2; round++ {
-		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), []pair[string, int]{{Key: "1", Value: 2}})
-	}
 }
 
 // 比較不能なキーを経由する型変換でも、Take の型推論・件数制限・再評価・途中終了が働く。

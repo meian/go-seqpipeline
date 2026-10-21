@@ -59,6 +59,28 @@ func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
 	}
 }
 
+// 指定件数に達する前の下流停止が、再評価のたびに上流へ伝わる。
+func TestTakeOperatorDownstreamStop(t *testing.T) {
+	reads, stops := 0, 0
+	src := iter.Seq[int](func(yield func(int) bool) {
+		for i := 1; i <= 3; i++ {
+			reads++
+			if !yield(i) {
+				stops++
+				return
+			}
+		}
+	})
+	iterator := op.Take(3).Operator(src)
+	for round := 1; round <= 2; round++ {
+		for v := range iterator {
+			assertEqual(t, v, 1)
+			break
+		}
+		assertEqual(t, []int{reads, stops}, []int{round, round})
+	}
+}
+
 // 組の順序とキーの重複を保ち、遅延評価・件数制限・上流停止が再評価ごとに働く。
 // 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator2(t *testing.T) {
@@ -94,8 +116,7 @@ func TestTakeOperator2(t *testing.T) {
 					}
 				}
 			})
-			pipeline := op.Take(tc.n).Operator2(src)
-			iterator := pipeline
+			iterator := op.Take(tc.n).Operator2(src)
 			assertEqual(t, []int{reads, starts, stops}, []int{0, 0, 0})
 			for round := 1; round <= 2; round++ {
 				assertEqual(t, collectPairs(iterator), tc.want)
@@ -137,40 +158,12 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 	assertEqual(t, []int{reads, stops}, []int{1, 1})
 }
 
-// 指定件数に達する前の下流停止が、再評価のたびに上流へ伝わる。
-func TestTakeOperatorDownstreamStop(t *testing.T) {
-	reads, stops := 0, 0
-	src := iter.Seq[int](func(yield func(int) bool) {
-		for i := 1; i <= 3; i++ {
-			reads++
-			if !yield(i) {
-				stops++
-				return
-			}
-		}
-	})
-	iterator := op.Take(3).Operator(src)
-	for round := 1; round <= 2; round++ {
-		for v := range iterator {
-			assertEqual(t, v, 1)
-			break
-		}
-		assertEqual(t, []int{reads, stops}, []int{round, round})
-	}
-}
-
 // 同じ設定を異なる型と入力に使っても、評価時の残り件数を共有しない。
 func TestTakeConfigurationReuse(t *testing.T) {
 	take := op.Take(2)
 	var ope op.Operator[int, int] = take.Operator
 	var ope2 op.Operator2[[]int, string, []int, string] = take.Operator2
-	values := iter.Seq[int](func(yield func(int) bool) {
-		for _, v := range []int{3, 3, 1} {
-			if !yield(v) {
-				return
-			}
-		}
-	})
+	values := slices.Values([]int{3, 3, 1})
 	pairs := iter.Seq2[[]int, string](func(yield func([]int, string) bool) {
 		for _, p := range []pair[[]int, string]{
 			{Key: []int{1}, Value: "a"},

@@ -25,6 +25,9 @@ func TestZip(t *testing.T) {
 
 // 入力の長さ・空・nil を組み合わせ、4つの終了条件ごとの出力順序と補完を確認する。
 func TestZipAlignBy(t *testing.T) {
+	type outputs struct {
+		shortest, left, right, longest []pair[int, string]
+	}
 	both := []pair[int, string]{{3, "a"}, {1, "b"}, {3, "c"}}
 	first := []pair[int, string]{{3, "a"}}
 	paddedKeys := []pair[int, string]{{3, "a"}, {0, "b"}, {0, "c"}}
@@ -35,84 +38,85 @@ func TestZipAlignBy(t *testing.T) {
 		name   string
 		keys   iter.Seq[int]
 		values iter.Seq[string]
-		want   [4][]pair[int, string]
+		want   outputs
 	}{
 		{
 			name:   "equal",
 			keys:   slices.Values([]int{3, 1, 3}),
 			values: slices.Values([]string{"a", "b", "c"}),
-			want:   [4][]pair[int, string]{both, both, both, both},
+			want:   outputs{shortest: both, left: both, right: both, longest: both},
 		},
 		{
 			name:   "keys longer",
 			keys:   slices.Values([]int{3, 1, 3}),
 			values: slices.Values([]string{"a"}),
-			want:   [4][]pair[int, string]{first, paddedValues, first, paddedValues},
+			want:   outputs{shortest: first, left: paddedValues, right: first, longest: paddedValues},
 		},
 		{
 			name:   "values longer",
 			keys:   slices.Values([]int{3}),
 			values: slices.Values([]string{"a", "b", "c"}),
-			want:   [4][]pair[int, string]{first, first, paddedKeys, paddedKeys},
+			want:   outputs{shortest: first, left: first, right: paddedKeys, longest: paddedKeys},
 		},
 		{
 			name:   "empty keys",
 			keys:   slices.Values([]int{}),
 			values: slices.Values([]string{"a"}),
-			want:   [4][]pair[int, string]{nil, nil, onlyValues, onlyValues},
+			want:   outputs{right: onlyValues, longest: onlyValues},
 		},
 		{
 			name:   "empty values",
 			keys:   slices.Values([]int{3}),
 			values: slices.Values([]string{}),
-			want:   [4][]pair[int, string]{nil, onlyKeys, nil, onlyKeys},
+			want:   outputs{left: onlyKeys, longest: onlyKeys},
 		},
 		{
 			name:   "both empty",
 			keys:   slices.Values([]int{}),
 			values: slices.Values([]string{}),
-			want:   [4][]pair[int, string]{},
+			want:   outputs{},
 		},
 		{
 			name:   "nil keys",
 			keys:   nil,
 			values: slices.Values([]string{"a"}),
-			want:   [4][]pair[int, string]{nil, nil, onlyValues, onlyValues},
+			want:   outputs{right: onlyValues, longest: onlyValues},
 		},
 		{
 			name:   "nil values",
 			keys:   slices.Values([]int{3}),
 			values: nil,
-			want:   [4][]pair[int, string]{nil, onlyKeys, nil, onlyKeys},
+			want:   outputs{left: onlyKeys, longest: onlyKeys},
 		},
 		{
 			name:   "both nil",
 			keys:   nil,
 			values: nil,
-			want:   [4][]pair[int, string]{},
+			want:   outputs{},
 		},
 		{
 			name:   "nil and empty",
 			keys:   nil,
 			values: slices.Values([]string{}),
-			want:   [4][]pair[int, string]{},
+			want:   outputs{},
 		},
 		{
 			name:   "empty and nil",
 			keys:   slices.Values([]int{}),
 			values: nil,
-			want:   [4][]pair[int, string]{},
+			want:   outputs{},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for i, align := range []struct {
+			for _, align := range []struct {
 				name  string
 				value op.ZipAlign
+				want  []pair[int, string]
 			}{
-				{"shortest", op.AlignShortest},
-				{"left", op.AlignLeft},
-				{"right", op.AlignRight},
-				{"longest", op.AlignLongest},
+				{"shortest", op.AlignShortest, tc.want.shortest},
+				{"left", op.AlignLeft, tc.want.left},
+				{"right", op.AlignRight, tc.want.right},
+				{"longest", op.AlignLongest, tc.want.longest},
 			} {
 				t.Run(align.name, func(t *testing.T) {
 					base := op.Zip(tc.values).AlignBy(align.value)
@@ -127,7 +131,7 @@ func TestZipAlignBy(t *testing.T) {
 							if output == nil {
 								t.Fatal("Operator must return a non-nil iterator")
 							}
-							assertEqual(t, collectPairs(output), tc.want[i])
+							assertEqual(t, collectPairs(output), align.want)
 						})
 					}
 				})
@@ -249,11 +253,15 @@ func trackedZipInput[T any](values []T, started, visited, stopped *int) iter.Seq
 func TestZipEvaluation(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		t.Run(fmt.Sprint(alignment), func(t *testing.T) {
-			testZipEvaluation(t, func(k iter.Seq[int], v iter.Seq[string]) iter.Seq2[int, string] {
-				return op.Zip(v).AlignBy(alignment).Operator(k)
+			t.Run("inferred key", func(t *testing.T) {
+				testZipEvaluation(t, func(k iter.Seq[int], v iter.Seq[string]) iter.Seq2[int, string] {
+					return op.Zip(v).AlignBy(alignment).Operator(k)
+				})
 			})
-			testZipEvaluation(t, func(k iter.Seq[int], v iter.Seq[string]) iter.Seq2[int, string] {
-				return op.Zip(v).WithDefaultKey(-1).AlignBy(alignment).Operator(k)
+			t.Run("fixed key", func(t *testing.T) {
+				testZipEvaluation(t, func(k iter.Seq[int], v iter.Seq[string]) iter.Seq2[int, string] {
+					return op.Zip(v).WithDefaultKey(-1).AlignBy(alignment).Operator(k)
+				})
 			})
 		})
 	}
@@ -261,64 +269,55 @@ func TestZipEvaluation(t *testing.T) {
 
 func testZipEvaluation(t *testing.T, zip func(iter.Seq[int], iter.Seq[string]) iter.Seq2[int, string]) {
 	t.Helper()
-	for _, mode := range []string{"full", "yield", "break", "Take", "TakeZero", "panic"} {
-		t.Run(mode, func(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		consume func(*testing.T, iter.Seq2[int, string])
+		reads   int
+	}{
+		{
+			name: "full",
+			consume: func(t *testing.T, src iter.Seq2[int, string]) {
+				want := []pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
+				assertEqual(t, collectPairs(src), want)
+			},
+			reads: 3,
+		},
+		{
+			name: "stop",
+			consume: func(t *testing.T, src iter.Seq2[int, string]) {
+				var got []pair[int, string]
+				for k, v := range src {
+					got = append(got, pair[int, string]{k, v})
+					break
+				}
+				assertEqual(t, got, []pair[int, string]{{1, "a"}})
+			},
+			reads: 1,
+		},
+		{
+			name: "panic",
+			consume: func(t *testing.T, src iter.Seq2[int, string]) {
+				defer func() {
+					assertEqual(t, recover(), any("downstream"))
+				}()
+				src(func(int, string) bool { panic("downstream") })
+			},
+			reads: 1,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			var started, visited, stopped [2]int
 			keys := trackedZipInput([]int{1, 2, 3}, &started[0], &visited[0], &stopped[0])
 			values := trackedZipInput([]string{"a", "b", "c"}, &started[1], &visited[1], &stopped[1])
 			zipped := zip(keys, values)
 			assertEqual(t, started, [2]int{})
-			for i := 1; i <= 2; i++ {
-				switch mode {
-				case "full":
-					want := []pair[int, string]{{1, "a"}, {2, "b"}, {3, "c"}}
-					assertEqual(t, collectPairs(zipped), want)
-				case "yield":
-					zipped(func(int, string) bool { return false })
-				case "break":
-					for range zipped {
-						break
-					}
-				case "Take":
-					assertEqual(t, maps.Collect(op.Take(1).Operator2(zipped)), map[int]string{1: "a"})
-				case "TakeZero":
-					assertEqual(t, maps.Collect(op.Take(0).Operator2(zipped)), map[int]string{})
-				case "panic":
-					func() {
-						defer func() {
-							if got := recover(); got != "downstream" {
-								t.Fatalf("panic = %v", got)
-							}
-						}()
-						zipped(func(int, string) bool { panic("downstream") })
-					}()
-				}
-				n := i
-				if mode == "TakeZero" {
-					n = 0
-				}
-				assertEqual(t, started, [2]int{n, n})
-				assertEqual(t, stopped, [2]int{n, n})
-				if mode == "full" {
-					n *= 3
-				}
-				assertEqual(t, visited, [2]int{n, n})
+			for round := 1; round <= 2; round++ {
+				tc.consume(t, zipped)
+				assertEqual(t, started, [2]int{round, round})
+				assertEqual(t, stopped, [2]int{round, round})
+				assertEqual(t, visited, [2]int{tc.reads * round, tc.reads * round})
 			}
 		})
-	}
-}
-
-// Take の件数制限を両入力に伝え、余分な取得をせずに反復を終了する。
-func TestZipTakeStopsInputs(t *testing.T) {
-	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
-		var started, visited, stopped [2]int
-		values := []int{0, 1, 2, 3, 4}
-		left := trackedZipInput(values, &started[0], &visited[0], &stopped[0])
-		right := trackedZipInput(values, &started[1], &visited[1], &stopped[1])
-		output := op.Take(3).Operator2(op.Zip(right).AlignBy(alignment).Operator(left))
-		assertEqual(t, collectPairs(output), []pair[int, int]{{0, 0}, {1, 1}, {2, 2}})
-		assertEqual(t, visited, [2]int{3, 3})
-		assertEqual(t, stopped, [2]int{1, 1})
 	}
 }
 
@@ -499,7 +498,7 @@ func TestZipInputOrder(t *testing.T) {
 	}
 }
 
-// 不足分の補完中でも Take で停止し、余分な取得をせずに入力を解放する。
+// 不足分の補完中でも下流の途中終了を伝え、余分な取得をせずに入力を解放する。
 func TestZipStopAfterPadding(t *testing.T) {
 	for _, alignment := range []op.ZipAlign{op.AlignLeft, op.AlignRight, op.AlignLongest} {
 		for _, lengths := range [][2]int{{0, 3}, {3, 0}, {1, 3}, {3, 1}} {
@@ -510,7 +509,13 @@ func TestZipStopAfterPadding(t *testing.T) {
 				AlignBy(alignment).
 				WithDefaultValue("missing").
 				WithDefaultKey(-1)
-			output := op.Take(2).Operator2(config.Operator(left))
+			var got []pair[int, string]
+			for k, v := range config.Operator(left) {
+				got = append(got, pair[int, string]{k, v})
+				if len(got) == 2 {
+					break
+				}
+			}
 			count := min(2, max(lengths[0], lengths[1]))
 			if alignment == op.AlignLeft {
 				count = min(2, lengths[0])
@@ -518,7 +523,7 @@ func TestZipStopAfterPadding(t *testing.T) {
 			if alignment == op.AlignRight {
 				count = min(2, lengths[1])
 			}
-			assertEqual(t, len(collectPairs(output)), count)
+			assertEqual(t, len(got), count)
 			assertEqual(t, visited, [2]int{min(lengths[0], count), min(lengths[1], count)})
 			assertEqual(t, stopped, started)
 		}

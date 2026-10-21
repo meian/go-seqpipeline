@@ -4,8 +4,6 @@ import (
 	"iter"
 	"reflect"
 	"testing"
-
-	"github.com/meian/go-seqpipeline/op"
 )
 
 func assertEqual[T any](t *testing.T, got, want T) {
@@ -27,5 +25,3 @@ func collectPairs[K, V any](src iter.Seq2[K, V]) []pair[K, V] {
 	}
 	return got
 }
-
-var withLength = op.MapToSeq2(func(v string) ([]int, string) { return []int{len(v)}, v })

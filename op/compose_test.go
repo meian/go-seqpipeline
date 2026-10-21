@@ -9,6 +9,8 @@ import (
 	"github.com/meian/go-seqpipeline/op"
 )
 
+var withLength = op.MapToSeq2(func(v string) ([]int, string) { return []int{len(v)}, v })
+
 func trackTransform[I, O any](calls *[]string, name string, transform func(I) O) func(I) O {
 	return func(src I) O {
 		*calls = append(*calls, name)

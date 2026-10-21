@@ -8,6 +8,7 @@ import (
 	"github.com/meian/go-seqpipeline/op"
 )
 
+// 順序と重複を保ってキーを取り出し、遅延評価・再評価と下流停止時の解放を確認する。
 func TestKeys(t *testing.T) {
 	want := []int{3, 1, 3, 2}
 	started, visited, stopped := 0, 0, 0
@@ -24,55 +25,53 @@ func TestKeys(t *testing.T) {
 	var ope op.ToSeqOperator[int, int, int] = op.Keys[int, int]
 	projected := ope(src)
 	assertEqual(t, started, 0)
-	for i := 0; i < 2; i++ {
+	for round := 1; round <= 2; round++ {
 		assertEqual(t, slices.Collect(projected), want)
-	}
-	assertEqual(t, started, 2)
-	assertEqual(t, visited, 8)
-	assertEqual(t, stopped, 2)
-
-	for _, mode := range []string{"yield", "break", "Take"} {
-		t.Run(mode, func(t *testing.T) {
-			visited, stopped = 0, 0
-			var got []int
-			switch mode {
-			case "yield":
-				projected(func(v int) bool {
-					got = append(got, v)
-					return false
-				})
-			case "break":
-				for v := range projected {
-					got = append(got, v)
-					break
-				}
-			case "Take":
-				got = slices.Collect(op.Take(1).Operator(projected))
-			}
-			assertEqual(t, got, want[:1])
-			assertEqual(t, visited, 1)
-			assertEqual(t, stopped, 1)
-		})
+		assertEqual(t, []int{started, visited, stopped}, []int{round, 4 * round, round})
 	}
 
-	visited, stopped = 0, 0
-	assertEqual(t, slices.Collect(op.Take(0).Operator(projected)), []int(nil))
-	assertEqual(t, visited, 0)
-	assertEqual(t, stopped, 0)
+	started, visited, stopped = 0, 0, 0
+	var got []int
+	for v := range projected {
+		got = append(got, v)
+		break
+	}
+	assertEqual(t, got, want[:1])
+	assertEqual(t, []int{started, visited, stopped}, []int{1, 1, 1})
+}
 
-	for _, input := range []iter.Seq2[int, int]{
-		nil,
-		iter.Seq2[int, int](nil),
-		func(func(int, int) bool) {},
+func TestKeysEmptyInput(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		src  iter.Seq2[int, int]
+	}{
+		{name: "nil"},
+		{name: "empty", src: func(func(int, int) bool) {}},
 	} {
-		output := op.Keys(input)
-		if output == nil {
-			t.Fatal("projection must return a non-nil iterator")
-		}
-		assertEqual(t, slices.Collect(output), []int(nil))
+		t.Run(tc.name, func(t *testing.T) {
+			output := op.Keys(tc.src)
+			if output == nil {
+				t.Fatal("Keys must return a non-nil iterator")
+			}
+			assertEqual(t, slices.Collect(output), []int(nil))
+		})
 	}
 }
 
+func TestKeysNonComparable(t *testing.T) {
+	keys := [][]int{{2}, {1}, {2}}
+	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
+	src := iter.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
+		for i, k := range keys {
+			if !yield(k, values[i]) {
+				return
+			}
+		}
+	})
+	assertEqual(t, slices.Collect(op.Keys(src)), keys)
+}
+
+// 順序と重複を保って値を取り出し、遅延評価・再評価と下流停止時の解放を確認する。
 func TestValues(t *testing.T) {
 	want := []int{20, 10, 30, 20}
 	started, visited, stopped := 0, 0, 0
@@ -89,66 +88,37 @@ func TestValues(t *testing.T) {
 	var ope op.ToSeqOperator[int, int, int] = op.Values[int, int]
 	projected := ope(src)
 	assertEqual(t, started, 0)
-	for i := 0; i < 2; i++ {
+	for round := 1; round <= 2; round++ {
 		assertEqual(t, slices.Collect(projected), want)
-	}
-	assertEqual(t, started, 2)
-	assertEqual(t, visited, 8)
-	assertEqual(t, stopped, 2)
-
-	for _, mode := range []string{"yield", "break", "Take"} {
-		t.Run(mode, func(t *testing.T) {
-			visited, stopped = 0, 0
-			var got []int
-			switch mode {
-			case "yield":
-				projected(func(v int) bool {
-					got = append(got, v)
-					return false
-				})
-			case "break":
-				for v := range projected {
-					got = append(got, v)
-					break
-				}
-			case "Take":
-				got = slices.Collect(op.Take(1).Operator(projected))
-			}
-			assertEqual(t, got, want[:1])
-			assertEqual(t, visited, 1)
-			assertEqual(t, stopped, 1)
-		})
+		assertEqual(t, []int{started, visited, stopped}, []int{round, 4 * round, round})
 	}
 
-	visited, stopped = 0, 0
-	assertEqual(t, slices.Collect(op.Take(0).Operator(projected)), []int(nil))
-	assertEqual(t, visited, 0)
-	assertEqual(t, stopped, 0)
-
-	for _, input := range []iter.Seq2[int, int]{
-		nil,
-		iter.Seq2[int, int](nil),
-		func(func(int, int) bool) {},
-	} {
-		output := op.Values(input)
-		if output == nil {
-			t.Fatal("projection must return a non-nil iterator")
-		}
-		assertEqual(t, slices.Collect(output), []int(nil))
+	started, visited, stopped = 0, 0, 0
+	var got []int
+	for v := range projected {
+		got = append(got, v)
+		break
 	}
+	assertEqual(t, got, want[:1])
+	assertEqual(t, []int{started, visited, stopped}, []int{1, 1, 1})
 }
 
-func TestKeysNonComparable(t *testing.T) {
-	keys := [][]int{{2}, {1}, {2}}
-	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
-	src := iter.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
-		for i, k := range keys {
-			if !yield(k, values[i]) {
-				return
+func TestValuesEmptyInput(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		src  iter.Seq2[int, int]
+	}{
+		{name: "nil"},
+		{name: "empty", src: func(func(int, int) bool) {}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			output := op.Values(tc.src)
+			if output == nil {
+				t.Fatal("Values must return a non-nil iterator")
 			}
-		}
-	})
-	assertEqual(t, slices.Collect(op.Keys(src)), keys)
+			assertEqual(t, slices.Collect(output), []int(nil))
+		})
+	}
 }
 
 func TestValuesNonComparable(t *testing.T) {

@@ -8,30 +8,6 @@ import (
 	"github.com/meian/go-seqpipeline/op"
 )
 
-func TestFilterNilInput(t *testing.T) {
-	iterator := op.Filter(func(int) bool {
-		t.Fatal("Filter callback called")
-		return true
-	})(nil)
-	for round := 0; round < 2; round++ {
-		for range iterator {
-			t.Fatal("nil input yielded a value")
-		}
-	}
-}
-
-func TestFilter2NilInput(t *testing.T) {
-	iterator := op.Filter2(func(int, string) bool {
-		t.Fatal("Filter2 callback called")
-		return true
-	})(nil)
-	for round := 0; round < 2; round++ {
-		for range iterator {
-			t.Fatal("nil input yielded a value")
-		}
-	}
-}
-
 // 条件ごとの選別が順序と重複を保ち、入力と条件判定を反復時にだけ実行する。
 // 再評価ごとの呼び出し回数と、下流停止後に余分な要素を取得しないことを確認する。
 func TestFilter(t *testing.T) {
@@ -71,6 +47,18 @@ func TestFilter(t *testing.T) {
 			})
 			assertEqual(t, []int{reads, calls}, []int{tc.stopReads, tc.stopReads})
 		})
+	}
+}
+
+func TestFilterNilInput(t *testing.T) {
+	iterator := op.Filter(func(int) bool {
+		t.Fatal("Filter callback called")
+		return true
+	})(nil)
+	for round := 0; round < 2; round++ {
+		for range iterator {
+			t.Fatal("nil input yielded a value")
+		}
 	}
 }
 
@@ -123,5 +111,17 @@ func TestFilter2(t *testing.T) {
 			})
 			assertEqual(t, []int{reads, calls}, []int{tc.stopReads, tc.stopReads})
 		})
+	}
+}
+
+func TestFilter2NilInput(t *testing.T) {
+	iterator := op.Filter2(func(int, string) bool {
+		t.Fatal("Filter2 callback called")
+		return true
+	})(nil)
+	for round := 0; round < 2; round++ {
+		for range iterator {
+			t.Fatal("nil input yielded a value")
+		}
 	}
 }

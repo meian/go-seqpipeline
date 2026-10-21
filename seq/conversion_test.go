@@ -37,23 +37,13 @@ func TestToSliceEmpty(t *testing.T) {
 	}
 }
 
-func TestNilSliceCollections(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		collect func()
-	}{
-		{name: "ToSlice", collect: func() { _ = seq.ToSlice[int](nil) }},
-		{name: "slices.Collect", collect: func() { _ = slices.Collect[int](nil) }},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if recover() == nil {
-					t.Fatal("nil iterator must panic")
-				}
-			}()
-			tc.collect()
-		})
-	}
+func TestToSliceNil(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("ToSlice(nil) must panic")
+		}
+	}()
+	seq.ToSlice[int](nil)
 }
 
 func TestFromSeq(t *testing.T) {
@@ -63,21 +53,22 @@ func TestFromSeq(t *testing.T) {
 	}
 }
 
-func TestNilSeqConversions(t *testing.T) {
-	var zero seq.Seq[int]
-	if zero != nil {
-		t.Fatal("zero values must be nil")
-	}
-	for _, s := range []seq.Seq[int]{zero, seq.Seq[int](nil), seq.FromSeq[int](nil)} {
-		if seq.ToSeq(s) != nil {
-			t.Fatal("ToSeq must preserve nil")
-		}
+func TestFromSeqNil(t *testing.T) {
+	if seq.FromSeq[int](nil) != nil {
+		t.Fatal("FromSeq must preserve nil")
 	}
 }
 
-func TestStandardSeqConversion(t *testing.T) {
+func TestToSeq(t *testing.T) {
 	s := seq.FromSlice([]int{3, 1, 2})
 	assertEqual(t, slices.Sorted(seq.ToSeq(s)), []int{1, 2, 3})
+}
+
+func TestToSeqNil(t *testing.T) {
+	var zero seq.Seq[int]
+	if seq.ToSeq(zero) != nil {
+		t.Fatal("ToSeq must preserve nil")
+	}
 }
 
 func TestToSeqLazyAndStop(t *testing.T) {
@@ -158,23 +149,13 @@ func TestToMapEmpty(t *testing.T) {
 	}
 }
 
-func TestNilMapCollections(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		collect func()
-	}{
-		{name: "ToMap", collect: func() { _ = seq.ToMap[string, int](nil) }},
-		{name: "maps.Collect", collect: func() { _ = maps.Collect[string, int](nil) }},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				if recover() == nil {
-					t.Fatal("nil iterator must panic")
-				}
-			}()
-			tc.collect()
-		})
-	}
+func TestToMapNil(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("ToMap(nil) must panic")
+		}
+	}()
+	seq.ToMap[string, int](nil)
 }
 
 func TestFromSeq2(t *testing.T) {
@@ -185,21 +166,22 @@ func TestFromSeq2(t *testing.T) {
 	}
 }
 
-func TestNilSeq2Conversions(t *testing.T) {
-	var zero2 seq.Seq2[int, string]
-	if zero2 != nil {
-		t.Fatal("zero values must be nil")
-	}
-	for _, s := range []seq.Seq2[int, string]{zero2, seq.Seq2[int, string](nil), seq.FromSeq2[int, string](nil)} {
-		if seq.ToSeq2(s) != nil {
-			t.Fatal("ToSeq2 must preserve nil")
-		}
+func TestFromSeq2Nil(t *testing.T) {
+	if seq.FromSeq2[int, string](nil) != nil {
+		t.Fatal("FromSeq2 must preserve nil")
 	}
 }
 
-func TestStandardSeq2Conversion(t *testing.T) {
+func TestToSeq2(t *testing.T) {
 	pairs := seq.FromMap(map[string]int{"a": 1, "b": 2})
 	assertEqual(t, maps.Collect(seq.ToSeq2(pairs)), map[string]int{"a": 1, "b": 2})
+}
+
+func TestToSeq2Nil(t *testing.T) {
+	var zero seq.Seq2[int, string]
+	if seq.ToSeq2(zero) != nil {
+		t.Fatal("ToSeq2 must preserve nil")
+	}
 }
 
 func TestToSeq2PreservesPairs(t *testing.T) {

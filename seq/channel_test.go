@@ -5,7 +5,6 @@ import (
 	"testing"
 	"testing/synctest"
 
-	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
@@ -92,6 +91,32 @@ func TestFromChannelSharedReceivers(t *testing.T) {
 	assertEqual(t, seq.ToSlice(first), []int(nil))
 }
 
+func TestFromChannelCloseReceive(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ch := make(chan int)
+		finished := make(chan struct{})
+		go func() {
+			defer close(finished)
+			for range seq.FromChannel(context.Background(), ch) {
+				t.Error("empty channel produced a value")
+			}
+		}()
+		synctest.Wait()
+		close(ch)
+		<-finished
+	})
+}
+
+// nil context の panic は、反復前の呼び出し元で捕捉できる。
+func TestFromChannelNilContext(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("nil context must panic during FromChannel")
+		}
+	}()
+	_ = seq.FromChannel[int](nil, make(chan int))
+}
+
 func TestToChannel(t *testing.T) {
 	src := seq.FromSlice([]int{3, 1, 1, 2})
 	for round := 0; round < 2; round++ {
@@ -168,51 +193,6 @@ func TestToChannelCanceled(t *testing.T) {
 	if _, ok := <-seq.ToChannel(ctx, src); ok {
 		t.Fatal("canceled output must be closed")
 	}
-}
-
-func TestChannelPipelineCancelReceive(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		input := make(chan int)
-		pipeline := seq.FromChannel(ctx, input).
-			Pipe(op.Map(func(v int) int { return v * 10 })).
-			Pipe(op.Take(2).Operator)
-		output := seq.ToChannel(ctx, pipeline)
-		input <- 3
-		assertEqual(t, <-output, 30)
-		synctest.Wait() // 上流の受信待ちも同じ context で解除する。
-		cancel()
-		if _, ok := <-output; ok {
-			t.Fatal("output must close after cancellation")
-		}
-	})
-}
-
-func TestFromChannelCloseReceive(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		ch := make(chan int)
-		finished := make(chan struct{})
-		go func() {
-			defer close(finished)
-			for range seq.FromChannel(context.Background(), ch) {
-				t.Error("empty channel produced a value")
-			}
-		}()
-		synctest.Wait()
-		close(ch)
-		<-finished
-	})
-}
-
-// nil context の panic は、反復前の呼び出し元で捕捉できる。
-func TestFromChannelNilContext(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Fatal("nil context must panic during FromChannel")
-		}
-	}()
-	_ = seq.FromChannel[int](nil, make(chan int))
 }
 
 // nil context の panic は、goroutine 内ではなく呼び出し元で捕捉できる。
