@@ -64,20 +64,20 @@ func TestCompose2Reuse(t *testing.T) {
 func TestComposeAcrossShapes(t *testing.T) {
 	fromValues := op.Compose().
 		Pipe(op.Map(strconv.Itoa)).
-		Pipe2(withLength[string]).
+		Pipe2(withLength).
 		Pipe2(op.Map2(func(k []int, v string) (string, int) { return v, k[0] })).
 		Pipe(op.Values).
 		Pipe(op.Map(strconv.Itoa))
 	fromPairs := op.Compose2().
 		Pipe(op.Values[int, string]).
-		Pipe2(withLength[string]).
+		Pipe2(withLength).
 		Pipe2(op.Map2(func(k []int, v string) (string, int) { return v, k[0] }))
 	assertEqual(t, seq.ToSlice(seq.FromSlice([]int{1, 22, 1}).Pipe(fromValues.Operator)), []string{"1", "2", "1"})
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "a"})).Pipe2(fromPairs.Operator)
 	want := []pair[string, int]{{Key: "a", Value: 1}, {Key: "bbb", Value: 3}, {Key: "a", Value: 1}}
 	assertEqual(t, collectPairs(seq.ToSeq2(pairs)), want)
 
-	toPairs := op.Compose().Pipe2(withLength[string])
+	toPairs := op.Compose().Pipe2(withLength)
 	toValues := op.Compose2().Pipe(op.Keys[[]int, string]).
 		Pipe(op.Map(func(length []int) int { return length[0] }))
 	pairPipeline := seq.FromSlice([]string{"a", "bbb"}).Pipe2(toPairs.Operator)
@@ -165,8 +165,8 @@ func TestComposeTakeZero(t *testing.T) {
 
 // nil と空入力を往復する合成に通し、組み込み処理が非 nil の空イテレーターを返す契約を確認する。
 func TestComposeEmptyInputs(t *testing.T) {
-	fromValues := op.Compose().Pipe2[string](withLength[string]).Pipe(op.Values)
-	fromPairs := op.Compose2().Pipe(op.Values[int, string]).Pipe2(withLength[string])
+	fromValues := op.Compose().Pipe2[string](withLength).Pipe(op.Values)
+	fromPairs := op.Compose2().Pipe(op.Values[int, string]).Pipe2(withLength)
 	for _, src := range []iter.Seq[string]{nil, slices.Values([]string{})} {
 		result := seq.FromSeq(src).Pipe(fromValues.Operator)
 		if result == nil {

@@ -3,7 +3,6 @@ package seq_test
 import (
 	"context"
 	"fmt"
-	"iter"
 	"slices"
 	"strconv"
 
@@ -20,23 +19,9 @@ func ExampleSeq_Pipe() {
 	// Output: [3 4]
 }
 
-// 独自オペレーターの接続と比較不能なキーを示すため、文字列の長さをスライスで添える。
-func withLength[T ~string](src iter.Seq[T]) iter.Seq2[[]int, T] {
-	return func(yield func([]int, T) bool) {
-		if src == nil {
-			return
-		}
-		for v := range src {
-			if !yield([]int{len(v)}, v) {
-				return
-			}
-		}
-	}
-}
-
 func ExampleSeq_Pipe2() {
 	pairs := seq.FromSlice([]string{"a", "bbb", "cc"}).
-		Pipe2(withLength).
+		Pipe2(op.MapToSeq2(func(v string) ([]int, string) { return []int{len(v)}, v })).
 		Pipe2(op.Take(2).Operator2)
 	for k, v := range pairs {
 		fmt.Println(k, v)

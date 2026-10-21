@@ -48,6 +48,12 @@ fmt.Println(seq.ToSlice(pipeline)) // [1 22]
 コールバックなどが型情報を持つ `Map` / `Filter` は、生成関数の戻り値をそのまま渡します。  
 `Take` / `Skip` のように生成時の引数だけでは型が決まらない処理は、単一値には `.Operator`、キーと値の組には `.Operator2` を渡し、接続時に型を推論します。  
 
+`Map` / `Map2` はシーケンスの形を変えずに値を変換します。  
+`MapToSeq2` は各要素からキーと値の組を1つ、`MapToSeq` は各組から単一値を1つ生成します。  
+どちらもコールバックから型を推論し、`Compose` / `Compose2` の合成を含め、`Pipe2` / `Pipe` へ接続できます。  
+キーと値に `comparable` 制約はなく、順序と重複を保持します。  
+利用例は [ExampleMapToSeq2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-MapToSeq2) / [ExampleMapToSeq](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-MapToSeq) を参照してください。  
+
 次の例では `Pipe2` で単一値をキーと値の組にし、`Pipe` で値だけのシーケンスへ戻します。  
 `Zip` の追加入力には `iter.Seq` を渡すため、ライブラリ型から渡す場合は `ToSeq` で変換してください。  
 設定メソッドの名前は各 API に従い、`Zip` では組を出力する場合も `.Operator` を `Pipe2` に渡します。  

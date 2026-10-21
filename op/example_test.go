@@ -28,6 +28,26 @@ func ExampleMap2() {
 	// "1": 3
 }
 
+func ExampleMapToSeq2() {
+	pipeline := seq.FromSlice([]string{"Go", "iter"}).
+		Pipe2(op.MapToSeq2(func(s string) (string, int) { return s, len(s) }))
+	for k, v := range pipeline {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// Go 2
+	// iter 4
+}
+
+func ExampleMapToSeq() {
+	pipeline := seq.FromSeq2(slices.All([]string{"Go", "iter"})).
+		Pipe(op.MapToSeq(func(index int, s string) string {
+			return fmt.Sprintf("%d:%s", index, s)
+		}))
+	fmt.Println(seq.ToSlice(pipeline))
+	// Output: [0:Go 1:iter]
+}
+
 func ExampleFilter() {
 	pipeline := seq.FromSlice([]int{3, 2, 4, 1}).
 		Pipe(op.Filter(func(v int) bool { return v%2 == 0 }))
@@ -146,22 +166,9 @@ func ExampleValues() {
 	// Output: ["bbb"]
 }
 
-// 独自オペレーターの接続と比較不能なキーを示すため、文字列の長さをスライスで添える。
-func withLength[T ~string](src iter.Seq[T]) iter.Seq2[[]int, T] {
-	return func(yield func([]int, T) bool) {
-		if src == nil {
-			return
-		}
-		for v := range src {
-			if !yield([]int{len(v)}, v) {
-				return
-			}
-		}
-	}
-}
-
 func ExampleToSeq2Operator() {
-	pipeline := seq.FromSlice([]string{"a", "bbb"}).Pipe2(withLength)
+	pipeline := seq.FromSlice([]string{"a", "bbb"}).
+		Pipe2(op.MapToSeq2(func(v string) ([]int, string) { return []int{len(v)}, v }))
 	for k, v := range pipeline {
 		fmt.Println(k, v)
 	}
@@ -306,7 +313,7 @@ func ExampleCompose2_values() {
 	transform := op.Compose2().
 		Pipe[int, string](op.Values).
 		Pipe(op.Map(func(v string) string { return v + "!" })).
-		Pipe2(withLength[string])
+		Pipe2(op.MapToSeq2(func(v string) ([]int, string) { return []int{len(v)}, v }))
 	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb"})).Pipe2(transform.Operator)
 	for k, v := range pipeline {
 		fmt.Println(k, v)
