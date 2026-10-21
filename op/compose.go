@@ -47,16 +47,16 @@ type composed[I, O any] struct {
 }
 
 // Pipe は合成全体の入力型を保ち、単一値を出力する処理を追加する。
-func (c composed[I, O]) Pipe[U any](next Operator[O, U]) composed[I, U] {
+func (c composed[I, O]) Pipe[U any](ope Operator[O, U]) composed[I, U] {
 	return composed[I, U]{operator: func(src iter.Seq[I]) iter.Seq[U] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
 // Pipe2 は合成全体の入力型を保ち、キーと値の組を出力する処理を追加する。
-func (c composed[I, O]) Pipe2[K, V any](next ToSeq2Operator[O, K, V]) composedToSeq2[I, K, V] {
+func (c composed[I, O]) Pipe2[K, V any](ope ToSeq2Operator[O, K, V]) composedToSeq2[I, K, V] {
 	return composedToSeq2[I, K, V]{operator: func(src iter.Seq[I]) iter.Seq2[K, V] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
@@ -70,16 +70,16 @@ type composedToSeq2[I, K, V any] struct {
 }
 
 // Pipe は合成全体の入力型を保ち、単一値を出力する処理を追加する。
-func (c composedToSeq2[I, K, V]) Pipe[O any](next ToSeqOperator[K, V, O]) composed[I, O] {
+func (c composedToSeq2[I, K, V]) Pipe[O any](ope ToSeqOperator[K, V, O]) composed[I, O] {
 	return composed[I, O]{operator: func(src iter.Seq[I]) iter.Seq[O] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
 // Pipe2 は合成全体の入力型を保ち、キーと値の組を出力する処理を追加する。
-func (c composedToSeq2[I, K, V]) Pipe2[K2, V2 any](next Operator2[K, V, K2, V2]) composedToSeq2[I, K2, V2] {
+func (c composedToSeq2[I, K, V]) Pipe2[K2, V2 any](ope Operator2[K, V, K2, V2]) composedToSeq2[I, K2, V2] {
 	return composedToSeq2[I, K2, V2]{operator: func(src iter.Seq[I]) iter.Seq2[K2, V2] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
@@ -93,16 +93,16 @@ type composedToSeq[K, V, O any] struct {
 }
 
 // Pipe は合成全体の入力型を保ち、単一値を出力する処理を追加する。
-func (c composedToSeq[K, V, O]) Pipe[U any](next Operator[O, U]) composedToSeq[K, V, U] {
+func (c composedToSeq[K, V, O]) Pipe[U any](ope Operator[O, U]) composedToSeq[K, V, U] {
 	return composedToSeq[K, V, U]{operator: func(src iter.Seq2[K, V]) iter.Seq[U] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
 // Pipe2 は合成全体の入力型を保ち、キーと値の組を出力する処理を追加する。
-func (c composedToSeq[K, V, O]) Pipe2[K2, V2 any](next ToSeq2Operator[O, K2, V2]) composed2[K, V, K2, V2] {
+func (c composedToSeq[K, V, O]) Pipe2[K2, V2 any](ope ToSeq2Operator[O, K2, V2]) composed2[K, V, K2, V2] {
 	return composed2[K, V, K2, V2]{operator: func(src iter.Seq2[K, V]) iter.Seq2[K2, V2] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
@@ -116,16 +116,16 @@ type composed2[K, V, K2, V2 any] struct {
 }
 
 // Pipe は合成全体の入力型を保ち、単一値を出力する処理を追加する。
-func (c composed2[K, V, K2, V2]) Pipe[O any](next ToSeqOperator[K2, V2, O]) composedToSeq[K, V, O] {
+func (c composed2[K, V, K2, V2]) Pipe[O any](ope ToSeqOperator[K2, V2, O]) composedToSeq[K, V, O] {
 	return composedToSeq[K, V, O]{operator: func(src iter.Seq2[K, V]) iter.Seq[O] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
 // Pipe2 は合成全体の入力型を保ち、キーと値の組を出力する処理を追加する。
-func (c composed2[K, V, K2, V2]) Pipe2[K3, V3 any](next Operator2[K2, V2, K3, V3]) composed2[K, V, K3, V3] {
+func (c composed2[K, V, K2, V2]) Pipe2[K3, V3 any](ope Operator2[K2, V2, K3, V3]) composed2[K, V, K3, V3] {
 	return composed2[K, V, K3, V3]{operator: func(src iter.Seq2[K, V]) iter.Seq2[K3, V3] {
-		return next(c.operator(src))
+		return ope(c.operator(src))
 	}}
 }
 
