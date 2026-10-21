@@ -265,3 +265,63 @@ func ExampleCache2() {
 	// 0 1
 	// upstream calls: 3
 }
+
+func ExampleCompose() {
+	transform := op.Compose().
+		Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(op.Map(strconv.Itoa)).
+		Pipe(op.Take(2).Operator)
+	first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform.Operator)
+	second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform.Operator)
+	fmt.Printf("%q\n", seq.ToSlice(first))
+	fmt.Printf("%q\n", seq.ToSlice(second))
+	// Output:
+	// ["2" "4"]
+	// ["8" "10"]
+}
+
+func ExampleCompose_explicit() {
+	transform := op.Compose().
+		Pipe[int](op.Take(2).Operator).
+		Pipe(op.Map(strconv.Itoa))
+	fmt.Printf("%q\n", seq.ToSlice(seq.FromSlice([]int{3, 2, 1}).Pipe(transform.Operator)))
+	// Output: ["3" "2"]
+}
+
+func ExampleCompose2() {
+	transform := op.Compose2().
+		Pipe2(op.Filter2(func(k int, v string) bool { return len(v) > 1 })).
+		Pipe2(op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
+		Pipe2(op.Take(2).Operator2)
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).Pipe2(transform.Operator)
+	for k, v := range pipeline {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// 1 3
+	// 2 2
+}
+
+func ExampleCompose2_values() {
+	transform := op.Compose2().
+		Pipe[int, string](op.Values).
+		Pipe(op.Map(func(v string) string { return v + "!" })).
+		Pipe2(withLength[string])
+	pipeline := seq.FromSeq2(slices.All([]string{"a", "bbb"})).Pipe2(transform.Operator)
+	for k, v := range pipeline {
+		fmt.Println(k, v)
+	}
+	// Output:
+	// [2] a!
+	// [4] bbb!
+}
+
+func ExampleCompose_nested() {
+	firstEven := op.Compose().
+		Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
+		Pipe(op.Take(2).Operator)
+	transform := op.Compose().Pipe(firstEven.Operator).Pipe(op.Map(strconv.Itoa))
+	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform.Operator)
+	fmt.Printf("%q\n", seq.ToSlice(pipeline))
+	// Output: ["2" "4"]
+}

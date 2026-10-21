@@ -52,14 +52,14 @@ Pass `.Operator` to `Pipe` for single values, or `.Operator2` to `Pipe2` for pai
 
 ## Usage notes
 
-`Cache` / `Cache2` evaluate the entire input during connection; limit infinite inputs before caching.  
+`Cache` / `Cache2` evaluate the entire input when applied to it; limit infinite inputs before caching.  
 See [caching precautions](doc/guide.md#reusing-evaluated-results) for details.  
 When stopping channel consumption early, cancel the context passed to the conversion.  
 See [channel conversions](doc/guide.md#channel-conversions) for communication waits and cancellation races.  
 
 ## Further reading
 
-- [Usage guide](doc/guide.md): evaluation, stopping, re-evaluation, nil, conversions, connection types, and custom operators
+- [Usage guide](doc/guide.md): evaluation, stopping, re-evaluation, nil, conversions, connection types, composition, and custom operators
 - GoDoc: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) for individual API contracts and boundary conditions
 - Go Examples: [seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) ([seq source](seq/example_test.go), [op source](op/example_test.go))
 - [Performance summary](benchmarks/REPORT.md): measured results and conditions
