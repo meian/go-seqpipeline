@@ -53,13 +53,13 @@ for k, v := range pairs {
 ## 利用上の注意
 
 `Cache` / `Cache2` は入力への適用時に全件評価するため、無限入力はキャッシュより前で制限してください。  
-詳細は [キャッシュの注意点](doc/guide.ja.md#評価結果の再利用) を参照してください。  
+詳細は [キャッシュの注意点](doc/guide.ja.md#cache-による評価結果の再利用) を参照してください。  
 channel の受信を途中でやめる場合は、渡したコンテキストをキャンセルしてください。  
 通信待ちやキャンセル競合の注意は [channel との相互変換](doc/guide.ja.md#channel-との相互変換) を参照してください。  
 
 ## 参照先
 
-- [利用ガイド](doc/guide.ja.md)：評価・停止・再評価・nil、入出力、接続型、合成、独自オペレーター
+- [利用ガイド](doc/guide.ja.md)：入出力、接続、評価、キャッシュ、channel、合成、独自オペレーター、共通仕様
 - GoDoc：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op) の個別 API の契約と境界条件
 - Go Example：[seq](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#pkg-examples) / [op](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#pkg-examples) の利用例（[seq のソース](seq/example_test.go)、[op のソース](op/example_test.go)）
 - [性能概要](benchmarks/REPORT.md)：測定結果と適用条件
