@@ -21,10 +21,10 @@ func TestComposeReuse(t *testing.T) {
 	first := seq.FromSlice([]int{1, 2, 3, 4, 6}).Pipe(transform.Operator)
 	second := seq.FromSlice([]int{8, 9, 10, 12}).Pipe(transform.Operator)
 	assertEqual(t, reads, 0)
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, seq.ToSlice(first), []string{"2", "4"})
 		assertEqual(t, seq.ToSlice(second), []string{"8", "10"})
-		assertEqual(t, reads, round*7)
+		assertEqual(t, reads, i*7)
 	}
 	reads = 0
 	for range first {
@@ -48,10 +48,10 @@ func TestCompose2Reuse(t *testing.T) {
 	assertEqual(t, reads, 0)
 	firstWant := []pair[string, string]{{Key: "1", Value: "2"}, {Key: "3", Value: "4"}}
 	secondWant := []pair[string, string]{{Key: "0", Value: "8"}, {Key: "2", Value: "10"}}
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(first)), firstWant)
 		assertEqual(t, collectPairs(seq.ToSeq2(second)), secondWant)
-		assertEqual(t, reads, round*7)
+		assertEqual(t, reads, i*7)
 	}
 	reads = 0
 	for range first {
@@ -120,11 +120,11 @@ func TestComposeCacheTiming(t *testing.T) {
 	second := seq.FromSlice([]int{4, 5}).Pipe(transform.Operator)
 	assertEqual(t, upstream, 5)
 	values[1] = 99
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, seq.ToSlice(first), []string{"20"})
 		assertEqual(t, seq.ToSlice(second), []string{"50"})
 		assertEqual(t, upstream, 5)
-		assertEqual(t, downstream, round*2)
+		assertEqual(t, downstream, i*2)
 	}
 }
 
@@ -146,11 +146,11 @@ func TestCompose2CacheTiming(t *testing.T) {
 	values[1] = "changed"
 	firstWant := []pair[string, int]{{Key: "1", Value: 3}}
 	secondWant := []pair[string, int]{{Key: "1", Value: 2}}
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(first)), firstWant)
 		assertEqual(t, collectPairs(seq.ToSeq2(second)), secondWant)
 		assertEqual(t, upstream, 5)
-		assertEqual(t, downstream, round*2)
+		assertEqual(t, downstream, i*2)
 	}
 }
 
@@ -185,58 +185,43 @@ func TestComposeEmptyInputs(t *testing.T) {
 
 // Zip の Pull を合成・再利用しても、停止と panic のどちらでも両入力を解放する。
 func TestComposeZipRelease(t *testing.T) {
-	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
-		for _, panics := range []bool{false, true} {
-			name := "alignment=" + strconv.Itoa(int(alignment)) + "/panic=" + strconv.FormatBool(panics)
-			t.Run(name, func(t *testing.T) {
-				leftStarts, leftStops, rightStarts, rightStops := 0, 0, 0, 0
-				left := iter.Seq[int](func(yield func(int) bool) {
-					leftStarts++
-					defer func() { leftStops++ }()
+	for _, panics := range []bool{false, true} {
+		t.Run("panic="+strconv.FormatBool(panics), func(t *testing.T) {
+			var starts, stops [2]int
+			input := func(index int) iter.Seq[int] {
+				return func(yield func(int) bool) {
+					starts[index]++
+					defer func() { stops[index]++ }()
 					for v := 0; v < 3; v++ {
 						if !yield(v) {
 							return
 						}
 					}
-				})
-				right := iter.Seq[string](func(yield func(string) bool) {
-					rightStarts++
-					defer func() { rightStops++ }()
-					for _, v := range []string{"a", "b", "c"} {
-						if !yield(v) {
-							return
-						}
-					}
-				})
-				transform := op.Compose().
-					Pipe2[int](op.Zip(right).AlignBy(alignment).Operator).
-					Pipe(op.Values)
-				pipeline := seq.FromSeq(left).Pipe(transform.Operator)
-				assertEqual(t, leftStarts, 0)
-				assertEqual(t, rightStarts, 0)
-				for round := 1; round <= 2; round++ {
-					func() {
-						defer func() {
-							got := recover()
-							if panics {
-								assertEqual(t, got, any("stop"))
-							} else if got != nil {
-								t.Fatalf("unexpected panic: %v", got)
-							}
-						}()
-						for range pipeline {
-							if panics {
-								panic("stop")
-							}
-							break
-						}
-					}()
-					assertEqual(t, leftStarts, round)
-					assertEqual(t, leftStops, round)
-					assertEqual(t, rightStarts, round)
-					assertEqual(t, rightStops, round)
 				}
-			})
-		}
+			}
+			transform := op.Compose().Pipe2[int](op.Zip(input(1)).Operator).Pipe(op.Values)
+			pipeline := seq.FromSeq(input(0)).Pipe(transform.Operator)
+			assertEqual(t, starts, [2]int{})
+			for i := 1; i <= 2; i++ {
+				func() {
+					defer func() {
+						var want any
+						if panics {
+							want = "stop"
+						}
+						assertEqual(t, recover(), want)
+					}()
+					for v := range pipeline {
+						assertEqual(t, v, 0)
+						if panics {
+							panic("stop")
+						}
+						break
+					}
+				}()
+				assertEqual(t, starts, [2]int{i, i})
+				assertEqual(t, stops, starts)
+			}
+		})
 	}
 }

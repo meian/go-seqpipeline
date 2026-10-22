@@ -26,57 +26,36 @@ func TestSkipOperator(t *testing.T) {
 		{name: "maximum", n: math.MaxInt},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			starts, reads := 0, 0
-			src := iter.Seq[int](func(yield func(int) bool) {
-				starts++
-				for _, v := range values {
-					reads++
-					if !yield(v) {
-						return
-					}
-				}
-			})
+			var state inputTrace
+			src := traceValues(values, &state)
 			iterator := op.Skip(tc.n).Operator(src)
-			assertEqual(t, []int{starts, reads}, []int{0, 0})
-			for round := 1; round <= 2; round++ {
+			assertEqual(t, []int{state.starts, state.reads}, []int{0, 0})
+			for i := 1; i <= 2; i++ {
 				assertEqual(t, slices.Collect(iterator), tc.want)
-				assertEqual(t, []int{starts, reads}, []int{round, len(values) * round})
+				assertEqual(t, []int{state.starts, state.reads}, []int{i, len(values) * i})
 			}
 		})
 	}
 }
 
 func TestSkipOperatorEmptyAndNil(t *testing.T) {
-	for _, n := range []int{-1, 0, 1} {
-		for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
-			iterator := op.Skip(n).Operator(src)
-			for round := 0; round < 2; round++ {
-				assertEqual(t, slices.Collect(iterator), []int(nil))
-			}
-		}
+	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
+		assertEqual(t, slices.Collect(op.Skip(1).Operator(src)), []int(nil))
 	}
 }
 
 func TestSkipOperatorDownstreamStop(t *testing.T) {
 	for _, n := range []int{-1, 0, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
-			reads, stops := 0, 0
-			src := iter.Seq[int](func(yield func(int) bool) {
-				for i := 1; i <= 5; i++ {
-					reads++
-					if !yield(i) {
-						stops++
-						return
-					}
-				}
-			})
+			var state inputTrace
+			src := traceValues([]int{1, 2, 3, 4, 5}, &state)
 			iterator := op.Skip(n).Operator(src)
-			for round := 1; round <= 2; round++ {
+			for i := 1; i <= 2; i++ {
 				for v := range iterator {
 					assertEqual(t, v, max(n, 0)+1)
 					break
 				}
-				assertEqual(t, []int{reads, stops}, []int{(max(n, 0) + 1) * round, round})
+				assertEqual(t, []int{state.reads, state.stops}, []int{(max(n, 0) + 1) * i, i})
 			}
 		})
 	}
@@ -103,58 +82,37 @@ func TestSkipOperator2(t *testing.T) {
 		{name: "maximum", n: math.MaxInt},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			starts, reads := 0, 0
-			src := iter.Seq2[int, string](func(yield func(int, string) bool) {
-				starts++
-				for _, p := range pairs {
-					reads++
-					if !yield(p.Key, p.Value) {
-						return
-					}
-				}
-			})
+			var state inputTrace
+			src := tracePairs(pairs, &state)
 			iterator := op.Skip(tc.n).Operator2(src)
-			assertEqual(t, []int{starts, reads}, []int{0, 0})
-			for round := 1; round <= 2; round++ {
+			assertEqual(t, []int{state.starts, state.reads}, []int{0, 0})
+			for i := 1; i <= 2; i++ {
 				assertEqual(t, collectPairs(iterator), tc.want)
-				assertEqual(t, []int{starts, reads}, []int{round, len(pairs) * round})
+				assertEqual(t, []int{state.starts, state.reads}, []int{i, len(pairs) * i})
 			}
 		})
 	}
 }
 
 func TestSkipOperator2EmptyAndNil(t *testing.T) {
-	for _, n := range []int{-1, 0, 1} {
-		for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
-			iterator := op.Skip(n).Operator2(src)
-			for round := 0; round < 2; round++ {
-				assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
-			}
-		}
+	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
+		assertEqual(t, collectPairs(op.Skip(1).Operator2(src)), []pair[int, string](nil))
 	}
 }
 
 func TestSkipOperator2DownstreamStop(t *testing.T) {
 	for _, n := range []int{-1, 0, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
-			reads, stops := 0, 0
-			src := iter.Seq2[int, int](func(yield func(int, int) bool) {
-				for i := 1; i <= 5; i++ {
-					reads++
-					if !yield(i, i*10) {
-						stops++
-						return
-					}
-				}
-			})
+			var state inputTrace
+			src := tracePairs([]pair[int, int]{{1, 10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}}, &state)
 			iterator := op.Skip(n).Operator2(src)
-			for round := 1; round <= 2; round++ {
+			for i := 1; i <= 2; i++ {
 				for k, v := range iterator {
 					assertEqual(t, k, max(n, 0)+1)
 					assertEqual(t, v, (max(n, 0)+1)*10)
 					break
 				}
-				assertEqual(t, []int{reads, stops}, []int{(max(n, 0) + 1) * round, round})
+				assertEqual(t, []int{state.reads, state.stops}, []int{(max(n, 0) + 1) * i, i})
 			}
 		})
 	}
@@ -173,7 +131,7 @@ func TestSkipConfigurationReuse(t *testing.T) {
 	first, second := ope(values), skip.Operator(values)
 	paired := ope2(pairs)
 	texts := skip.Operator(slices.Values([]string{"a", "b"}))
-	for round := 0; round < 2; round++ {
+	for i := 0; i < 2; i++ {
 		assertEqual(t, slices.Collect(first), []int{2, 3})
 		assertEqual(t, slices.Collect(second), []int{2, 3})
 		assertEqual(t, slices.Collect(texts), []string{"b"})

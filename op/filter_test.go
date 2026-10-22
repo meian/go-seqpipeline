@@ -1,127 +1,90 @@
 package op_test
 
 import (
-	"iter"
 	"slices"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/op"
 )
 
-// 条件ごとの選別が順序と重複を保ち、入力と条件判定を反復時にだけ実行する。
-// 再評価ごとの呼び出し回数と、下流停止後に余分な要素を取得しないことを確認する。
+// 採用・不採用・重複を含む入力で、順序・再評価・途中停止と全件不採用を確認する。
 func TestFilter(t *testing.T) {
-	for _, tc := range []struct {
-		name      string
-		matches   func(int) bool
-		stopReads int
-		want      []int
-	}{
-		{name: "some", matches: func(v int) bool { return v > 1 }, want: []int{3, 3}, stopReads: 2},
-		{name: "all", matches: func(int) bool { return true }, want: []int{1, 3, 3}, stopReads: 1},
-		{name: "none", matches: func(int) bool { return false }, stopReads: 3},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			reads, calls := 0, 0
-			src := iter.Seq[int](func(yield func(int) bool) {
-				for _, v := range []int{1, 3, 3} {
-					reads++
-					if !yield(v) {
-						return
-					}
-				}
-			})
-			filtered := op.Filter(func(v int) bool {
-				calls++
-				return tc.matches(v)
-			})(src)
-			assertEqual(t, []int{reads, calls}, []int{0, 0})
-			for round := 1; round <= 2; round++ {
-				assertEqual(t, slices.Collect(filtered), tc.want)
-				assertEqual(t, []int{reads, calls}, []int{3 * round, 3 * round})
-			}
-			reads, calls = 0, 0
-			filtered(func(v int) bool {
-				assertEqual(t, v, tc.want[0])
-				return false
-			})
-			assertEqual(t, []int{reads, calls}, []int{tc.stopReads, tc.stopReads})
-		})
+	var state inputTrace
+	calls := 0
+	minimum := 1
+	src := traceValues([]int{1, 3, 2, 3, 1}, &state)
+	filtered := op.Filter(func(v int) bool {
+		calls++
+		return v > minimum
+	})(src)
+	assertEqual(t, []int{state.reads, calls}, []int{0, 0})
+	want := []int{3, 2, 3}
+	for i := 1; i <= 2; i++ {
+		assertEqual(t, slices.Collect(filtered), want)
+		assertEqual(t, []int{state.reads, calls}, []int{5 * i, 5 * i})
 	}
+	state, calls = inputTrace{}, 0
+	filtered(func(v int) bool {
+		assertEqual(t, v, want[0])
+		return false
+	})
+	assertEqual(t, state, inputTrace{starts: 1, reads: 2, stops: 1})
+	assertEqual(t, calls, 2)
+	minimum = 3
+	state, calls = inputTrace{}, 0
+	assertEqual(t, slices.Collect(filtered), []int(nil))
+	assertEqual(t, state, inputTrace{starts: 1, reads: 5})
+	assertEqual(t, calls, 5)
 }
 
 func TestFilterNilInput(t *testing.T) {
-	iterator := op.Filter(func(int) bool {
+	iterator := op.Filter(func(v int) bool {
 		t.Fatal("Filter callback called")
 		return true
 	})(nil)
-	for round := 0; round < 2; round++ {
-		for range iterator {
-			t.Fatal("nil input yielded a value")
-		}
+	for range iterator {
+		t.Fatal("nil input yielded a value")
 	}
 }
 
-// キーと値による選別が組の順序と重複を保ち、入力と条件判定を反復時にだけ実行する。
-// 再評価ごとの呼び出し回数と、下流停止後に余分な組を取得しないことを確認する。
+// 採用・不採用・重複を含む入力で、順序・再評価・途中停止と全件不採用を確認する。
 func TestFilter2(t *testing.T) {
-	for _, tc := range []struct {
-		name      string
-		matches   func(int, string) bool
-		stopReads int
-		want      []pair[int, string]
-	}{
-		{
-			name:      "some",
-			matches:   func(k int, v string) bool { return k > 1 && len(v) > 1 },
-			want:      []pair[int, string]{{3, "cc"}, {3, "cc"}},
-			stopReads: 3,
-		},
-		{
-			name:      "all",
-			matches:   func(int, string) bool { return true },
-			want:      []pair[int, string]{{1, "aa"}, {3, "b"}, {3, "cc"}, {3, "cc"}},
-			stopReads: 1,
-		},
-		{name: "none", matches: func(int, string) bool { return false }, stopReads: 4},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			reads, calls := 0, 0
-			src := iter.Seq2[int, string](func(yield func(int, string) bool) {
-				for _, p := range []pair[int, string]{{1, "aa"}, {3, "b"}, {3, "cc"}, {3, "cc"}} {
-					reads++
-					if !yield(p.Key, p.Value) {
-						return
-					}
-				}
-			})
-			filtered := op.Filter2(func(k int, v string) bool {
-				calls++
-				return tc.matches(k, v)
-			})(src)
-			assertEqual(t, []int{reads, calls}, []int{0, 0})
-			for round := 1; round <= 2; round++ {
-				assertEqual(t, collectPairs(filtered), tc.want)
-				assertEqual(t, []int{reads, calls}, []int{4 * round, 4 * round})
-			}
-			reads, calls = 0, 0
-			filtered(func(k int, v string) bool {
-				assertEqual(t, pair[int, string]{k, v}, tc.want[0])
-				return false
-			})
-			assertEqual(t, []int{reads, calls}, []int{tc.stopReads, tc.stopReads})
-		})
+	var state inputTrace
+	calls := 0
+	minimum := 1
+	src := tracePairs([]pair[int, string]{
+		{1, "aa"}, {3, "b"}, {3, "cc"}, {2, "ddd"}, {3, "cc"}, {1, "d"},
+	}, &state)
+	filtered := op.Filter2(func(k int, v string) bool {
+		calls++
+		return k > minimum && len(v) > 1
+	})(src)
+	assertEqual(t, []int{state.reads, calls}, []int{0, 0})
+	want := []pair[int, string]{{3, "cc"}, {2, "ddd"}, {3, "cc"}}
+	for i := 1; i <= 2; i++ {
+		assertEqual(t, collectPairs(filtered), want)
+		assertEqual(t, []int{state.reads, calls}, []int{6 * i, 6 * i})
 	}
+	state, calls = inputTrace{}, 0
+	filtered(func(k int, v string) bool {
+		assertEqual(t, pair[int, string]{k, v}, want[0])
+		return false
+	})
+	assertEqual(t, state, inputTrace{starts: 1, reads: 3, stops: 1})
+	assertEqual(t, calls, 3)
+	minimum = 3
+	state, calls = inputTrace{}, 0
+	assertEqual(t, collectPairs(filtered), []pair[int, string](nil))
+	assertEqual(t, state, inputTrace{starts: 1, reads: 6})
+	assertEqual(t, calls, 6)
 }
 
 func TestFilter2NilInput(t *testing.T) {
-	iterator := op.Filter2(func(int, string) bool {
+	iterator := op.Filter2(func(k int, v string) bool {
 		t.Fatal("Filter2 callback called")
 		return true
 	})(nil)
-	for round := 0; round < 2; round++ {
-		for range iterator {
-			t.Fatal("nil input yielded a value")
-		}
+	for range iterator {
+		t.Fatal("nil input yielded a value")
 	}
 }

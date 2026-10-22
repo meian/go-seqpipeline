@@ -1,7 +1,6 @@
 package seq_test
 
 import (
-	"maps"
 	"slices"
 	"testing"
 
@@ -12,7 +11,7 @@ func TestFromSlice(t *testing.T) {
 	values := []int{3, 1, 2}
 	source := seq.FromSlice(values)
 	values[0] = 4
-	for round := 0; round < 2; round++ {
+	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(source), []int{4, 1, 2})
 	}
 	assertEqual(t, seq.ToSlice(seq.FromSlice([]int(nil))), []int(nil))
@@ -48,7 +47,7 @@ func TestToSliceNil(t *testing.T) {
 
 func TestFromSeq(t *testing.T) {
 	source := seq.FromSeq(slices.Values([]int{3, 1, 2}))
-	for round := 0; round < 2; round++ {
+	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(source), []int{3, 1, 2})
 	}
 }
@@ -59,11 +58,6 @@ func TestFromSeqNil(t *testing.T) {
 	}
 }
 
-func TestToSeq(t *testing.T) {
-	s := seq.FromSlice([]int{3, 1, 2})
-	assertEqual(t, slices.Sorted(seq.ToSeq(s)), []int{1, 2, 3})
-}
-
 func TestToSeqNil(t *testing.T) {
 	var zero seq.Seq[int]
 	if seq.ToSeq(zero) != nil {
@@ -71,11 +65,11 @@ func TestToSeqNil(t *testing.T) {
 	}
 }
 
-func TestToSeqLazyAndStop(t *testing.T) {
+func TestToSeq(t *testing.T) {
 	starts, reads, stops := 0, 0, 0
 	source := seq.FromSeq(func(yield func(int) bool) {
 		starts++
-		for _, v := range []int{3, 1, 2} {
+		for _, v := range []int{3, 1, 3} {
 			reads++
 			if !yield(v) {
 				stops++
@@ -85,20 +79,22 @@ func TestToSeqLazyAndStop(t *testing.T) {
 	})
 	iterator := seq.ToSeq(source)
 	assertEqual(t, []int{starts, reads, stops}, []int{0, 0, 0})
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		for v := range iterator {
 			assertEqual(t, v, 3)
 			break
 		}
-		assertEqual(t, []int{starts, reads, stops}, []int{round, round, round})
+		assertEqual(t, []int{starts, reads, stops}, []int{i, i, i})
 	}
+	assertEqual(t, slices.Collect(iterator), []int{3, 1, 3})
+	assertEqual(t, []int{starts, reads, stops}, []int{3, 5, 2})
 }
 
 func TestFromMap(t *testing.T) {
 	values := map[string]int{"a": 1, "b": 2}
 	pipeline := seq.FromMap(values)
 	values["c"] = 3
-	for round := 0; round < 2; round++ {
+	for i := 0; i < 2; i++ {
 		got := make(map[string]int)
 		pairs := collectPairs(seq.ToSeq2(pipeline))
 		for _, p := range pairs {
@@ -125,10 +121,10 @@ func TestToMap(t *testing.T) {
 	}
 	source := seq.FromSeq2(src)
 	assertEqual(t, reads, 0)
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		var got map[string]int = seq.ToMap(source)
 		assertEqual(t, got, map[string]int{"a": 3, "b": 2})
-		assertEqual(t, reads, round*3)
+		assertEqual(t, reads, i*3)
 		got["a"] = 99
 	}
 }
@@ -161,7 +157,7 @@ func TestToMapNil(t *testing.T) {
 func TestFromSeq2(t *testing.T) {
 	source := seq.FromSeq2(slices.All([]string{"b", "a"}))
 	want := []pair[int, string]{{Key: 0, Value: "b"}, {Key: 1, Value: "a"}}
-	for round := 0; round < 2; round++ {
+	for i := 0; i < 2; i++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(source)), want)
 	}
 }
@@ -172,11 +168,6 @@ func TestFromSeq2Nil(t *testing.T) {
 	}
 }
 
-func TestToSeq2(t *testing.T) {
-	pairs := seq.FromMap(map[string]int{"a": 1, "b": 2})
-	assertEqual(t, maps.Collect(seq.ToSeq2(pairs)), map[string]int{"a": 1, "b": 2})
-}
-
 func TestToSeq2Nil(t *testing.T) {
 	var zero seq.Seq2[int, string]
 	if seq.ToSeq2(zero) != nil {
@@ -184,7 +175,7 @@ func TestToSeq2Nil(t *testing.T) {
 	}
 }
 
-func TestToSeq2PreservesPairs(t *testing.T) {
+func TestToSeq2(t *testing.T) {
 	src := func(yield func(string, int) bool) {
 		if !yield("a", 1) {
 			return
@@ -193,7 +184,7 @@ func TestToSeq2PreservesPairs(t *testing.T) {
 	}
 	pairs := seq.FromSeq2(src)
 	want := []pair[string, int]{{Key: "a", Value: 1}, {Key: "a", Value: 2}}
-	for round := 0; round < 2; round++ {
+	for i := 0; i < 2; i++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(pairs)), want)
 	}
 }
