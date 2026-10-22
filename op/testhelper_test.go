@@ -4,8 +4,6 @@ import (
 	"iter"
 	"reflect"
 	"testing"
-
-	"github.com/meian/go-seqpipeline/op"
 )
 
 func assertEqual[T any](t *testing.T, got, want T) {
@@ -28,4 +26,33 @@ func collectPairs[K, V any](src iter.Seq2[K, V]) []pair[K, V] {
 	return got
 }
 
-var withLength = op.MapToSeq2(func(v string) ([]int, string) { return []int{len(v)}, v })
+// 入力の開始・取得と、yield(false) による停止を記録する。
+type inputTrace struct {
+	starts, reads, stops int
+}
+
+func traceValues[T any](values []T, state *inputTrace) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		state.starts++
+		for _, v := range values {
+			state.reads++
+			if !yield(v) {
+				state.stops++
+				return
+			}
+		}
+	}
+}
+
+func tracePairs[K, V any](pairs []pair[K, V], state *inputTrace) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		state.starts++
+		for _, p := range pairs {
+			state.reads++
+			if !yield(p.Key, p.Value) {
+				state.stops++
+				return
+			}
+		}
+	}
+}

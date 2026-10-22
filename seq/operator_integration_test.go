@@ -16,6 +16,18 @@ func takeWith[T any](n int, predicate func(T) bool) op.Operator[T, T] {
 	}
 }
 
+func repeat(src iter.Seq[int]) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for v := range src {
+			for i := 0; i < 2; i++ {
+				if !yield(strconv.Itoa(v)) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // Map・Filter の生成関数の戻り値の型を確認し、名前付き関数型を直接適用・Pipe 接続する。
 func TestOperatorDirectCall(t *testing.T) {
 	var mapFactory func(func(int) string) op.Operator[int, string] = op.Map[int, string]
@@ -26,6 +38,10 @@ func TestOperatorDirectCall(t *testing.T) {
 	var custom op.Operator[int, string] = repeat
 	src := seq.FromSlice([]int{1, 22, 333})
 	assertEqual(t, slices.Collect(limit(filtered(mapped(seq.ToSeq(src))))), []string{"22"})
+	pipeline := src.Pipe(mapped).Pipe(filtered).Pipe(limit)
+	for i := 0; i < 2; i++ {
+		assertEqual(t, seq.ToSlice(pipeline), []string{"22"})
+	}
 	assertEqual(t, seq.ToSlice(src.Pipe(custom).Pipe(filtered).Pipe(limit)), []string{"22"})
 }
 
@@ -38,15 +54,41 @@ func TestComposedOperator(t *testing.T) {
 			return v
 		})).Pipe(ope)
 	assertEqual(t, reads, 0)
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		assertEqual(t, seq.ToSlice(pipeline), []int{2, 4})
-		assertEqual(t, reads, round*4)
+		assertEqual(t, reads, i*4)
 	}
 	reads = 0
 	for range pipeline {
 		break
 	}
 	assertEqual(t, reads, 2)
+}
+
+// 独自の変換関数を Map・Take に接続し、遅延評価と再評価ごとの上流停止を確認する。
+func TestTransformPipeline(t *testing.T) {
+	ope := repeat
+	calls := 0
+	pipeline := seq.FromSlice([]int{1, 2, 3}).
+		Pipe(op.Map(func(v int) int {
+			calls++
+			return v
+		})).Pipe(ope).Pipe(op.Take(1).Operator)
+	assertEqual(t, calls, 0)
+	for i := 1; i <= 2; i++ {
+		assertEqual(t, seq.ToSlice(pipeline), []string{"1"})
+		assertEqual(t, calls, i)
+	}
+}
+
+func keyText(src iter.Seq2[int, int]) iter.Seq2[string, int] {
+	return func(yield func(string, int) bool) {
+		for k, v := range src {
+			if !yield(strconv.Itoa(k), v) {
+				return
+			}
+		}
+	}
 }
 
 // Map2・Filter2 の生成関数の戻り値の型を確認し、名前付き関数型を直接適用・Pipe2 接続する。
@@ -64,7 +106,9 @@ func TestOperator2DirectCall(t *testing.T) {
 	pipeline := src.Pipe2(custom).
 		Pipe2(op.Map2(func(k string, v int) (string, string) { return k, strconv.Itoa(v) })).
 		Pipe2(filtered).Pipe2(limit)
-	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
+	for i := 0; i < 2; i++ {
+		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
+	}
 }
 
 func TestComposedOperator2(t *testing.T) {
@@ -78,16 +122,54 @@ func TestComposedOperator2(t *testing.T) {
 			return k, v
 		})).Pipe2(ope)
 	assertEqual(t, reads, 0)
-	for round := 1; round <= 2; round++ {
+	for i := 1; i <= 2; i++ {
 		want := []pair[int, int]{{Key: 1, Value: 2}, {Key: 3, Value: 4}}
 		assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
-		assertEqual(t, reads, round*4)
+		assertEqual(t, reads, i*4)
 	}
 	reads = 0
 	for range pipeline {
 		break
 	}
 	assertEqual(t, reads, 2)
+}
+
+// 独自の組変換を直接適用・Pipe2 接続でき、接続時の遅延評価と下流の停止を保つ。
+func TestExternalTransforms2(t *testing.T) {
+	ope := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
+		return func(yield func(string, string) bool) {
+			for k, v := range src {
+				if !yield(k, strconv.Itoa(v)) {
+					return
+				}
+			}
+		}
+	}
+	direct := ope(seq.ToSeq2(seq.FromMap(map[string]int{"1": 10})))
+	assertEqual(t, collectPairs(direct), []pair[string, string]{{Key: "1", Value: "10"}})
+	reads := 0
+	src := func(yield func(int, int) bool) {
+		for i := 1; i <= 3; i++ {
+			reads++
+			if !yield(i, i*10) {
+				return
+			}
+		}
+	}
+	pipeline := seq.FromSeq2(src).Pipe2(keyText).Pipe2(ope)
+	assertEqual(t, reads, 0)
+	for k, v := range seq.ToSeq2(pipeline) {
+		assertEqual(t, k, "1")
+		assertEqual(t, v, "10")
+		break
+	}
+	assertEqual(t, reads, 1)
+	want := []pair[string, string]{
+		{Key: "1", Value: "10"},
+		{Key: "2", Value: "20"},
+		{Key: "3", Value: "30"},
+	}
+	assertEqual(t, collectPairs(seq.ToSeq2(pipeline)), want)
 }
 
 // 単一値を組に変換する名前付き関数型を直接適用・Pipe2 接続し、nil 入力も確認する。
@@ -100,33 +182,9 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 	assertEqual(t, collectPairs(ope(nil)), []pair[[]int, string](nil))
 }
 
-// 組を単一値に変換する名前付き関数型を直接適用・Pipe 接続し、nil 入力も確認する。
-func TestToSeqOperatorDirectCall(t *testing.T) {
+// 組を単一値に変換する名前付き関数型を Pipe に接続できる。
+func TestToSeqOperatorPipeline(t *testing.T) {
 	var ope op.ToSeqOperator[int, string, string] = op.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
-	assertEqual(t, slices.Collect(ope(seq.ToSeq2(src))), []string{"a", "bbb"})
 	assertEqual(t, seq.ToSlice(src.Pipe(ope)), []string{"a", "bbb"})
-	assertEqual(t, slices.Collect(ope(nil)), []string(nil))
-}
-
-func repeat(src iter.Seq[int]) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for v := range src {
-			for i := 0; i < 2; i++ {
-				if !yield(strconv.Itoa(v)) {
-					return
-				}
-			}
-		}
-	}
-}
-
-func keyText(src iter.Seq2[int, int]) iter.Seq2[string, int] {
-	return func(yield func(string, int) bool) {
-		for k, v := range src {
-			if !yield(strconv.Itoa(k), v) {
-				return
-			}
-		}
-	}
 }
