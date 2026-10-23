@@ -6,7 +6,7 @@
 
 ## 環境要件とインストール
 
-Go 1.27.1 以降が必要です。  
+Go 1.27.3 以降が必要です。  
 
 ```sh
 go get github.com/meian/go-seqpipeline

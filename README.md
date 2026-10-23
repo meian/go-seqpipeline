@@ -6,7 +6,7 @@ A library for building type-safe pipelines through method chaining with `iter.Se
 
 ## Requirements and installation
 
-Go 1.27.1 or later is required.  
+Go 1.27.3 or later is required.  
 
 ```sh
 go get github.com/meian/go-seqpipeline
