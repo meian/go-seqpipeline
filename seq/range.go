@@ -27,6 +27,8 @@ func Range[T Integer](start, stop, step T) Seq[T] {
 		return rangeInt[T](int(start), int(stop), int(step))
 	case int16:
 		return rangeInt16[T](int16(start), int16(stop), int16(step))
+	case uint8:
+		return rangeUint8[T](uint8(start), uint8(stop), uint8(step))
 	}
 
 	switch reflect.TypeFor[T]().Kind() {
@@ -34,8 +36,10 @@ func Range[T Integer](start, stop, step T) Seq[T] {
 		return rangeInt[T](int(start), int(stop), int(step))
 	case reflect.Int16:
 		return rangeInt16[T](int16(start), int16(stop), int16(step))
+	case reflect.Uint8:
+		return rangeUint8[T](uint8(start), uint8(stop), uint8(step))
 	case reflect.Int8, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Uintptr:
 		return rangeGeneric(start, stop, step)
 	default:
@@ -128,6 +132,31 @@ func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
 			current += increment
 		}
 		if current >= end {
+			yield(T(current))
+		}
+	}
+}
+
+// rangeUint8 は T の基底型が uint8 の場合だけ呼び出す。
+func rangeUint8[T Integer](start, stop, step uint8) Seq[T] {
+	return func(yield func(T) bool) {
+		current, end, increment := start, stop, step
+		if current > end {
+			return
+		}
+		// end - increment が uint8 の範囲外なら、次の値は stop を越える。
+		if end < increment {
+			yield(T(current))
+			return
+		}
+		guard := end - increment
+		for current <= guard {
+			if !yield(T(current)) {
+				return
+			}
+			current += increment
+		}
+		if current <= end {
 			yield(T(current))
 		}
 	}

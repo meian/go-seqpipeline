@@ -81,7 +81,32 @@ func TestRangeInt16(t *testing.T) {
 	})
 }
 
+func TestRangeUint8(t *testing.T) {
+	tests := []struct {
+		name              string
+		start, stop, step uint8
+		want              []uint8
+	}{
+		{name: "reaches stop", start: 1, stop: 7, step: 2, want: []uint8{1, 3, 5, 7}},
+		{name: "passes stop", start: 1, stop: 8, step: 2, want: []uint8{1, 3, 5, 7}},
+		{name: "guard underflow", start: 0, stop: 1, step: 255, want: []uint8{0}},
+		{name: "reaches max", start: 254, stop: 255, step: 1, want: []uint8{254, 255}},
+		{name: "passes max", start: 254, stop: 255, step: 2, want: []uint8{254}},
+		{name: "equal bounds", start: 3, stop: 3, step: 2, want: []uint8{3}},
+		{name: "start beyond stop", start: 8, stop: 1, step: 2, want: nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertEqual(t, seq.ToSlice(seq.Range(tt.start, tt.stop, tt.step)), tt.want)
+		})
+	}
+	t.Run("defined uint8", func(t *testing.T) {
+		type definedUint8 uint8
+		got := seq.ToSlice(seq.Range(definedUint8(254), definedUint8(255), definedUint8(1)))
+		assertEqual(t, got, []definedUint8{254, 255})
+	})
+}
+
 func TestRangeOtherIntegers(t *testing.T) {
-	assertEqual(t, seq.ToSlice(seq.Range(uint8(254), uint8(255), uint8(1))), []uint8{254, 255})
 	assertEqual(t, seq.ToSlice(seq.Range(int8(-127), int8(-128), int8(-1))), []int8{-127, -128})
 }
