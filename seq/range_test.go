@@ -1,6 +1,7 @@
 package seq_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -25,4 +26,22 @@ func TestRange(t *testing.T) {
 		got := seq.ToSlice(seq.Range(definedInt(1), definedInt(6), definedInt(2)))
 		assertEqual(t, got, []definedInt{1, 3, 5})
 	})
+}
+
+func TestRangeIntBounds(t *testing.T) {
+	tests := []struct {
+		name              string
+		start, stop, step int
+		want              []int
+	}{
+		{name: "ascending guard underflow", start: math.MinInt, stop: math.MinInt + 1, step: math.MaxInt, want: []int{math.MinInt}},
+		{name: "ascending across bounds", start: math.MinInt, stop: math.MaxInt, step: math.MaxInt, want: []int{math.MinInt, -1, math.MaxInt - 1}},
+		{name: "descending guard overflow", start: math.MaxInt, stop: math.MaxInt - 1, step: math.MinInt, want: []int{math.MaxInt}},
+		{name: "descending across bounds", start: math.MaxInt, stop: math.MinInt, step: math.MinInt, want: []int{math.MaxInt, -1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assertEqual(t, seq.ToSlice(seq.Range(tt.start, tt.stop, tt.step)), tt.want)
+		})
+	}
 }

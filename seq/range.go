@@ -1,6 +1,9 @@
 package seq
 
-import "reflect"
+import (
+	"math"
+	"reflect"
+)
 
 // Integer は Range で扱う整数型を表す。
 // 基底型が整数型である定義型も含む。
@@ -39,28 +42,43 @@ func Range[T Integer](start, stop, step T) Seq[T] {
 func rangeInt[T Integer](start, stop, step int) Seq[T] {
 	return func(yield func(T) bool) {
 		current, end, increment := start, stop, step
+		// end - increment が int の範囲外なら、次の値は stop を越える。
 		if increment > 0 {
-			for current < end {
+			if current >= end {
+				return
+			}
+			if end < math.MinInt+increment {
+				yield(T(current))
+				return
+			}
+			guard := end - increment
+			for current < guard {
 				if !yield(T(current)) {
 					return
 				}
-				next := current + increment
-				if next <= current {
-					return
-				}
-				current = next
+				current += increment
+			}
+			if current < end {
+				yield(T(current))
 			}
 			return
 		}
-		for current > end {
+		if current <= end {
+			return
+		}
+		if end > math.MaxInt+increment {
+			yield(T(current))
+			return
+		}
+		guard := end - increment
+		for current > guard {
 			if !yield(T(current)) {
 				return
 			}
-			next := current + increment
-			if next >= current {
-				return
-			}
-			current = next
+			current += increment
+		}
+		if current > end {
+			yield(T(current))
 		}
 	}
 }
