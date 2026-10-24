@@ -20,12 +20,12 @@ func Range[T Integer](start, stop, step T) Seq[T] {
 
 	switch any(start).(type) {
 	case int:
-		return rangeInt(start, stop, step)
+		return rangeInt[T](int(start), int(stop), int(step))
 	}
 
 	switch reflect.TypeFor[T]().Kind() {
 	case reflect.Int:
-		return rangeInt(start, stop, step)
+		return rangeInt[T](int(start), int(stop), int(step))
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Uintptr:
@@ -35,9 +35,10 @@ func Range[T Integer](start, stop, step T) Seq[T] {
 	}
 }
 
-func rangeInt[T Integer](start, stop, step T) Seq[T] {
+// rangeInt は T の基底型が int の場合だけ呼び出す。
+func rangeInt[T Integer](start, stop, step int) Seq[T] {
 	return func(yield func(T) bool) {
-		current, end, increment := int(start), int(stop), int(step)
+		current, end, increment := start, stop, step
 		if increment > 0 {
 			for current < end {
 				if !yield(T(current)) {
