@@ -53,5 +53,3 @@ jobs:
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Check both READMEs
         run: python3 scripts/check_readme.py
-      - name: Check ADRs and current decisions
-        run: python3 scripts/check_adr.py

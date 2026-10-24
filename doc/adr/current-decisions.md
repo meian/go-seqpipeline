@@ -6,6 +6,6 @@
 
 | 判断 | 適用範囲 | 根拠 |
 | --- | --- | --- |
-| オペレーターは `op` に置き、依存方向を `seq → op → iter` とする | パッケージの責務と新しいオペレーター | [ADR-0001](0001-operator-package.md) |
+| オペレーターは `op` に配置し、依存方向を `seq → op → iter` とする | パッケージの責務と新しいオペレーター | [ADR-0001](0001-operator-package.md) |
 | README は導入の入口とし、詳細を目的別の文書へ置く | README・利用ガイド・GoDoc・Example・性能レポート | [ADR-0002](0002-documentation-roles.md) |
 | 正式版の版番号は SemVer を基に変更内容から決める | リリース版番号と最低 Go バージョンの変更 | [ADR-0003](0003-release-version-policy.md) |
