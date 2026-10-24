@@ -13,31 +13,32 @@ type Integer interface {
 }
 
 // Range は start から step ずつ増減する整数を、stop まで生成する。
+// step は int 型で、符号なし整数型にも負の値を指定できる。
 // stop にちょうど達した場合は含み、飛び越した場合は含まない。
 // start と stop が等しい場合は start を一度生成し、step の方向と stop の位置が合わない場合は空になる。
 // step が 0 の場合は panic する。
-// 加算で値が進まないか、整数のオーバーフローで方向が逆転した場合は生成を終了する。
-func Range[T Integer](start, stop, step T) Seq[T] {
+// 次の値が stop を越えるか、整数型の範囲外になる場合は生成を終了する。
+func Range[T Integer](start, stop T, step int) Seq[T] {
 	if step == 0 {
 		panic("seq.Range: step must not be zero")
 	}
 
 	switch any(start).(type) {
 	case int:
-		return rangeInt[T](int(start), int(stop), int(step))
+		return rangeInt[T](int(start), int(stop), step)
 	case int16:
-		return rangeInt16[T](int16(start), int16(stop), int16(step))
+		return rangeInt16[T](int16(start), int16(stop), step)
 	case uint8:
-		return rangeUint8[T](uint8(start), uint8(stop), uint8(step))
+		return rangeUint8[T](uint8(start), uint8(stop), step)
 	}
 
 	switch reflect.TypeFor[T]().Kind() {
 	case reflect.Int:
-		return rangeInt[T](int(start), int(stop), int(step))
+		return rangeInt[T](int(start), int(stop), step)
 	case reflect.Int16:
-		return rangeInt16[T](int16(start), int16(stop), int16(step))
+		return rangeInt16[T](int16(start), int16(stop), step)
 	case reflect.Uint8:
-		return rangeUint8[T](uint8(start), uint8(stop), uint8(step))
+		return rangeUint8[T](uint8(start), uint8(stop), step)
 	case reflect.Int8, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Uintptr:
@@ -93,15 +94,14 @@ func rangeInt[T Integer](start, stop, step int) Seq[T] {
 }
 
 // rangeInt16 は T の基底型が int16 の場合だけ呼び出す。
-func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
+func rangeInt16[T Integer](start, stop int16, step int) Seq[T] {
 	return func(yield func(T) bool) {
-		current, end, increment := start, stop, step
-		// end - increment が int16 の範囲外なら、次の値は stop を越える。
+		current, end, increment := int(start), int(stop), step
 		if increment > 0 {
 			if current > end {
 				return
 			}
-			if end < math.MinInt16+increment {
+			if increment > end-current {
 				yield(T(current))
 				return
 			}
@@ -120,7 +120,7 @@ func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
 		if current < end {
 			return
 		}
-		if end > math.MaxInt16+increment {
+		if increment < end-current {
 			yield(T(current))
 			return
 		}
@@ -138,57 +138,76 @@ func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
 }
 
 // rangeUint8 は T の基底型が uint8 の場合だけ呼び出す。
-func rangeUint8[T Integer](start, stop, step uint8) Seq[T] {
+func rangeUint8[T Integer](start, stop uint8, step int) Seq[T] {
 	return func(yield func(T) bool) {
-		current, end, increment := start, stop, step
-		if current > end {
+		current, end, increment := int(start), int(stop), step
+		if increment > 0 {
+			if current > end {
+				return
+			}
+			if increment > end-current {
+				yield(T(current))
+				return
+			}
+			guard := end - increment
+			for current <= guard {
+				if !yield(T(current)) {
+					return
+				}
+				current += increment
+			}
+			if current <= end {
+				yield(T(current))
+			}
 			return
 		}
-		// end - increment が uint8 の範囲外なら、次の値は stop を越える。
-		if end < increment {
+		if current < end {
+			return
+		}
+		if increment < end-current {
 			yield(T(current))
 			return
 		}
 		guard := end - increment
-		for current <= guard {
+		for current >= guard {
 			if !yield(T(current)) {
 				return
 			}
 			current += increment
 		}
-		if current <= end {
+		if current >= end {
 			yield(T(current))
 		}
 	}
 }
 
-func rangeGeneric[T Integer](start, stop, step T) Seq[T] {
+func rangeGeneric[T Integer](start, stop T, step int) Seq[T] {
 	return func(yield func(T) bool) {
 		current := start
+		// uint64 の差は符号付き型の全範囲にまたがる距離も表せる。
 		if step > 0 {
+			increment := uint64(step)
 			for current <= stop {
 				if !yield(current) {
 					return
 				}
-				next := current + step
-				if next <= current {
+				if uint64(stop)-uint64(current) < increment {
 					return
 				}
-				current = next
+				current = T(uint64(current) + increment)
 			}
 			return
 		}
-		if step < 0 {
-			for current >= stop {
-				if !yield(current) {
-					return
-				}
-				next := current + step
-				if next >= current {
-					return
-				}
-				current = next
+		// step == MinInt でも絶対値を uint64 で表せる。
+		decrement := uint64(-(step + 1)) + 1
+		for current >= stop {
+			if !yield(current) {
+				return
 			}
+			if uint64(current)-uint64(stop) < decrement {
+				return
+			}
+			current = T(uint64(current) - decrement)
 		}
 	}
 }
