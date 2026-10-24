@@ -21,7 +21,6 @@ For operations with separate functions for single values and key-value pairs, th
 ## Input and result collection
 
 Functions starting with `From` convert collections, standard iterators, or channels into pipeline inputs.  
-`Range(start, stop, step)` generates an integer input, including `stop` when reached exactly; its `int` step may be negative even for unsigned values.  
 Functions starting with `To` collect results into collections or convert them to standard iterators or channels.  
 
 | Operation | `seq.Seq` | `seq.Seq2` |
