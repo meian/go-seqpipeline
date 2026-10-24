@@ -24,12 +24,16 @@ func Range[T Integer](start, stop, step T) Seq[T] {
 	switch any(start).(type) {
 	case int:
 		return rangeInt[T](int(start), int(stop), int(step))
+	case int16:
+		return rangeInt16[T](int16(start), int16(stop), int16(step))
 	}
 
 	switch reflect.TypeFor[T]().Kind() {
 	case reflect.Int:
 		return rangeInt[T](int(start), int(stop), int(step))
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+	case reflect.Int16:
+		return rangeInt16[T](int16(start), int16(stop), int16(step))
+	case reflect.Int8, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Uintptr:
 		return rangeGeneric(start, stop, step)
@@ -67,6 +71,51 @@ func rangeInt[T Integer](start, stop, step int) Seq[T] {
 			return
 		}
 		if end > math.MaxInt+increment {
+			yield(T(current))
+			return
+		}
+		guard := end - increment
+		for current > guard {
+			if !yield(T(current)) {
+				return
+			}
+			current += increment
+		}
+		if current > end {
+			yield(T(current))
+		}
+	}
+}
+
+// rangeInt16 は T の基底型が int16 の場合だけ呼び出す。
+func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
+	return func(yield func(T) bool) {
+		current, end, increment := start, stop, step
+		// end - increment が int16 の範囲外なら、次の値は stop を越える。
+		if increment > 0 {
+			if current >= end {
+				return
+			}
+			if end < math.MinInt16+increment {
+				yield(T(current))
+				return
+			}
+			guard := end - increment
+			for current < guard {
+				if !yield(T(current)) {
+					return
+				}
+				current += increment
+			}
+			if current < end {
+				yield(T(current))
+			}
+			return
+		}
+		if current <= end {
+			return
+		}
+		if end > math.MaxInt16+increment {
 			yield(T(current))
 			return
 		}
