@@ -12,8 +12,9 @@ type Integer interface {
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
-// Range は start から step ずつ増減する整数を、stop の手前まで生成する。
-// stop は含まず、step の方向と stop の位置が合わない場合は空になる。
+// Range は start から step ずつ増減する整数を、stop まで生成する。
+// stop にちょうど達した場合は含み、飛び越した場合は含まない。
+// start と stop が等しい場合は start を一度生成し、step の方向と stop の位置が合わない場合は空になる。
 // step が 0 の場合は panic する。
 // 加算で値が進まないか、整数のオーバーフローで方向が逆転した場合は生成を終了する。
 func Range[T Integer](start, stop, step T) Seq[T] {
@@ -48,7 +49,7 @@ func rangeInt[T Integer](start, stop, step int) Seq[T] {
 		current, end, increment := start, stop, step
 		// end - increment が int の範囲外なら、次の値は stop を越える。
 		if increment > 0 {
-			if current >= end {
+			if current > end {
 				return
 			}
 			if end < math.MinInt+increment {
@@ -56,18 +57,18 @@ func rangeInt[T Integer](start, stop, step int) Seq[T] {
 				return
 			}
 			guard := end - increment
-			for current < guard {
+			for current <= guard {
 				if !yield(T(current)) {
 					return
 				}
 				current += increment
 			}
-			if current < end {
+			if current <= end {
 				yield(T(current))
 			}
 			return
 		}
-		if current <= end {
+		if current < end {
 			return
 		}
 		if end > math.MaxInt+increment {
@@ -75,13 +76,13 @@ func rangeInt[T Integer](start, stop, step int) Seq[T] {
 			return
 		}
 		guard := end - increment
-		for current > guard {
+		for current >= guard {
 			if !yield(T(current)) {
 				return
 			}
 			current += increment
 		}
-		if current > end {
+		if current >= end {
 			yield(T(current))
 		}
 	}
@@ -93,7 +94,7 @@ func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
 		current, end, increment := start, stop, step
 		// end - increment が int16 の範囲外なら、次の値は stop を越える。
 		if increment > 0 {
-			if current >= end {
+			if current > end {
 				return
 			}
 			if end < math.MinInt16+increment {
@@ -101,18 +102,18 @@ func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
 				return
 			}
 			guard := end - increment
-			for current < guard {
+			for current <= guard {
 				if !yield(T(current)) {
 					return
 				}
 				current += increment
 			}
-			if current < end {
+			if current <= end {
 				yield(T(current))
 			}
 			return
 		}
-		if current <= end {
+		if current < end {
 			return
 		}
 		if end > math.MaxInt16+increment {
@@ -120,13 +121,13 @@ func rangeInt16[T Integer](start, stop, step int16) Seq[T] {
 			return
 		}
 		guard := end - increment
-		for current > guard {
+		for current >= guard {
 			if !yield(T(current)) {
 				return
 			}
 			current += increment
 		}
-		if current > end {
+		if current >= end {
 			yield(T(current))
 		}
 	}
@@ -136,7 +137,7 @@ func rangeGeneric[T Integer](start, stop, step T) Seq[T] {
 	return func(yield func(T) bool) {
 		current := start
 		if step > 0 {
-			for current < stop {
+			for current <= stop {
 				if !yield(current) {
 					return
 				}
@@ -149,7 +150,7 @@ func rangeGeneric[T Integer](start, stop, step T) Seq[T] {
 			return
 		}
 		if step < 0 {
-			for current > stop {
+			for current >= stop {
 				if !yield(current) {
 					return
 				}
