@@ -1,6 +1,9 @@
 package seq
 
-import "reflect"
+import (
+	"math"
+	"reflect"
+)
 
 type integer interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
@@ -32,40 +35,48 @@ func FromRange[T integer](start, stop T, step int64) Seq[T] {
 }
 
 func fromSignedRange[T integer](start, stop int64, step int64) Seq[T] {
-	// int64 の両端をまたぐ距離は uint64 の差で判定する。
+	// stop - step が int64 の範囲外になる場合、次の値は生成できない。
 	if step > 0 {
-		increment := uint64(step)
 		return func(yield func(T) bool) {
 			if start > stop {
 				return
 			}
+			if stop < math.MinInt64+step {
+				yield(T(start))
+				return
+			}
+			guard := stop - step
 			current := start
-			for {
+			for current <= guard {
 				if !yield(T(current)) {
-					return
-				}
-				if uint64(stop)-uint64(current) < increment {
 					return
 				}
 				current += step
 			}
+			if current <= stop {
+				yield(T(current))
+			}
 		}
 	}
 
-	decrement := uint64(-(step + 1)) + 1
 	return func(yield func(T) bool) {
 		if start < stop {
 			return
 		}
+		if stop > math.MaxInt64+step {
+			yield(T(start))
+			return
+		}
+		guard := stop - step
 		current := start
-		for {
+		for current >= guard {
 			if !yield(T(current)) {
 				return
 			}
-			if uint64(current)-uint64(stop) < decrement {
-				return
-			}
 			current += step
+		}
+		if current >= stop {
+			yield(T(current))
 		}
 	}
 }

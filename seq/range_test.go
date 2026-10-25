@@ -84,6 +84,13 @@ func TestFromRangeBounds(t *testing.T) {
 	assertEqual(t, seq.ToSlice(seq.FromRange(uint(math.MaxUint-1), uint(math.MaxUint), 1)), []uint{math.MaxUint - 1, math.MaxUint})
 	assertEqual(t, seq.ToSlice(seq.FromRange(int64(math.MaxInt64-1), int64(math.MaxInt64), 1)), []int64{math.MaxInt64 - 1, math.MaxInt64})
 	assertEqual(t, seq.ToSlice(seq.FromRange(int64(math.MinInt64+1), int64(math.MinInt64), -1)), []int64{math.MinInt64 + 1, math.MinInt64})
+	// 境界の等号と、その直前で初回のみ返す場合を両方向で確認する。
+	min, max := int64(math.MinInt64), int64(math.MaxInt64)
+	assertEqual(t, seq.ToSlice(seq.FromRange(min, -1, max)), []int64{min, -1})
+	assertEqual(t, seq.ToSlice(seq.FromRange(min, -2, max)), []int64{min})
+	assertEqual(t, seq.ToSlice(seq.FromRange(min, max, max)), []int64{min, -1, max - 1})
+	assertEqual(t, seq.ToSlice(seq.FromRange(max, -1, min)), []int64{max, -1})
+	assertEqual(t, seq.ToSlice(seq.FromRange(max, 0, min)), []int64{max})
 	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(math.MaxUint64-1), uint64(math.MaxUint64), 1)), []uint64{math.MaxUint64 - 1, math.MaxUint64})
 	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(1), uint64(0), -1)), []uint64{1, 0})
 
