@@ -286,7 +286,7 @@ squash merge 後の測定コミットがローカルにない場合は、origin 
 - ライブラリ・依存コードの `.go` ファイル（`*_test.go` と `doc.go` を除く）
 - ルートの `go.mod`、`go.sum`、`go.work`、`go.work.sum`、`.go-version`、`.tool-versions`
 
-`benchmarks/`、`scripts/`、`doc/`、`.github/` と、各階層の `testdata/` は対象外とする。  
+`benchmarks/`、`ci/`、`doc/`、`.github/` と、各階層の `testdata/` は対象外とする。  
 文書・テスト・測定コード・測定結果のみの変更では Issue を作らない。  
 実装ファイル内のコメントのみの変更は、同じファイルの変更として対象になる。  
 追加・削除も確認し、実装ファイルがテストへ移動した場合は元の実装の削除として検出する。  
@@ -323,8 +323,8 @@ dry-run でも基準の検証と既存 Issue の照合は行い、エラーを�
 
 ```sh
 git fetch origin main
-python3 scripts/check_benchmark_update.py --repo meian/go-seqpipeline --dry-run
-python3 -m unittest discover -s scripts -p 'test*benchmark*.py'
+python3 ci/scripts/check_benchmark_update.py --repo meian/go-seqpipeline --dry-run
+python3 -m unittest discover -s ci/scripts -p 'test*benchmark*.py'
 ```
 
 判定関数の単体テストと、一時 Git リポジトリによる統合テストを分ける。  

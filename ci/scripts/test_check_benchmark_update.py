@@ -90,7 +90,7 @@ class IsRuntimePathTests(unittest.TestCase):
         for path in (
             "README.md", "doc.go", "seq/doc.go", "seq/map_test.go", "seq/testdata/input.go",
             "benchmarks/map_test.go", "benchmarks/helper.go", "benchmarks/results/environment.md",
-            "benchmarks/measure.sh", "scripts/check_benchmark_update.py", "doc/sample.go",
+            "benchmarks/measure.sh", "ci/scripts/helper.go", "doc/sample.go",
             ".github/workflows/ci.yml", "testdata/example.go",
         ):
             with self.subTest(path=path):
