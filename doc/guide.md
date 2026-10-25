@@ -208,7 +208,7 @@ See [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#examp
 Implement a custom operator when composing existing operators cannot express the operation you need.  
 
 Implement a transformation function using `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
-The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
+The function should return an iterator that processes input when iterated, without evaluating input during the transformation call.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 To combine operators within a custom implementation, use composition in `op` while keeping input and output as standard iterators.  
 
