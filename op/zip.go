@@ -76,16 +76,14 @@ type zipKeyOperator[K, V any] struct {
 	defaultKey K
 }
 
-// AlignBy selects which input determines the output length while retaining the
-// configured default key.
+// AlignBy selects which input determines the output length.
 // Values other than AlignShortest, AlignLeft, AlignRight, and AlignLongest panic.
 func (z zipKeyOperator[K, V]) AlignBy(alignment ZipAlign) zipKeyOperator[K, V] {
 	z.zip = z.zip.AlignBy(alignment)
 	return z
 }
 
-// WithDefaultValue sets the value used when the value input ends first while
-// retaining the configured default key.
+// WithDefaultValue sets the value used when the value input ends first.
 func (z zipKeyOperator[K, V]) WithDefaultValue(defaultValue V) zipKeyOperator[K, V] {
 	z.zip = z.zip.WithDefaultValue(defaultValue)
 	return z
