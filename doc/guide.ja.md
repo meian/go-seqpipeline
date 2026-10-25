@@ -86,8 +86,8 @@ fmt.Println(seq.ToSlice(values)) // [a b]
 
 ## 評価と停止の基本
 
-キャッシュ以外の組み込みの入力変換とオペレーターは遅延評価し、収集関数の呼び出しや反復で処理を開始します。  
-`Cache` / `Cache2` は、`Pipe` / `Pipe2` での接続時を含め、呼び出し時に入力を全件評価します。  
+組み込みの入力変換とオペレーターは遅延評価し、収集関数の呼び出しや反復で処理を開始します。  
+`Cache` / `Cache2` は初回反復時に入力を全件評価します。  
 channel への出力は、呼び出し時に goroutine で評価を開始します。  
 `seq.Seq` / `seq.Seq2` の反復中に下流の `yield` が `false` を返すか、`range` を `break` すると、上流へ停止を伝えます。  
 入力やコールバック内部の待機は強制中断できないため、呼び出し側で停止手段を用意してください。  
@@ -95,8 +95,20 @@ channel への出力は、呼び出し時に goroutine で評価を開始しま�
 ## Cache による評価結果の再利用
 
 `Pipe(op.Cache)` / `Pipe2(op.Cache2)` で途中までの結果を保存し、同じキャッシュから複数の後続処理を組み立てられます。  
-キャッシュは接続時に上流を一度だけ評価し、順序と重複を保持し、nil・空入力にも非 nil のシーケンスを返します。  
+キャッシュは初回反復時に値を返す前に上流を一度だけ全件評価し、順序と重複を保持し、nil・空入力にも非 nil のシーケンスを返します。  
 以降の反復では途中終了後も保存済みの先頭から読み出し、キャッシュより後の処理は反復ごとに実行します。  
+
+この時点で結果を確定したい場合は、明示的に収集し、保存したスライスからシーケンスを作ります。  
+
+```go
+source := seq.FromSlice([]int{1, 2, 3}).Pipe(op.Map(func(v int) int { return v * 2 }))
+values := slices.Collect(seq.ToSeq(source))
+saved := seq.FromSeq(slices.Values(values))
+fmt.Println(seq.ToSlice(saved)) // [2 4 6]
+```
+
+`Collect` の呼び出し時に `source` が評価され、`saved` の反復では再実行されません。  
+結果を固定したまま使う場合は、`values` を変更しないでください。  
 
 利用例は [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) / [ExampleCache2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache2) を参照してください。  
 
@@ -116,8 +128,8 @@ naturals := seq.Seq[int](func(yield func(int) bool) {
 })
 ```
 
-次の接続は、`Cache` が無限入力を全件評価しようとするため戻りません。  
-後ろの `Take(3)` には到達しません。  
+次のパイプラインは接続できますが、反復時に `Cache` が無限入力を全件評価しようとするため値を返しません。  
+後ろの `Take(3)` では、その評価を制限できません。  
 
 ```go
 naturals.Pipe(op.Cache).Pipe(op.Take(3).Operator)
@@ -132,9 +144,11 @@ fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 ```
 
-要素は値として保存し、深いコピーは行わないため、元の要素の置き換えは反映せず、ポインター・スライス・map などで共有する参照先の変更は反映します。  
-入力の反復はキャッシュ呼び出しが戻る前に終了し、キャッシュが使われなくなると保存領域は回収可能になります。  
-キャッシュは交互・並行に反復できますが、共有する参照先や下流のコールバックは必要に応じて呼び出し側で同期してください。  
+初回反復前の入力の変更はキャッシュに反映されますが、保存後の要素の置き換えは反映されません。  
+要素は値として保存し、深いコピーは行わないため、ポインター・スライス・map などで共有する参照先の変更は反映します。  
+初回反復中に上流が panic した場合、以降の反復でも同じ値で panic し、上流の再実行や途中までの値の返却は行いません。  
+入力の全件評価を終えてから最初のキャッシュ値を返し、キャッシュが使われなくなると保存領域は回収可能になります。  
+キャッシュは初回を含め交互・並行に反復できますが、共有する参照先や下流のコールバックは必要に応じて呼び出し側で同期してください。  
 
 ## channel との相互変換
 
@@ -185,7 +199,7 @@ values := op.Compose2().Pipe[int, string](op.Values)
 
 合成の組み立て時には変換関数を呼び出さず、入力も評価しません。  
 合成結果を入力へ適用すると接続順に変換関数を呼び出し、各処理の評価・停止の仕様に従います。  
-`Cache` / `Cache2` は適用時に呼び出しごとのキャッシュを作り、以降の反復ではそのキャッシュを再利用します。  
+`Cache` / `Cache2` は適用ごとに独立したキャッシュを作り、初回反復で保存して以降の反復では再利用します。  
 入力・コールバック・`Zip` の右側などの追加入力は、それぞれの再利用・状態共有の条件に従います。  
 
 実行可能な利用例は [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose)、[ExampleCompose2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2)、[ExampleCompose2_values](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2-Values) を参照してください。  
@@ -195,7 +209,7 @@ values := op.Compose2().Pipe[int, string](op.Values)
 既存オペレーターの合成では必要な処理を表せない場合は、独自オペレーターを実装します。  
 
 入出力に `iter.Seq` / `iter.Seq2` を使う変換関数を実装し、出力型に応じて `Pipe` / `Pipe2` に渡します。  
-変換関数は、呼び出し時に入力を評価せず、実行時に処理するイテレーターを返してください。  
+変換関数は、呼び出し時に入力を評価せず、反復実行時に入力を処理するイテレーターを返してください。  
 生成時の引数に型情報を持たない処理には、設定値と型パラメーターを持つ変換メソッドを用意し、そのメソッド値を出力型に応じて `Pipe` / `Pipe2` に渡します。  
 独自実装の内部でオペレーターを組み合わせる場合も、入出力を標準イテレーターのまま保ち、`op` 内の合成を使えます。  
 

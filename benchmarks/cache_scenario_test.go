@@ -27,6 +27,7 @@ func cacheSeq2(values []int, work int) seq.Seq2[int, int] {
 
 var scenarioCacheSeqResult seq.Seq[int]
 
+// Cache / Cache2 の初回評価が反復時に移ったため、Fill / Warm / Reuse の測定範囲は次回の定期ベンチマーク更新で見直す。
 func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
 	return cacheSeq(values, work).Pipe(op.Cache)
 }

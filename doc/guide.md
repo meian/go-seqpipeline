@@ -86,8 +86,8 @@ Input evaluation and stop propagation depend on the transformation function.
 
 ## Evaluation and stopping basics
 
-Built-in input conversions and operators are lazy, except for caching; collection or iteration starts processing.  
-`Cache` / `Cache2` evaluate the entire input when called, including when connected with `Pipe` / `Pipe2`.  
+Built-in input conversions and operators are lazy; collection or iteration starts processing.  
+`Cache` / `Cache2` evaluate the entire input on the first iteration.  
 Channel output starts evaluation in a goroutine when called.  
 During `seq.Seq` / `seq.Seq2` iteration, a downstream `yield` returning `false` or a `range` loop ending with `break` propagates a stop upstream.  
 Waits inside inputs or callbacks cannot be forcibly interrupted; callers must provide a way to stop them.  
@@ -95,8 +95,20 @@ Waits inside inputs or callbacks cannot be forcibly interrupted; callers must pr
 ## Reusing evaluated results with Cache
 
 Use `Pipe(op.Cache)` / `Pipe2(op.Cache2)` to save results at a pipeline boundary and build multiple downstream pipelines from them.  
-Caching evaluates upstream once during connection, preserves order and duplicates, and returns a non-nil sequence even for nil or empty input.  
+Caching evaluates upstream once on the first iteration before yielding any values, preserves order and duplicates, and returns a non-nil sequence even for nil or empty input.  
 Later iterations read the saved results from the beginning, including after an early stop; downstream operations run on every iteration.  
+
+To fix the results when this code runs, collect them explicitly and create a sequence from the saved slice.  
+
+```go
+source := seq.FromSlice([]int{1, 2, 3}).Pipe(op.Map(func(v int) int { return v * 2 }))
+values := slices.Collect(seq.ToSeq(source))
+saved := seq.FromSeq(slices.Values(values))
+fmt.Println(seq.ToSlice(saved)) // [2 4 6]
+```
+
+`Collect` evaluates `source` immediately; iterating `saved` does not rerun it.  
+Keep `values` unchanged if the saved results must stay fixed.  
 
 See [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) / [ExampleCache2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache2) for executable usage.  
 
@@ -115,8 +127,8 @@ naturals := seq.Seq[int](func(yield func(int) bool) {
 })
 ```
 
-The following connection never returns because `Cache` tries to evaluate the entire infinite input.  
-The downstream `Take(3)` is never reached.  
+The following pipeline can be connected, but its iteration never yields a value because `Cache` tries to evaluate the entire infinite input first.  
+The downstream `Take(3)` cannot limit that evaluation.  
 
 ```go
 naturals.Pipe(op.Cache).Pipe(op.Take(3).Operator)
@@ -131,9 +143,11 @@ fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 ```
 
-Elements are saved by value without a deep copy: replacing original elements does not change the cache, but mutations through shared pointers, slices, or maps remain visible.  
-Input iteration ends before the caching call returns, and the saved storage can be reclaimed when the cache is no longer used.  
-Cached sequences support interleaved and concurrent iteration; callers must synchronize shared referenced data and downstream callbacks as needed.  
+Changes to the input before the first iteration are reflected in the cache; later replacements are not.  
+Elements are saved by value without a deep copy, so mutations through shared pointers, slices, or maps remain visible.  
+If upstream panics during the first iteration, subsequent iterations panic with the same value without retrying upstream or yielding a partial cache.  
+Upstream iteration finishes before the first cached value is yielded, and the saved storage can be reclaimed when the cache is no longer used.  
+Cached sequences support interleaved and concurrent iteration, including the first iteration; callers must synchronize shared referenced data and downstream callbacks as needed.  
 
 ## Channel conversions
 
@@ -184,7 +198,7 @@ values := op.Compose2().Pipe[int, string](op.Values)
 
 Composition does not call the transformation functions or evaluate input.  
 Applying the result to an input calls transformations in connection order; their evaluation and stopping semantics remain unchanged.  
-`Cache` / `Cache2` create a cache at application time, independently for each application, and later iterations reuse that cache.  
+`Cache` / `Cache2` create a cache independently for each application; the first iteration fills it and later iterations reuse it.  
 Inputs, callbacks, and additional inputs such as the right side of `Zip` still follow their own rules for reuse and shared state.  
 
 See [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose), [ExampleCompose2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2), and [ExampleCompose2_values](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Compose2-Values) for executable examples.  
@@ -194,7 +208,7 @@ See [ExampleCompose](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#examp
 Implement a custom operator when composing existing operators cannot express the operation you need.  
 
 Implement a transformation function using `iter.Seq` / `iter.Seq2` for input and output, and pass it to `Pipe` / `Pipe2` according to the output type.  
-The function should return an iterator that processes input when executed, without evaluating input during the transformation call.  
+The function should return an iterator that processes input when iterated, without evaluating input during the transformation call.  
 For operations whose factory arguments carry no type information, provide a configuration value with a transformation method that has type parameters, and pass its method value to `Pipe` / `Pipe2` according to the output type.  
 To combine operators within a custom implementation, use composition in `op` while keeping input and output as standard iterators.  
 

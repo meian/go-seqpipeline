@@ -52,7 +52,7 @@ Pass `.Operator` to `Pipe` for single values, or `.Operator2` to `Pipe2` for pai
 
 ## Usage notes
 
-`Cache` / `Cache2` evaluate the entire input when applied to it; limit infinite inputs before caching.  
+`Cache` / `Cache2` evaluate the entire input on the first iteration; limit infinite inputs before caching.  
 See [caching precautions](doc/guide.md#reusing-evaluated-results-with-cache) for details.  
 When stopping channel consumption early, cancel the context passed to the conversion.  
 See [channel conversions](doc/guide.md#channel-conversions) for communication waits and cancellation races.  

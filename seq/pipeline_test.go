@@ -408,7 +408,7 @@ func TestCachePipeline(t *testing.T) {
 		Pipe(op.Map(func(v int) int { upstream++; return v * 10 })).
 		Pipe(op.Take(3).Operator).
 		Pipe(cache)
-	assertEqual(t, upstream, 3)
+	assertEqual(t, upstream, 0)
 	first := cached.Pipe(op.Map(func(v int) string {
 		downstream++
 		return strconv.Itoa(v)
@@ -416,6 +416,7 @@ func TestCachePipeline(t *testing.T) {
 	second := cached.Pipe(op.Filter(func(v int) bool { return v >= 20 }))
 	for i := 1; i <= 2; i++ {
 		assertEqual(t, seq.ToSlice(first), []string{"10"})
+		assertEqual(t, upstream, 3)
 		assertEqual(t, seq.ToSlice(second), []int{20, 30})
 		assertEqual(t, upstream, 3)
 		assertEqual(t, downstream, i)
@@ -432,7 +433,7 @@ func TestCache2Pipeline(t *testing.T) {
 		Pipe2(op.Map2(func(k, v int) (int, int) { upstream++; return k, v * 10 })).
 		Pipe2(op.Take(3).Operator2).
 		Pipe2(cache)
-	assertEqual(t, upstream, 3)
+	assertEqual(t, upstream, 0)
 	first := cached.Pipe2(op.Map2(func(k, v int) (string, int) {
 		downstream++
 		return strconv.Itoa(k), v
@@ -441,6 +442,7 @@ func TestCache2Pipeline(t *testing.T) {
 	want := []pair[string, int]{{Key: "0", Value: 10}}
 	for i := 1; i <= 2; i++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(first)), want)
+		assertEqual(t, upstream, 3)
 		assertEqual(t, seq.ToSlice(second), []int{20, 30})
 		assertEqual(t, upstream, 3)
 		assertEqual(t, downstream, i)

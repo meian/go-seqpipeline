@@ -4,6 +4,7 @@ import (
 	"iter"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/op"
@@ -26,17 +27,20 @@ func TestCache(t *testing.T) {
 		}
 	})
 	cached := op.Cache(src)
-	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
+	assertEqual(t, []int{starts, reads, finishes}, []int{0, 0, 0})
 	values[0] = 99
 	yields := 0
 	cached(func(v int) bool {
 		yields++
-		assertEqual(t, v, 3)
+		assertEqual(t, v, 99)
+		assertEqual(t, []int{reads, finishes}, []int{4, 1})
 		return false
 	})
 	assertEqual(t, yields, 1)
+	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
+	values[0] = 77
 	for round := 0; round < 2; round++ {
-		assertEqual(t, slices.Collect(cached), []int{3, 1, 1, 2})
+		assertEqual(t, slices.Collect(cached), []int{99, 1, 1, 2})
 	}
 	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
 }
@@ -57,6 +61,7 @@ func TestCacheShallowCopy(t *testing.T) {
 	value := 1
 	values := []*int{&value}
 	cached := op.Cache(slices.Values(values))
+	assertEqual(t, slices.Collect(cached), []*int{&value})
 	other := 2
 	values[0] = &other
 	value = 3
@@ -82,6 +87,48 @@ func TestCacheInterleavedAndConcurrent(t *testing.T) {
 	wg.Wait()
 }
 
+// 初回評価中の反復も完成した同一キャッシュを待ち、上流を重複実行しない。
+func TestCacheConcurrentFirstIteration(t *testing.T) {
+	var starts atomic.Int32
+	started, release := make(chan struct{}), make(chan struct{})
+	cached := op.Cache(iter.Seq[int](func(yield func(int) bool) {
+		starts.Add(1)
+		close(started)
+		<-release
+		yield(1)
+		yield(2)
+	}))
+	results := make(chan []int, 4)
+	for i := 0; i < cap(results); i++ {
+		go func() { results <- slices.Collect(cached) }()
+	}
+	<-started
+	assertEqual(t, starts.Load(), int32(1))
+	close(release)
+	for i := 0; i < cap(results); i++ {
+		assertEqual(t, <-results, []int{1, 2})
+	}
+	assertEqual(t, starts.Load(), int32(1))
+}
+
+func TestCachePanic(t *testing.T) {
+	starts := 0
+	cached := op.Cache(iter.Seq[int](func(yield func(int) bool) {
+		starts++
+		yield(1)
+		panic("cache source failed")
+	}))
+	for i := 0; i < 2; i++ {
+		yields := 0
+		func() {
+			defer func() { assertEqual(t, recover(), any("cache source failed")) }()
+			cached(func(int) bool { yields++; return true })
+		}()
+		assertEqual(t, yields, 0)
+	}
+	assertEqual(t, starts, 1)
+}
+
 func TestCache2(t *testing.T) {
 	values := []pair[int, string]{
 		{Key: 3, Value: "c"}, {Key: 1, Value: "a"},
@@ -102,16 +149,19 @@ func TestCache2(t *testing.T) {
 		}
 	})
 	cached := op.Cache2(src)
-	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
-	want := slices.Clone(values)
+	assertEqual(t, []int{starts, reads, finishes}, []int{0, 0, 0})
 	values[0] = pair[int, string]{Key: 99, Value: "changed"}
+	want := slices.Clone(values)
 	yields := 0
 	cached(func(k int, v string) bool {
 		yields++
 		assertEqual(t, pair[int, string]{Key: k, Value: v}, want[0])
+		assertEqual(t, []int{reads, finishes}, []int{4, 1})
 		return false
 	})
 	assertEqual(t, yields, 1)
+	assertEqual(t, []int{starts, reads, finishes}, []int{1, 4, 1})
+	values[0] = pair[int, string]{Key: 77, Value: "later"}
 	for round := 0; round < 2; round++ {
 		assertEqual(t, collectPairs(cached), want)
 	}
@@ -136,6 +186,7 @@ func TestCache2ShallowCopyAndNonComparableKeys(t *testing.T) {
 		yield(keys[0], values[0])
 	}))
 	key, value := keys[0], values[0]
+	assertEqual(t, collectPairs(cached), []pair[[]int, []int]{{Key: []int{1}, Value: []int{10}}})
 	keys[0], values[0] = []int{2}, []int{20}
 	key[0], value[0] = 3, 30
 	want := []pair[[]int, []int]{{Key: []int{3}, Value: []int{30}}}
@@ -159,4 +210,47 @@ func TestCache2InterleavedAndConcurrent(t *testing.T) {
 		wg.Go(func() { assertEqual(t, collectPairs(cached), want) })
 	}
 	wg.Wait()
+}
+
+// 初回評価中の反復も完成した同一キャッシュを待ち、上流を重複実行しない。
+func TestCache2ConcurrentFirstIteration(t *testing.T) {
+	var starts atomic.Int32
+	started, release := make(chan struct{}), make(chan struct{})
+	cached := op.Cache2(iter.Seq2[int, string](func(yield func(int, string) bool) {
+		starts.Add(1)
+		close(started)
+		<-release
+		yield(1, "a")
+		yield(2, "b")
+	}))
+	results := make(chan []pair[int, string], 4)
+	for i := 0; i < cap(results); i++ {
+		go func() { results <- collectPairs(cached) }()
+	}
+	<-started
+	assertEqual(t, starts.Load(), int32(1))
+	close(release)
+	want := []pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
+	for i := 0; i < cap(results); i++ {
+		assertEqual(t, <-results, want)
+	}
+	assertEqual(t, starts.Load(), int32(1))
+}
+
+func TestCache2Panic(t *testing.T) {
+	starts := 0
+	cached := op.Cache2(iter.Seq2[int, string](func(yield func(int, string) bool) {
+		starts++
+		yield(1, "a")
+		panic("cache2 source failed")
+	}))
+	for i := 0; i < 2; i++ {
+		yields := 0
+		func() {
+			defer func() { assertEqual(t, recover(), any("cache2 source failed")) }()
+			cached(func(int, string) bool { yields++; return true })
+		}()
+		assertEqual(t, yields, 0)
+	}
+	assertEqual(t, starts, 1)
 }
