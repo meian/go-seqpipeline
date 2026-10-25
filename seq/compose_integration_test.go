@@ -102,8 +102,8 @@ func TestComposeBranches(t *testing.T) {
 	assertEqual(t, seq.ToSlice(src.Pipe(firstTwo.Operator)), []int{2, 4})
 }
 
-// キャッシュは合成の構築時には作らず、適用時に入力ごとに作る。
-// キャッシュより後の処理は反復ごとに実行し、元入力の置換や別入力の適用の影響を受けない。
+// 合成と適用では上流を評価せず、入力ごとに初回反復時の値を保存する。
+// キャッシュより後の処理は反復ごとに実行する。
 func TestComposeCacheTiming(t *testing.T) {
 	upstream, downstream := 0, 0
 	transform := op.Compose().
@@ -115,16 +115,17 @@ func TestComposeCacheTiming(t *testing.T) {
 	assertEqual(t, upstream, 0)
 	values := []int{1, 2, 3}
 	first := seq.FromSlice(values).Pipe(transform.Operator)
-	assertEqual(t, upstream, 3)
+	assertEqual(t, upstream, 0)
 	assertEqual(t, downstream, 0)
 	second := seq.FromSlice([]int{4, 5}).Pipe(transform.Operator)
-	assertEqual(t, upstream, 5)
+	assertEqual(t, upstream, 0)
 	values[1] = 99
 	for i := 1; i <= 2; i++ {
-		assertEqual(t, seq.ToSlice(first), []string{"20"})
+		assertEqual(t, seq.ToSlice(first), []string{"990"})
 		assertEqual(t, seq.ToSlice(second), []string{"50"})
 		assertEqual(t, upstream, 5)
 		assertEqual(t, downstream, i*2)
+		values[1] = 77
 	}
 }
 
@@ -139,18 +140,19 @@ func TestCompose2CacheTiming(t *testing.T) {
 	assertEqual(t, upstream, 0)
 	values := []string{"a", "bbb", "cc"}
 	first := seq.FromSeq2(slices.All(values)).Pipe2(transform.Operator)
-	assertEqual(t, upstream, 3)
+	assertEqual(t, upstream, 0)
 	assertEqual(t, downstream, 0)
 	second := seq.FromSeq2(slices.All([]string{"d", "ee"})).Pipe2(transform.Operator)
-	assertEqual(t, upstream, 5)
+	assertEqual(t, upstream, 0)
 	values[1] = "changed"
-	firstWant := []pair[string, int]{{Key: "1", Value: 3}}
+	firstWant := []pair[string, int]{{Key: "1", Value: 7}}
 	secondWant := []pair[string, int]{{Key: "1", Value: 2}}
 	for i := 1; i <= 2; i++ {
 		assertEqual(t, collectPairs(seq.ToSeq2(first)), firstWant)
 		assertEqual(t, collectPairs(seq.ToSeq2(second)), secondWant)
 		assertEqual(t, upstream, 5)
 		assertEqual(t, downstream, i*2)
+		values[1] = "later"
 	}
 }
 

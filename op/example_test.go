@@ -240,7 +240,7 @@ func ExampleCache() {
 	fmt.Println(seq.ToSlice(first))
 	fmt.Println("upstream calls:", calls)
 	// Output:
-	// cached: 3
+	// cached: 0
 	// [1]
 	// [3 2]
 	// [1]
@@ -266,7 +266,7 @@ func ExampleCache2() {
 	}
 	fmt.Println("upstream calls:", calls)
 	// Output:
-	// cached: 3
+	// cached: 0
 	// 0 1
 	// [1 3 2]
 	// 0 1
