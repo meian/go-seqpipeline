@@ -87,7 +87,7 @@ Input evaluation and stop propagation depend on the transformation function.
 ## Evaluation and stopping basics
 
 Built-in input conversions and operators are lazy; collection or iteration starts processing.  
-`Cache` / `Cache2` evaluate the entire input on the first iteration, including when connected with `Pipe` / `Pipe2`.  
+`Cache` / `Cache2` evaluate the entire input on the first iteration.  
 Channel output starts evaluation in a goroutine when called.  
 During `seq.Seq` / `seq.Seq2` iteration, a downstream `yield` returning `false` or a `range` loop ending with `break` propagates a stop upstream.  
 Waits inside inputs or callbacks cannot be forcibly interrupted; callers must provide a way to stop them.  
@@ -134,7 +134,7 @@ fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 Changes to the input before the first iteration are reflected in the cache; later replacements are not.  
 Elements are saved by value without a deep copy, so mutations through shared pointers, slices, or maps remain visible.  
 If upstream panics during the first iteration, subsequent iterations panic with the same value without retrying upstream or yielding a partial cache.  
-Upstream iteration and its cleanup finish before the first cached value is yielded, and the saved storage can be reclaimed when the cache is no longer used.  
+Upstream iteration finishes before the first cached value is yielded, and the saved storage can be reclaimed when the cache is no longer used.  
 Cached sequences support interleaved and concurrent iteration, including the first iteration; callers must synchronize shared referenced data and downstream callbacks as needed.  
 
 ## Channel conversions

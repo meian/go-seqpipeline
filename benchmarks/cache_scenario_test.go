@@ -29,7 +29,9 @@ var scenarioCacheSeqResult seq.Seq[int]
 
 func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
 	cached := cacheSeq(values, work).Pipe(op.Cache)
+	// 初回反復で全件保存するため、保存済みデータの走査は最初の値で止める。
 	for range cached {
+		break
 	}
 	return cached
 }
@@ -374,7 +376,9 @@ var scenarioCacheSeq2Result seq.Seq2[int, int]
 
 func scenarioCacheSeq2Fill(values []int, work int) seq.Seq2[int, int] {
 	cached := cacheSeq2(values, work).Pipe2(op.Cache2)
+	// 初回反復で全件保存するため、保存済みデータの走査は最初の組で止める。
 	for range cached {
+		break
 	}
 	return cached
 }

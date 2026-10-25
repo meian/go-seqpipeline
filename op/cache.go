@@ -2,6 +2,7 @@ package op
 
 import (
 	"iter"
+	"slices"
 	"sync"
 )
 
@@ -16,20 +17,13 @@ import (
 // 戻り値は交互・並行に反復できるが、共有する参照先や下流のコールバックの同期は呼び出し側が担う。
 func Cache[T any](src iter.Seq[T]) iter.Seq[T] {
 	collect := sync.OnceValue(func() []T {
-		var values []T
-		if src != nil {
-			for v := range src {
-				values = append(values, v)
-			}
+		if src == nil {
+			return nil
 		}
-		return values
+		return slices.Collect(src)
 	})
 	return func(yield func(T) bool) {
-		for _, v := range collect() {
-			if !yield(v) {
-				return
-			}
-		}
+		slices.Values(collect())(yield)
 	}
 }
 
