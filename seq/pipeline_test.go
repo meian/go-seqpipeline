@@ -9,6 +9,23 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
+// 数値入力を Pipe と収集へ接続し、停止伝播と再評価時の結果を確認する。
+func TestFromRangePipeline(t *testing.T) {
+	maps := 0
+	pipeline := seq.FromRange(1, 8, 1).
+		Pipe(op.Map(func(v int) int {
+			maps++
+			return v * 2
+		})).
+		Pipe(op.Filter(func(v int) bool { return v%4 == 0 })).
+		Pipe(op.Take(2).Operator)
+	assertEqual(t, maps, 0)
+	for i := 1; i <= 2; i++ {
+		assertEqual(t, seq.ToSlice(pipeline), []int{4, 8})
+		assertEqual(t, maps, i*4)
+	}
+}
+
 // 型変換・Filter の前後で Take を接続し、再評価ごとの件数制限と下流停止を確認する。
 func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	reads := 0

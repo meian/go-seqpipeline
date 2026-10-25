@@ -20,16 +20,21 @@
 
 ## 入力と結果の取り出し
 
-`From` で始まる関数は、コレクション、標準イテレーター、channel をパイプラインの入力へ変換します。  
+`From` で始まる関数は、コレクション・標準イテレーター・channel からの変換や整数範囲の生成によって、パイプラインの入力を作ります。  
 `To` で始まる関数は、結果をコレクションへ収集するか、標準イテレーターや channel へ変換します。  
 
 | 操作 | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
 | コレクションから入力 | `FromSlice` | `FromMap` |
+| 整数範囲から入力 | `FromRange` | — |
 | 標準イテレーターから入力 | `FromSeq` | `FromSeq2` |
 | コレクションへ収集 | `ToSlice` | `ToMap`（キーは `comparable`） |
 | 標準イテレーターへ変換 | `ToSeq` | `ToSeq2` |
 | channel から入力 / channel へ出力 | `FromChannel` / `ToChannel` | — |
+
+`FromRange(start, stop, step)` は `int64` の増減幅で整数列を作り、到達した終点を含みます。  
+`step` が 0 なら呼び出し時に panic し、終点へ向かわない符号なら空になります。  
+境界条件の詳細は [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#FromRange) を参照してください。  
 
 `iter.Seq` / `iter.Seq2` を受け取る関数と組み合わせる場合は、`ToSeq` / `ToSeq2` で変換して渡します。  
 

@@ -10,6 +10,13 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
+func ExampleFromRange() {
+	pipeline := seq.FromRange(1, 7, 2).
+		Pipe(op.Map(func(v int) int { return v * v }))
+	fmt.Println(seq.ToSlice(pipeline))
+	// Output: [1 9 25 49]
+}
+
 func ExampleSeq_Pipe() {
 	var pipeline seq.Seq[int] = seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(op.Map(func(v int) string { return strconv.Itoa(v) })).
