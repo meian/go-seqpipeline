@@ -6,15 +6,22 @@ import (
 	"sync"
 )
 
-// Cache は入力を初回反復時に全件評価し、その結果を繰り返し反復できる iter.Seq を返す。
-// 入力の順序と重複を保ち、途中終了後も保存した先頭から反復する。
-// 上流の副作用は初回反復時に発生し、以降の反復では上流を再実行しない。
-// 上流が panic した場合、部分的な結果は公開せず、以降の反復でも同じ値で panic する。
+// Cache returns an iter.Seq that evaluates all input on its first iteration
+// and can then be iterated repeatedly over the saved results.
+// It preserves input order and duplicates and restarts from the saved beginning
+// even after an early stop.
+// Upstream side effects occur on the first iteration; later iterations do not
+// rerun upstream.
+// If upstream panics, Cache yields no partial results and panics with the same
+// value on subsequent iterations.
 //
-// 入力は有限である必要があり、保存には要素数に比例するメモリを使う。
-// 無限入力は評価が完了しないため、必要なら Cache より前に Take を接続する。
-// 要素は値として保存し、ポインター・スライス・map などの参照先はコピーしない。
-// 戻り値は交互・並行に反復できるが、共有する参照先や下流のコールバックの同期は呼び出し側が担う。
+// Input must be finite, and storage grows with the number of elements.
+// Evaluation of infinite input never completes; connect [Take] before Cache
+// when a limit is needed.
+// Elements are saved by value; data referenced by pointers, slices, or maps
+// is not copied.
+// The result supports interleaved and concurrent iteration, but callers must
+// synchronize shared referenced data and downstream callbacks.
 func Cache[T any](src iter.Seq[T]) iter.Seq[T] {
 	collect := sync.OnceValue(func() []T {
 		if src == nil {
@@ -27,9 +34,11 @@ func Cache[T any](src iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
-// Cache2 は入力を初回反復時に全件評価し、その結果を繰り返し反復できる iter.Seq2 を返す。
-// キーと値の組の順序と重複を保つ。
-// 入力の有限性、保存方式、反復時の動作と同期の条件は [Cache] と同じ。
+// Cache2 returns an iter.Seq2 that evaluates all input on its first iteration
+// and can then be iterated repeatedly over the saved results.
+// It preserves key-value pair order and duplicates.
+// The input finiteness, storage, iteration, and synchronization conditions are
+// the same as for [Cache].
 func Cache2[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
 	type pair struct {
 		key   K

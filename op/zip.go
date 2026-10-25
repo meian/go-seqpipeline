@@ -5,28 +5,31 @@ import (
 	"iter"
 )
 
-// ZipAlign は Zip の合成結果の出力件数の合わせ方を指定する。
+// ZipAlign specifies how Zip determines the number of output pairs.
 type ZipAlign int
 
 const (
-	// AlignShortest は短い方の入力が終了した時点で終了する。
+	// AlignShortest stops when the shorter input ends.
 	AlignShortest ZipAlign = iota
-	// AlignLeft は左の入力の件数に合わせ、不足する値を補う。
+	// AlignLeft matches the left input length, filling missing values.
 	AlignLeft
-	// AlignRight は右の入力の件数に合わせ、不足するキーを補う。
+	// AlignRight matches the right input length, filling missing keys.
 	AlignRight
-	// AlignLongest は長い方の入力の件数に合わせ、不足するキーや値を補う。
+	// AlignLongest matches the longer input length, filling missing keys or values.
 	AlignLongest
 )
 
-// Zip は2つのシーケンスの要素を反復順にキーと値の組にする設定値を返す。
-// 接続先のシーケンスをキー、指定したシーケンスを値として使う。
-// Operator を seq.Seq.Pipe2 に渡して使用し、既定では短い方の入力で終了する。
-// AlignBy で終了条件、WithDefaultKey と WithDefaultValue で不足分の既定値を指定する。
-// 未指定の既定値はそれぞれの型のゼロ値を使う。
-// AlignRight では右から、それ以外では左から要素を取得する。
-// AlignShortest では右の終了検出時に左を1要素余分に取得することがある。
-// Operator の適用時に入力の iter.Seq からキー型を推論する。
+// Zip returns a configuration value for pairing elements of two sequences in
+// iteration order.
+// The connected sequence supplies keys, and values supplies values.
+// Pass Operator to seq.Seq.Pipe2; by default, iteration stops with the shorter input.
+// AlignBy sets the stopping condition, while WithDefaultKey and WithDefaultValue
+// set values used when one input ends first.
+// Unspecified defaults are the respective types' zero values.
+// AlignRight reads from the right first; other alignments read from the left first.
+// AlignShortest may consume one extra left element when detecting that the right
+// input has ended.
+// Operator infers the key type from its input iter.Seq when applied.
 func Zip[V any](values iter.Seq[V]) zipOperator[V] {
 	return zipOperator[V]{values: values}
 }
@@ -37,8 +40,8 @@ type zipOperator[V any] struct {
 	defaultValue V
 }
 
-// AlignBy は出力件数をどちらの入力に合わせるかを設定する。
-// AlignShortest、AlignLeft、AlignRight、AlignLongest 以外の値は panic する。
+// AlignBy selects which input determines the output length.
+// Values other than AlignShortest, AlignLeft, AlignRight, and AlignLongest panic.
 func (z zipOperator[V]) AlignBy(alignment ZipAlign) zipOperator[V] {
 	if alignment < AlignShortest || alignment > AlignLongest {
 		panic(fmt.Sprintf("op.Zip: invalid alignment: %d", alignment))
@@ -47,19 +50,21 @@ func (z zipOperator[V]) AlignBy(alignment ZipAlign) zipOperator[V] {
 	return z
 }
 
-// WithDefaultValue は値側の入力が先に終了したときの補完値を設定する。
+// WithDefaultValue sets the value used when the value input ends first.
 func (z zipOperator[V]) WithDefaultValue(defaultValue V) zipOperator[V] {
 	z.defaultValue = defaultValue
 	return z
 }
 
-// WithDefaultKey はキー側の入力が先に終了したときの補完値を設定する。
+// WithDefaultKey sets the key used when the key input ends first.
 func (z zipOperator[V]) WithDefaultKey[K any](defaultKey K) zipKeyOperator[K, V] {
 	return zipKeyOperator[K, V]{zip: z, defaultKey: defaultKey}
 }
 
-// Operator は左の入力をキー、設定済みの右の入力を値として、反復順に組み合わせる。
-// 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
+// Operator pairs keys from the left input with values from the configured right
+// input in iteration order.
+// It stops iteration of both inputs when evaluation ends, including on an early
+// downstream stop or panic.
 func (z zipOperator[V]) Operator[K any](src iter.Seq[K]) iter.Seq2[K, V] {
 	var defaultKey K
 	return zipSequences(src, z.values, z.alignment, defaultKey, z.defaultValue)
@@ -71,28 +76,32 @@ type zipKeyOperator[K, V any] struct {
 	defaultKey K
 }
 
-// AlignBy はキーの既定値を保ち、出力件数をどちらの入力に合わせるかを設定する。
-// AlignShortest、AlignLeft、AlignRight、AlignLongest 以外の値は panic する。
+// AlignBy selects which input determines the output length while retaining the
+// configured default key.
+// Values other than AlignShortest, AlignLeft, AlignRight, and AlignLongest panic.
 func (z zipKeyOperator[K, V]) AlignBy(alignment ZipAlign) zipKeyOperator[K, V] {
 	z.zip = z.zip.AlignBy(alignment)
 	return z
 }
 
-// WithDefaultValue はキーの既定値を保ち、値側の入力が先に終了したときの補完値を設定する。
+// WithDefaultValue sets the value used when the value input ends first while
+// retaining the configured default key.
 func (z zipKeyOperator[K, V]) WithDefaultValue(defaultValue V) zipKeyOperator[K, V] {
 	z.zip = z.zip.WithDefaultValue(defaultValue)
 	return z
 }
 
-// WithDefaultKey はキー側の入力が先に終了したときの補完値を変更する。
+// WithDefaultKey changes the key used when the key input ends first.
 func (z zipKeyOperator[K, V]) WithDefaultKey(defaultKey K) zipKeyOperator[K, V] {
 	z.defaultKey = defaultKey
 	return z
 }
 
-// Operator は左の入力をキー、設定済みの右の入力を値として、反復順に組み合わせる。
-// 不足するキーや値には設定済みの既定値を使う。
-// 下流の途中終了や panic を含め、評価終了時には両入力の反復を停止する。
+// Operator pairs keys from the left input with values from the configured right
+// input in iteration order.
+// It fills missing keys or values with the configured defaults.
+// It stops iteration of both inputs when evaluation ends, including on an early
+// downstream stop or panic.
 func (z zipKeyOperator[K, V]) Operator(src iter.Seq[K]) iter.Seq2[K, V] {
 	return zipSequences(src, z.zip.values, z.zip.alignment, z.defaultKey, z.zip.defaultValue)
 }

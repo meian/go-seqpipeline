@@ -1,11 +1,15 @@
-// Package seq は iter を利用したシーケンスと入出力変換を提供する。
-// Seq と Seq2 の Pipe / Pipe2 に op パッケージのオペレーターを接続し、
-// パイプラインを構築する。
-// Pipe / Pipe2 は接続時にオペレーターを呼び出し、入力の評価と停止伝播は接続したオペレーターが決める。
-// 再評価や並行評価の可否は入力とコールバックに従う。
+// Package seq provides sequences and input/output conversions built on iter.
+// Connect operators from package op through [Seq.Pipe], [Seq.Pipe2],
+// [Seq2.Pipe], or [Seq2.Pipe2] to build a pipeline.
+// Pipe and Pipe2 call the operator when connecting it; the connected operator
+// determines when input is evaluated and how stopping propagates.
+// Whether evaluation can be repeated or run concurrently depends on the input
+// and callbacks.
 //
-// FromSeq / FromSeq2 と ToSeq / ToSeq2 は要素を評価・コピーせず、nil を保持する。
-// Seq / Seq2 のゼロ値は nil であり、組み込みオペレーターは空として扱う。
-// nil のシーケンスを反復したり、ToSlice / ToMap に渡したりすると panic する。
-// ToChannel は nil のシーケンスを空として扱う。
+// [FromSeq], [FromSeq2], [ToSeq], and [ToSeq2] preserve nil without evaluating
+// or copying elements.
+// The zero values of [Seq] and [Seq2] are nil, which built-in operators treat
+// as empty input.
+// Iterating a nil sequence or passing it to [ToSlice] or [ToMap] panics.
+// [ToChannel] treats a nil sequence as empty input.
 package seq
