@@ -98,6 +98,18 @@ Use `Pipe(op.Cache)` / `Pipe2(op.Cache2)` to save results at a pipeline boundary
 Caching evaluates upstream once on the first iteration before yielding any values, preserves order and duplicates, and returns a non-nil sequence even for nil or empty input.  
 Later iterations read the saved results from the beginning, including after an early stop; downstream operations run on every iteration.  
 
+To fix the results when this code runs, collect them explicitly and create a sequence from the saved slice.  
+
+```go
+source := seq.FromSlice([]int{1, 2, 3}).Pipe(op.Map(func(v int) int { return v * 2 }))
+values := slices.Collect(seq.ToSeq(source))
+saved := seq.FromSeq(slices.Values(values))
+fmt.Println(seq.ToSlice(saved)) // [2 4 6]
+```
+
+`Collect` evaluates `source` immediately; iterating `saved` does not rerun it.  
+Keep `values` unchanged if the saved results must stay fixed.  
+
 See [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) / [ExampleCache2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache2) for executable usage.  
 
 Input must be finite, and memory use grows with the number of saved elements or pairs.  

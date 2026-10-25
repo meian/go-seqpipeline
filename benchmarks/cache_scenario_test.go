@@ -29,10 +29,11 @@ var scenarioCacheSeqResult seq.Seq[int]
 
 func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
 	cached := cacheSeq(values, work).Pipe(op.Cache)
-	// 初回反復で全件保存するため、保存済みデータの走査は最初の値で止める。
-	for range cached {
-		break
+	var sum int64
+	for v := range cached {
+		sum += int64(v)
 	}
+	checksum = sum
 	return cached
 }
 
@@ -74,8 +75,9 @@ func BenchmarkScenarioCacheSeqFill(b *testing.B) {
 func TestScenarioCacheSeqFill(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 	cached := scenarioCacheSeqFill(values, 0)
+	values[0] = 99
 	got := seq.ToSlice(cached)
-	want := values
+	want := []int{1, 2, 3, 4, 5, 6}
 	if !slices.Equal(got, want) {
 		t.Fatalf("got %v; want %v", got, want)
 	}
@@ -135,7 +137,7 @@ func TestScenarioCacheSeqWarm(t *testing.T) {
 }
 
 func scenarioCacheSeqCached(values []int, work int, reuse int) int64 {
-	source := scenarioCacheSeqFill(values, work)
+	source := cacheSeq(values, work).Pipe(op.Cache)
 	var sum int64
 	for r := 0; r < reuse; r++ {
 		for v := range source {
@@ -376,10 +378,11 @@ var scenarioCacheSeq2Result seq.Seq2[int, int]
 
 func scenarioCacheSeq2Fill(values []int, work int) seq.Seq2[int, int] {
 	cached := cacheSeq2(values, work).Pipe2(op.Cache2)
-	// 初回反復で全件保存するため、保存済みデータの走査は最初の組で止める。
-	for range cached {
-		break
+	var sum int64
+	for k, v := range cached {
+		sum += int64(k) + int64(v)
 	}
+	checksum = sum
 	return cached
 }
 
@@ -421,6 +424,7 @@ func BenchmarkScenarioCacheSeq2Fill(b *testing.B) {
 func TestScenarioCacheSeq2Fill(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 	cached := scenarioCacheSeq2Fill(values, 0)
+	values[0] = 99
 	var got []pair
 	for k, v := range cached {
 		got = append(got, pair{k, v})
@@ -485,7 +489,7 @@ func TestScenarioCacheSeq2Warm(t *testing.T) {
 }
 
 func scenarioCacheSeq2Cached(values []int, work int, reuse int) int64 {
-	source := scenarioCacheSeq2Fill(values, work)
+	source := cacheSeq2(values, work).Pipe2(op.Cache2)
 	var sum int64
 	for r := 0; r < reuse; r++ {
 		for k, v := range source {

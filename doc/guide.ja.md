@@ -98,6 +98,18 @@ channel への出力は、呼び出し時に goroutine で評価を開始しま�
 キャッシュは初回反復時に値を返す前に上流を一度だけ全件評価し、順序と重複を保持し、nil・空入力にも非 nil のシーケンスを返します。  
 以降の反復では途中終了後も保存済みの先頭から読み出し、キャッシュより後の処理は反復ごとに実行します。  
 
+この時点で結果を確定したい場合は、明示的に収集し、保存したスライスからシーケンスを作ります。  
+
+```go
+source := seq.FromSlice([]int{1, 2, 3}).Pipe(op.Map(func(v int) int { return v * 2 }))
+values := slices.Collect(seq.ToSeq(source))
+saved := seq.FromSeq(slices.Values(values))
+fmt.Println(seq.ToSlice(saved)) // [2 4 6]
+```
+
+`Collect` の呼び出し時に `source` が評価され、`saved` の反復では再実行されません。  
+結果を固定したまま使う場合は、`values` を変更しないでください。  
+
 利用例は [ExampleCache](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache) / [ExampleCache2](https://pkg.go.dev/github.com/meian/go-seqpipeline/op#example-Cache2) を参照してください。  
 
 入力は有限である必要があり、保存する要素数・組数に比例するメモリを使います。  
