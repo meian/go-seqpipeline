@@ -323,8 +323,8 @@ dry-run でも基準の検証と既存 Issue の照合は行い、エラーを�
 
 ```sh
 git fetch origin main
-python3 ci/check_benchmark_update.py --repo meian/go-seqpipeline --dry-run
-python3 -m unittest discover -s ci -p 'test*benchmark*.py'
+python3 ci/scripts/check_benchmark_update.py --repo meian/go-seqpipeline --dry-run
+python3 -m unittest discover -s ci/scripts -p 'test*benchmark*.py'
 ```
 
 判定関数の単体テストと、一時 Git リポジトリによる統合テストを分ける。  
