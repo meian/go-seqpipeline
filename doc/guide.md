@@ -20,16 +20,21 @@ For operations with separate functions for single values and key-value pairs, th
 
 ## Input and result collection
 
-Functions starting with `From` convert collections, standard iterators, or channels into pipeline inputs.  
+Functions starting with `From` create pipeline inputs from collections, standard iterators, channels, or integer ranges.  
 Functions starting with `To` collect results into collections or convert them to standard iterators or channels.  
 
 | Operation | `seq.Seq` | `seq.Seq2` |
 | --- | --- | --- |
 | Input from a collection | `FromSlice` | `FromMap` |
+| Input from an integer range | `FromRange` | — |
 | Input from a standard iterator | `FromSeq` | `FromSeq2` |
 | Collect into a collection | `ToSlice` | `ToMap` (keys must be `comparable`) |
 | Convert to a standard iterator | `ToSeq` | `ToSeq2` |
 | Input from / output to a channel | `FromChannel` / `ToChannel` | — |
+
+`FromRange(start, stop, step)` builds an integer sequence using an `int64` step and includes the end value when reached.  
+A zero `step` panics at the call, while a `step` pointing away from the end produces an empty sequence.  
+See the [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#FromRange) for boundary details.  
 
 Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the `iter.Seq` / `iter.Seq2` types.  
 
