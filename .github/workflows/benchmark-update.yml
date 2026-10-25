@@ -41,4 +41,4 @@ jobs:
           if [ "$DRY_RUN" = true ]; then
             args+=(--dry-run)
           fi
-          python3 scripts/check_benchmark_update.py --repo "$GITHUB_REPOSITORY" "${args[@]}"
+          python3 ci/check_benchmark_update.py --repo "$GITHUB_REPOSITORY" "${args[@]}"

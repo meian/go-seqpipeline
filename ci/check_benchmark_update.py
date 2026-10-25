@@ -61,7 +61,7 @@ def is_runtime_path(name):
     path = PurePosixPath(name)
     if name in RUNTIME_CONFIGS:
         return True
-    if "testdata" in path.parts or path.parts[0] in {"benchmarks", "scripts", "doc", ".github"}:
+    if "testdata" in path.parts or path.parts[0] in {"benchmarks", "ci", "doc", ".github"}:
         return False
     return path.suffix == ".go" and path.name != "doc.go" and not path.name.endswith("_test.go")
 

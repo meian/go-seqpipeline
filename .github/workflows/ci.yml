@@ -48,8 +48,8 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install README guard dependencies
-        run: python3 -m pip install -r scripts/requirements.txt
-      - name: Test repository scripts
-        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+        run: python3 -m pip install -r ci/requirements.txt
+      - name: Test CI scripts
+        run: python3 -m unittest discover -s ci -p 'test_*.py'
       - name: Check both READMEs
-        run: python3 scripts/check_readme.py
+        run: python3 ci/check_readme.py
