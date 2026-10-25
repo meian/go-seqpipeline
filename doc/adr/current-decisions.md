@@ -7,6 +7,7 @@
 | 判断 | 適用範囲 | 根拠 |
 | --- | --- | --- |
 | オペレーターは `op` に配置し、依存方向を `seq → op → iter` とする | パッケージの責務と新しいオペレーター | [ADR-0001](0001-operator-package.md) |
+| Operator 関数型は変換、`Seq` は接続、`Compose` は合成を担う | 4 種類の Operator 関数型、`Seq` / `Seq2`、合成専用型 | [ADR-0005](0005-operator-composition.md) |
 | 組み込みオペレーターは返すシーケンスの反復時に入力を評価する | `op` の組み込みオペレーター | [ADR-0004](0004-lazy-operator-evaluation.md) |
 | README は導入の入口とし、詳細を目的別の文書へ置く | README・利用ガイド・GoDoc・Example・性能レポート | [ADR-0002](0002-documentation-roles.md) |
 | 正式版の版番号は SemVer を基に変更内容から決める | リリース版番号と最低 Go バージョンの変更 | [ADR-0003](0003-release-version-policy.md) |
