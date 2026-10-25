@@ -23,15 +23,11 @@ func FromRange[T integer](start, stop T, step int64) Seq[T] {
 		panic("seq: FromRange step must not be zero")
 	}
 
-	// Kind による分岐では T の制約が狭まらないため、両経路とも integer を使う。
 	switch reflect.TypeFor[T]().Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return fromSignedRange[T](int64(start), int64(stop), step)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return fromUnsignedRange[T](uint64(start), uint64(stop), step)
-	default:
-		panic("seq: unsupported integer kind")
 	}
+	return fromUnsignedRange[T](uint64(start), uint64(stop), step)
 }
 
 func fromSignedRange[T integer](start, stop int64, step int64) Seq[T] {

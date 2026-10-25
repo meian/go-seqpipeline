@@ -22,9 +22,8 @@
 ## 実装構成
 
 - `seq` に generic な公開関数を置き、シーケンス構築時に `reflect.TypeFor[T]().Kind()` を 1 回調べる
-- signed の 5 種と、`uintptr` を含む unsigned の 6 種の `reflect.Kind` を、それぞれ 1 つの反復関数へ振り分ける
+- signed の 5 種の `reflect.Kind` を判定し、残る `uintptr` を含む unsigned の 6 種を別の反復関数へ渡す
 - 要素ごとの反射は行わない
-- `Kind()` の判定では型パラメータ `T` の制約は狭まらないため、両反復関数は整数型全体の制約を使う
 - signed の作業値は `int64`、unsigned の作業値は `uint64` に無損失で変換し、出力時に `T` へ戻して定義型を保つ
 - unsigned の値を `int64` 経由で扱わない
 - 現在値を反復ごとのローカル状態に置き、途中停止後の再評価に影響を残さない
