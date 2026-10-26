@@ -81,7 +81,11 @@ func BenchmarkFromRangeSigned(b *testing.B) {
 }
 
 func TestFromRangeSigned(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library/Ascending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeSignedLibrary(1, 6, 1)
 		const want int64 = 21
 		if got != want {
@@ -89,6 +93,8 @@ func TestFromRangeSigned(t *testing.T) {
 		}
 	})
 	t.Run("Library/Descending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeSignedLibrary(6, 1, -1)
 		const want int64 = 21
 		if got != want {
@@ -96,6 +102,8 @@ func TestFromRangeSigned(t *testing.T) {
 		}
 	})
 	t.Run("Go/Ascending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeSignedGo(1, 6, 1)
 		const want int64 = 21
 		if got != want {
@@ -103,6 +111,8 @@ func TestFromRangeSigned(t *testing.T) {
 		}
 	})
 	t.Run("Go/Descending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeSignedGo(6, 1, -1)
 		const want int64 = 21
 		if got != want {
@@ -186,7 +196,11 @@ func BenchmarkFromRangeUnsigned(b *testing.B) {
 }
 
 func TestFromRangeUnsigned(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library/Ascending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeUnsignedLibrary(1, 6, 1)
 		const want int64 = 21
 		if got != want {
@@ -194,6 +208,8 @@ func TestFromRangeUnsigned(t *testing.T) {
 		}
 	})
 	t.Run("Library/Descending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeUnsignedLibrary(6, 1, -1)
 		const want int64 = 21
 		if got != want {
@@ -201,6 +217,8 @@ func TestFromRangeUnsigned(t *testing.T) {
 		}
 	})
 	t.Run("Go/Ascending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeUnsignedGo(1, 6, 1)
 		const want int64 = 21
 		if got != want {
@@ -208,6 +226,8 @@ func TestFromRangeUnsigned(t *testing.T) {
 		}
 	})
 	t.Run("Go/Descending", func(t *testing.T) {
+		t.Parallel()
+
 		got := fromRangeUnsignedGo(6, 1, -1)
 		const want int64 = 21
 		if got != want {

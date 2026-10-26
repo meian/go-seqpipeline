@@ -11,6 +11,8 @@ import (
 
 // 数値入力を Pipe と収集へ接続し、停止伝播と再評価時の結果を確認する。
 func TestFromRangePipeline(t *testing.T) {
+	t.Parallel()
+
 	maps := 0
 	pipeline := seq.FromRange(1, 8, 1).
 		Pipe(op.Map(func(v int) int {
@@ -28,6 +30,8 @@ func TestFromRangePipeline(t *testing.T) {
 
 // 型変換・Filter の前後で Take を接続し、再評価ごとの件数制限と下流停止を確認する。
 func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	var pipeline seq.Seq[string] = seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(op.Take(10).Operator).
@@ -51,6 +55,8 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 
 // 構築時には入力を評価せず、下流の途中終了が Map・Filter を経由して上流へ伝わる。
 func TestLazyEvaluationAndStopPropagation(t *testing.T) {
+	t.Parallel()
+
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
 	src := func(yield func(int) bool) {
 		starts++
@@ -84,6 +90,8 @@ func TestLazyEvaluationAndStopPropagation(t *testing.T) {
 
 // Seq のゼロ値・nil・空入力では、接続した Map・Filter のコールバックを呼び出さない。
 func TestEmptyAndZeroValues(t *testing.T) {
+	t.Parallel()
+
 	var zero seq.Seq[int]
 	for _, src := range []seq.Seq[int]{
 		zero,
@@ -105,6 +113,8 @@ func TestEmptyAndZeroValues(t *testing.T) {
 
 // 再評価時に元のスライスの変更を反映し、Take の件数制限も毎回適用する。
 func TestRepeatAndSourceChanges(t *testing.T) {
+	t.Parallel()
+
 	values := []int{1, 2, 3}
 	pipeline := seq.FromSlice(values).Pipe(op.Map(func(v int) int { return v * 10 })).
 		Pipe(op.Filter(func(v int) bool { return v >= 20 })).Pipe(op.Take(2).Operator)
@@ -116,6 +126,8 @@ func TestRepeatAndSourceChanges(t *testing.T) {
 
 // 反復状態を外部に持つ入力は、再評価しても巻き戻さない。
 func TestSingleUseSource(t *testing.T) {
+	t.Parallel()
+
 	remaining := []int{1, 2, 3}
 	src := func(yield func(int) bool) {
 		for len(remaining) > 0 {
@@ -135,6 +147,8 @@ func TestSingleUseSource(t *testing.T) {
 
 // 組のままなら重複キーを保ち、ToMap で収集すると後の値を採用する。
 func TestSeq2Pipeline(t *testing.T) {
+	t.Parallel()
+
 	src := func(yield func(int, string) bool) {
 		for _, p := range []pair[int, string]{{Key: 1, Value: "a"}, {Key: 1, Value: "bbb"}, {Key: 2, Value: "cc"}} {
 			if !yield(p.Key, p.Value) {
@@ -153,6 +167,8 @@ func TestSeq2Pipeline(t *testing.T) {
 
 // 組のパイプラインでも遅延評価と下流からの停止伝播が働き、再評価で状態を共有しない。
 func TestSeq2LazyAndStop(t *testing.T) {
+	t.Parallel()
+
 	starts, reads, maps, filters, stops := 0, 0, 0, 0, 0
 	src := func(yield func(int, int) bool) {
 		starts++
@@ -187,6 +203,8 @@ func TestSeq2LazyAndStop(t *testing.T) {
 
 // Seq2 のゼロ値・nil・空入力では、接続した Map2・Filter2 のコールバックを呼び出さない。
 func TestSeq2EmptyAndZero(t *testing.T) {
+	t.Parallel()
+
 	var zero seq.Seq2[string, int]
 	for _, src := range []seq.Seq2[string, int]{
 		zero,
@@ -207,6 +225,8 @@ func TestSeq2EmptyAndZero(t *testing.T) {
 
 // スライスをキーに持つ Seq2 を変換し、標準の iter.Seq2 として取り出せる。
 func TestNonComparableKeys(t *testing.T) {
+	t.Parallel()
+
 	src := func(yield func([]int, string) bool) { yield([]int{1, 2}, "value") }
 	pipeline := seq.FromSeq2(src).Pipe2(op.Map2(func(k []int, v string) ([]int, int) {
 		return k, len(v)
@@ -217,6 +237,8 @@ func TestNonComparableKeys(t *testing.T) {
 
 // 比較不能なキーを経由する型変換でも、Take の型推論・件数制限・再評価・途中終了が働く。
 func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	var pipeline seq.Seq2[string, int] = seq.FromSeq2(slices.All([]int{1, 22, 333, 4444})).
 		Pipe2(op.Take(10).Operator2).
@@ -240,10 +262,14 @@ func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 
 // 比較不能なキーを含む4通りの接続で、下流の件数制限が上流まで届くことを確かめる。
 func TestCrossTypePipeline(t *testing.T) {
+	t.Parallel()
+
 	var toPairs op.ToSeq2Operator[string, []int, string] = withLength
 	var toValues op.ToSeqOperator[[]int, string, string] = op.Values[[]int, string]
 	for _, n := range []int{0, 1, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
+			t.Parallel()
+
 			starts, reads, stops := 0, 0, 0
 			src := seq.Seq[int](func(yield func(int) bool) {
 				starts++
@@ -287,6 +313,8 @@ func TestCrossTypePipeline(t *testing.T) {
 
 // 選別後の要素を Skip で読み飛ばし、Take の件数制限が再評価ごとに上流へ伝わる。
 func TestSkipAfterFilter(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	src := seq.Seq[int](func(yield func(int) bool) {
 		for i := 1; i <= 10; i++ {
@@ -310,6 +338,8 @@ func TestSkipAfterFilter(t *testing.T) {
 
 // 選別後の組を Skip で読み飛ばし、型変換と Take を通して再評価できる。
 func TestSkip2AfterFilter(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
 		for i := 1; i <= 10; i++ {
@@ -334,6 +364,8 @@ func TestSkip2AfterFilter(t *testing.T) {
 
 // 共通の設定を型変換の前後や別入力に使っても、残り件数を共有しない。
 func TestTakeSharedConfigurationPipeline(t *testing.T) {
+	t.Parallel()
+
 	take := op.Take(2)
 	values := seq.FromSlice([]int{1, 22, 333}).
 		Pipe(take.Operator).
@@ -356,6 +388,8 @@ func TestTakeSharedConfigurationPipeline(t *testing.T) {
 
 // 変換後の組からキーを取り出し、単一値の選別・変換・件数制限へ接続する。
 func TestKeysPipeline(t *testing.T) {
+	t.Parallel()
+
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(op.Map2(func(k int, v string) (int, int) { return k + 1, len(v) }))
 	pipeline := pairs.Pipe(op.Keys).
@@ -369,6 +403,8 @@ func TestKeysPipeline(t *testing.T) {
 
 // 選別後の組から値を取り出し、単一値の選別・変換・件数制限へ接続する。
 func TestValuesPipeline(t *testing.T) {
+	t.Parallel()
+
 	pairs := seq.FromSeq2(slices.All([]string{"a", "bbb", "cc"})).
 		Pipe2(op.Filter2(func(k int, v string) bool { return k > 0 }))
 	pipeline := pairs.Pipe(op.Values).
@@ -382,6 +418,8 @@ func TestValuesPipeline(t *testing.T) {
 
 // 射影の前後の Skip と末尾の Take を接続し、評価・停止と Take(0) の上流非評価を確認する。
 func TestProjectionWithSkip(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range []struct {
 		name          string
 		ope           op.ToSeqOperator[int, int, int]
@@ -394,6 +432,8 @@ func TestProjectionWithSkip(t *testing.T) {
 		{"values/prefix", op.Values[int, int], []int{30, 40}, 1, 4},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			starts, reads, stops := 0, 0, 0
 			src := seq.Seq2[int, int](func(yield func(int, int) bool) {
 				starts++
@@ -419,6 +459,8 @@ func TestProjectionWithSkip(t *testing.T) {
 
 // キャッシュ後の分岐だけを再評価し、上流の呼び出し数が増えないことを確かめる。
 func TestCachePipeline(t *testing.T) {
+	t.Parallel()
+
 	upstream, downstream := 0, 0
 	var cache op.Operator[int, int] = op.Cache
 	cached := seq.FromSlice([]int{1, 2, 3, 4}).
@@ -444,6 +486,8 @@ func TestCachePipeline(t *testing.T) {
 
 // 組のキャッシュ後に異なる変換へ分岐し、下流を再評価しても上流を再実行しない。
 func TestCache2Pipeline(t *testing.T) {
+	t.Parallel()
+
 	upstream, downstream := 0, 0
 	var cache op.Operator2[int, int, int, int] = op.Cache2
 	cached := seq.FromSeq2(slices.All([]int{1, 2, 3, 4})).

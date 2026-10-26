@@ -11,6 +11,7 @@ import (
 // 遅延評価と指定件数での上流停止を確認し、再評価のたびに件数制限が働く。
 // 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		n      int
@@ -27,6 +28,7 @@ func TestTakeOperator(t *testing.T) {
 		{name: "larger", n: 4, want: []int{1, 2, 3}, reads: 3, starts: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			var state inputTrace
 			src := traceValues([]int{1, 2, 3}, &state)
 			iterator := op.Take(tc.n).Operator(src)
@@ -42,6 +44,7 @@ func TestTakeOperator(t *testing.T) {
 }
 
 func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
+	t.Parallel()
 	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 		iterator := op.Take(1).Operator(src)
 		assertEqual(t, slices.Collect(iterator), []int(nil))
@@ -50,6 +53,7 @@ func TestTakeOperatorEmptyAndNilInput(t *testing.T) {
 
 // 指定件数に達する前の下流停止が、再評価のたびに上流へ伝わる。
 func TestTakeOperatorDownstreamStop(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	src := traceValues([]int{1, 2, 3}, &state)
 	iterator := op.Take(3).Operator(src)
@@ -65,6 +69,7 @@ func TestTakeOperatorDownstreamStop(t *testing.T) {
 // 組の順序とキーの重複を保ち、遅延評価・件数制限・上流停止が再評価ごとに働く。
 // 指定数が 0 以下なら入力を開始しない。
 func TestTakeOperator2(t *testing.T) {
+	t.Parallel()
 	pairs := []pair[int, int]{
 		{Key: 1, Value: 10},
 		{Key: 0, Value: 20},
@@ -86,6 +91,7 @@ func TestTakeOperator2(t *testing.T) {
 		{name: "larger", n: 4, want: pairs[:3], reads: 3, starts: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			var state inputTrace
 			src := tracePairs(pairs, &state)
 			iterator := op.Take(tc.n).Operator2(src)
@@ -101,6 +107,7 @@ func TestTakeOperator2(t *testing.T) {
 }
 
 func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
+	t.Parallel()
 	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 		iterator := op.Take(1).Operator2(src)
 		assertEqual(t, collectPairs(iterator), []pair[int, string](nil))
@@ -109,6 +116,7 @@ func TestTakeOperator2EmptyAndNilInput(t *testing.T) {
 
 // 下流が指定件数より先に終了した場合も、組を生成する上流の反復を停止する。
 func TestTakeOperator2DownstreamStop(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	src := tracePairs([]pair[int, int]{{1, 10}, {2, 20}, {3, 30}}, &state)
 	pipeline := op.Take(3).Operator2(src)
@@ -122,6 +130,7 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 
 // 同じ設定を異なる型と入力に使っても、評価時の残り件数を共有しない。
 func TestTakeConfigurationReuse(t *testing.T) {
+	t.Parallel()
 	take := op.Take(2)
 	var ope op.Operator[int, int] = take.Operator
 	var ope2 op.Operator2[[]int, string, []int, string] = take.Operator2

@@ -11,6 +11,7 @@ import (
 )
 
 func TestSkipOperator(t *testing.T) {
+	t.Parallel()
 	values := []int{3, 1, 1, 2}
 	for _, tc := range []struct {
 		name string
@@ -26,6 +27,7 @@ func TestSkipOperator(t *testing.T) {
 		{name: "maximum", n: math.MaxInt},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			var state inputTrace
 			src := traceValues(values, &state)
 			iterator := op.Skip(tc.n).Operator(src)
@@ -39,14 +41,17 @@ func TestSkipOperator(t *testing.T) {
 }
 
 func TestSkipOperatorEmptyAndNil(t *testing.T) {
+	t.Parallel()
 	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 		assertEqual(t, slices.Collect(op.Skip(1).Operator(src)), []int(nil))
 	}
 }
 
 func TestSkipOperatorDownstreamStop(t *testing.T) {
+	t.Parallel()
 	for _, n := range []int{-1, 0, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
+			t.Parallel()
 			var state inputTrace
 			src := traceValues([]int{1, 2, 3, 4, 5}, &state)
 			iterator := op.Skip(n).Operator(src)
@@ -62,6 +67,7 @@ func TestSkipOperatorDownstreamStop(t *testing.T) {
 }
 
 func TestSkipOperator2(t *testing.T) {
+	t.Parallel()
 	pairs := []pair[int, string]{
 		{Key: 3, Value: "c"},
 		{Key: 1, Value: "a"},
@@ -82,6 +88,7 @@ func TestSkipOperator2(t *testing.T) {
 		{name: "maximum", n: math.MaxInt},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			var state inputTrace
 			src := tracePairs(pairs, &state)
 			iterator := op.Skip(tc.n).Operator2(src)
@@ -95,14 +102,17 @@ func TestSkipOperator2(t *testing.T) {
 }
 
 func TestSkipOperator2EmptyAndNil(t *testing.T) {
+	t.Parallel()
 	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 		assertEqual(t, collectPairs(op.Skip(1).Operator2(src)), []pair[int, string](nil))
 	}
 }
 
 func TestSkipOperator2DownstreamStop(t *testing.T) {
+	t.Parallel()
 	for _, n := range []int{-1, 0, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
+			t.Parallel()
 			var state inputTrace
 			src := tracePairs([]pair[int, int]{{1, 10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}}, &state)
 			iterator := op.Skip(n).Operator2(src)
@@ -119,6 +129,7 @@ func TestSkipOperator2DownstreamStop(t *testing.T) {
 }
 
 func TestSkipConfigurationReuse(t *testing.T) {
+	t.Parallel()
 	skip := op.Skip(1)
 	var ope op.Operator[int, int] = skip.Operator
 	var ope2 op.Operator2[[]int, string, []int, string] = skip.Operator2

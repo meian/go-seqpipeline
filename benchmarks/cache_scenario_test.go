@@ -72,6 +72,8 @@ func BenchmarkScenarioCacheSeqFill(b *testing.B) {
 }
 
 func TestScenarioCacheSeqFill(t *testing.T) {
+	t.Parallel()
+
 	values := []int{1, 2, 3, 4, 5, 6}
 	cached := scenarioCacheSeqFill(values, 0)
 	clear(values)
@@ -126,6 +128,8 @@ func BenchmarkScenarioCacheSeqWarm(b *testing.B) {
 }
 
 func TestScenarioCacheSeqWarm(t *testing.T) {
+	t.Parallel()
+
 	values := []int{1, 2, 3, 4, 5, 6}
 	cached := scenarioCacheSeqFill(values, 0)
 	got := scenarioCacheSeqWarm(cached)
@@ -353,7 +357,11 @@ func BenchmarkScenarioCacheSeqReuse(b *testing.B) {
 }
 
 func TestScenarioCacheSeqReuse(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Cached", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioCacheSeqCached(values, 0, 2)
 		const want int64 = 42
@@ -362,6 +370,8 @@ func TestScenarioCacheSeqReuse(t *testing.T) {
 		}
 	})
 	t.Run("Uncached", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioCacheSeqUncached(values, 0, 2)
 		const want int64 = 42
@@ -417,6 +427,8 @@ func BenchmarkScenarioCacheSeq2Fill(b *testing.B) {
 }
 
 func TestScenarioCacheSeq2Fill(t *testing.T) {
+	t.Parallel()
+
 	values := []int{1, 2, 3, 4, 5, 6}
 	cached := scenarioCacheSeq2Fill(values, 0)
 	clear(values)
@@ -474,6 +486,8 @@ func BenchmarkScenarioCacheSeq2Warm(b *testing.B) {
 }
 
 func TestScenarioCacheSeq2Warm(t *testing.T) {
+	t.Parallel()
+
 	values := []int{1, 2, 3, 4, 5, 6}
 	cached := scenarioCacheSeq2Fill(values, 0)
 	got := scenarioCacheSeq2Warm(cached)
@@ -701,7 +715,11 @@ func BenchmarkScenarioCacheSeq2Reuse(b *testing.B) {
 }
 
 func TestScenarioCacheSeq2Reuse(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Cached", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioCacheSeq2Cached(values, 0, 2)
 		const want int64 = 72
@@ -710,6 +728,8 @@ func TestScenarioCacheSeq2Reuse(t *testing.T) {
 		}
 	})
 	t.Run("Uncached", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioCacheSeq2Uncached(values, 0, 2)
 		const want int64 = 72

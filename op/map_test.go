@@ -12,6 +12,7 @@ import (
 // 型変換後も入力の順序と重複を保ち、反復時にだけ入力と変換関数を実行する。
 // 再評価と下流の途中終了でも、取得件数と変換回数が一致することを確認する。
 func TestMap(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	calls := 0
 	src := traceValues([]int{3, 1, 3}, &state)
@@ -33,6 +34,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestMapNilInput(t *testing.T) {
+	t.Parallel()
 	iterator := op.Map(func(int) int {
 		t.Fatal("Map callback called")
 		return 0
@@ -45,6 +47,7 @@ func TestMapNilInput(t *testing.T) {
 // キーと値の型変換後も組の順序とキーの重複を保ち、反復時にだけ入力と変換関数を実行する。
 // 再評価と下流の途中終了でも、取得件数と変換回数が一致することを確認する。
 func TestMap2(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	calls := 0
 	src := tracePairs([]pair[int, string]{{3, "aaa"}, {1, "b"}, {3, "cc"}}, &state)
@@ -67,6 +70,7 @@ func TestMap2(t *testing.T) {
 }
 
 func TestMap2NilInput(t *testing.T) {
+	t.Parallel()
 	iterator := op.Map2(func(int, string) (int, string) {
 		t.Fatal("Map2 callback called")
 		return 0, ""
@@ -79,6 +83,7 @@ func TestMap2NilInput(t *testing.T) {
 // 型変換と比較不能なキー・値を扱い、順序・重複と評価回数を確認する。
 // 再評価後に途中終了しても、余分な入力やコールバックを実行しない。
 func TestMapToSeq2(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	calls := 0
 	src := traceValues([]int{3, 1, 3}, &state)
@@ -109,6 +114,7 @@ func TestMapToSeq2(t *testing.T) {
 }
 
 func TestMapToSeq2EmptyInput(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		src  iter.Seq[int]
@@ -117,6 +123,7 @@ func TestMapToSeq2EmptyInput(t *testing.T) {
 		{name: "empty", src: slices.Values([]int{})},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			mapped := op.MapToSeq2(func(int) (string, int) {
 				t.Fatal("MapToSeq2 callback called")
 				return "", 0
@@ -132,6 +139,7 @@ func TestMapToSeq2EmptyInput(t *testing.T) {
 // 比較不能なキー・値を単一値へ変換し、順序・重複と評価回数を確認する。
 // 再評価後に途中終了しても、余分な入力やコールバックを実行しない。
 func TestMapToSeq(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	calls := 0
 	src := tracePairs([]pair[[]int, []string]{
@@ -160,6 +168,7 @@ func TestMapToSeq(t *testing.T) {
 }
 
 func TestMapToSeqEmptyInput(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		src  iter.Seq2[int, string]
@@ -168,6 +177,7 @@ func TestMapToSeqEmptyInput(t *testing.T) {
 		{name: "empty", src: slices.All([]string{})},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			mapped := op.MapToSeq(func(int, string) string {
 				t.Fatal("MapToSeq callback called")
 				return ""

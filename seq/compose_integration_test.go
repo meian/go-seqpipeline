@@ -12,6 +12,8 @@ import (
 
 // 同じ合成を別入力へ接続し、遅延評価・停止伝播と反復ごとの Take の状態を確認する。
 func TestComposeReuse(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	transform := op.Compose().
 		Pipe(op.Map(func(v int) int { reads++; return v })).
@@ -37,6 +39,8 @@ func TestComposeReuse(t *testing.T) {
 
 // 組の合成も入力ごと・反復ごとに件数制限を独立させ、キーを保持して停止する。
 func TestCompose2Reuse(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	transform := op.Compose2().
 		Pipe2(op.Map2(func(k, v int) (int, int) { reads++; return k, v })).
@@ -62,6 +66,8 @@ func TestCompose2Reuse(t *testing.T) {
 
 // 単一値と組を往復しても、合成全体の入力型と最終出力型で seq に接続できる。
 func TestComposeAcrossShapes(t *testing.T) {
+	t.Parallel()
+
 	fromValues := op.Compose().
 		Pipe(op.Map(strconv.Itoa)).
 		Pipe2(withLength).
@@ -88,6 +94,8 @@ func TestComposeAcrossShapes(t *testing.T) {
 
 // 合成値から分岐・入れ子を作っても、元の処理と各枝の状態を変更しない。
 func TestComposeBranches(t *testing.T) {
+	t.Parallel()
+
 	base := op.Compose().Pipe(op.Filter(func(v int) bool { return v%2 == 0 }))
 	first := base.Pipe(op.Take(1).Operator)
 	firstTwo := base.Pipe(op.Take(2).Operator)
@@ -105,6 +113,8 @@ func TestComposeBranches(t *testing.T) {
 // 合成と適用では上流を評価せず、入力ごとに初回反復時の値を保存する。
 // キャッシュより後の処理は反復ごとに実行する。
 func TestComposeCacheTiming(t *testing.T) {
+	t.Parallel()
+
 	upstream, downstream := 0, 0
 	transform := op.Compose().
 		Pipe(op.Map(func(v int) int { upstream++; return v * 10 })).
@@ -130,6 +140,8 @@ func TestComposeCacheTiming(t *testing.T) {
 }
 
 func TestCompose2CacheTiming(t *testing.T) {
+	t.Parallel()
+
 	upstream, downstream := 0, 0
 	transform := op.Compose2().
 		Pipe2(op.Map2(func(k int, v string) (int, int) { upstream++; return k, len(v) })).
@@ -157,6 +169,8 @@ func TestCompose2CacheTiming(t *testing.T) {
 }
 
 func TestComposeTakeZero(t *testing.T) {
+	t.Parallel()
+
 	values := seq.Seq[int](func(func(int) bool) { t.Fatal("unexpected value evaluation") })
 	pairs := seq.Seq2[int, string](func(func(int, string) bool) { t.Fatal("unexpected pair evaluation") })
 	fromValues := op.Compose().Pipe[int](op.Take(0).Operator).Pipe(op.Cache)
@@ -167,6 +181,8 @@ func TestComposeTakeZero(t *testing.T) {
 
 // nil と空入力を往復する合成に通し、組み込み処理が非 nil の空イテレーターを返す契約を確認する。
 func TestComposeEmptyInputs(t *testing.T) {
+	t.Parallel()
+
 	fromValues := op.Compose().Pipe2[string](withLength).Pipe(op.Values)
 	fromPairs := op.Compose2().Pipe(op.Values[int, string]).Pipe2(withLength)
 	for _, src := range []iter.Seq[string]{nil, slices.Values([]string{})} {
@@ -187,8 +203,12 @@ func TestComposeEmptyInputs(t *testing.T) {
 
 // Zip の Pull を合成・再利用しても、停止と panic のどちらでも両入力を解放する。
 func TestComposeZipRelease(t *testing.T) {
+	t.Parallel()
+
 	for _, panics := range []bool{false, true} {
 		t.Run("panic="+strconv.FormatBool(panics), func(t *testing.T) {
+			t.Parallel()
+
 			var starts, stops [2]int
 			input := func(index int) iter.Seq[int] {
 				return func(yield func(int) bool) {

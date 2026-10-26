@@ -230,7 +230,11 @@ func BenchmarkScenarioPipelineSeq(b *testing.B) {
 }
 
 func TestScenarioPipelineSeq(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioPipelineSeqLibrary(values, 2, 0)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -239,6 +243,8 @@ func TestScenarioPipelineSeq(t *testing.T) {
 		}
 	})
 	t.Run("Loop", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioPipelineSeqLoop(values, 2, 0)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -247,6 +253,8 @@ func TestScenarioPipelineSeq(t *testing.T) {
 		}
 	})
 	t.Run("Functions", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioPipelineSeqFunctions(values, 2, 0)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -478,7 +486,11 @@ func BenchmarkScenarioPipelineSeq2(b *testing.B) {
 }
 
 func TestScenarioPipelineSeq2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioPipelineSeq2Library(values, 2, 0)
 		want := []pair{{0, 2}, {2, 4}, {3, 5}, {5, 7}}
@@ -487,6 +499,8 @@ func TestScenarioPipelineSeq2(t *testing.T) {
 		}
 	})
 	t.Run("Loop", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioPipelineSeq2Loop(values, 2, 0)
 		want := []pair{{0, 2}, {2, 4}, {3, 5}, {5, 7}}
@@ -495,6 +509,8 @@ func TestScenarioPipelineSeq2(t *testing.T) {
 		}
 	})
 	t.Run("Functions", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioPipelineSeq2Functions(values, 2, 0)
 		want := []pair{{0, 2}, {2, 4}, {3, 5}, {5, 7}}

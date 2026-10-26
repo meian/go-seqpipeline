@@ -62,7 +62,11 @@ func BenchmarkSeqPipe(b *testing.B) {
 }
 
 func TestSeqPipe(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seqPipeLibrary(values)
@@ -72,6 +76,8 @@ func TestSeqPipe(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seqPipeGo(values)
@@ -136,7 +142,11 @@ func BenchmarkSeqPipe2(b *testing.B) {
 }
 
 func TestSeqPipe2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seqPipe2Library(values)
@@ -146,6 +156,8 @@ func TestSeqPipe2(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seqPipe2Go(values)
@@ -210,7 +222,11 @@ func BenchmarkSeq2Pipe(b *testing.B) {
 }
 
 func TestSeq2Pipe(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seq2PipeLibrary(values)
@@ -220,6 +236,8 @@ func TestSeq2Pipe(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seq2PipeGo(values)
@@ -284,7 +302,11 @@ func BenchmarkSeq2Pipe2(b *testing.B) {
 }
 
 func TestSeq2Pipe2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seq2Pipe2Library(values)
@@ -294,6 +316,8 @@ func TestSeq2Pipe2(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := seq2Pipe2Go(values)

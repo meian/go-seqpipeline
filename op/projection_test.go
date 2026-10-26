@@ -10,6 +10,7 @@ import (
 
 // 順序と重複を保ってキーを取り出し、遅延評価・再評価と下流停止時の解放を確認する。
 func TestKeys(t *testing.T) {
+	t.Parallel()
 	want := []int{3, 1, 3, 2}
 	started, visited, stopped := 0, 0, 0
 	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
@@ -41,6 +42,7 @@ func TestKeys(t *testing.T) {
 }
 
 func TestKeysEmptyInput(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		src  iter.Seq2[int, int]
@@ -49,6 +51,7 @@ func TestKeysEmptyInput(t *testing.T) {
 		{name: "empty", src: func(func(int, int) bool) {}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			output := op.Keys(tc.src)
 			if output == nil {
 				t.Fatal("Keys must return a non-nil iterator")
@@ -59,6 +62,7 @@ func TestKeysEmptyInput(t *testing.T) {
 }
 
 func TestKeysNonComparable(t *testing.T) {
+	t.Parallel()
 	keys := [][]int{{2}, {1}, {2}}
 	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
 	src := iter.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {
@@ -73,6 +77,7 @@ func TestKeysNonComparable(t *testing.T) {
 
 // 順序と重複を保って値を取り出し、遅延評価・再評価と下流停止時の解放を確認する。
 func TestValues(t *testing.T) {
+	t.Parallel()
 	want := []int{20, 10, 30, 20}
 	started, visited, stopped := 0, 0, 0
 	src := iter.Seq2[int, int](func(yield func(int, int) bool) {
@@ -104,6 +109,7 @@ func TestValues(t *testing.T) {
 }
 
 func TestValuesEmptyInput(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name string
 		src  iter.Seq2[int, int]
@@ -112,6 +118,7 @@ func TestValuesEmptyInput(t *testing.T) {
 		{name: "empty", src: func(func(int, int) bool) {}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			output := op.Values(tc.src)
 			if output == nil {
 				t.Fatal("Values must return a non-nil iterator")
@@ -122,6 +129,7 @@ func TestValuesEmptyInput(t *testing.T) {
 }
 
 func TestValuesNonComparable(t *testing.T) {
+	t.Parallel()
 	keys := [][]int{{2}, {1}, {2}}
 	values := []map[string]int{{"a": 2}, {"b": 1}, {"a": 2}}
 	src := iter.Seq2[[]int, map[string]int](func(yield func([]int, map[string]int) bool) {

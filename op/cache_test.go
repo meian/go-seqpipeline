@@ -11,6 +11,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
+	t.Parallel()
 	values := []int{3, 1, 1, 2}
 	starts, reads, finishes := 0, 0, 0
 	src := iter.Seq[int](func(yield func(int) bool) {
@@ -46,6 +47,7 @@ func TestCache(t *testing.T) {
 }
 
 func TestCacheEmptyAndNil(t *testing.T) {
+	t.Parallel()
 	for _, src := range []iter.Seq[int]{nil, func(func(int) bool) {}} {
 		cached := op.Cache(src)
 		if cached == nil {
@@ -58,6 +60,7 @@ func TestCacheEmptyAndNil(t *testing.T) {
 }
 
 func TestCacheShallowCopy(t *testing.T) {
+	t.Parallel()
 	value := 1
 	values := []*int{&value}
 	cached := op.Cache(slices.Values(values))
@@ -70,6 +73,7 @@ func TestCacheShallowCopy(t *testing.T) {
 }
 
 func TestCacheInterleavedAndConcurrent(t *testing.T) {
+	t.Parallel()
 	cached := op.Cache(slices.Values([]int{3, 1, 1, 2}))
 	next, stop := iter.Pull(cached)
 	defer stop()
@@ -89,6 +93,7 @@ func TestCacheInterleavedAndConcurrent(t *testing.T) {
 
 // 初回評価中の反復も完成した同一キャッシュを待ち、上流を重複実行しない。
 func TestCacheConcurrentFirstIteration(t *testing.T) {
+	t.Parallel()
 	var starts atomic.Int32
 	started, release := make(chan struct{}), make(chan struct{})
 	cached := op.Cache(iter.Seq[int](func(yield func(int) bool) {
@@ -112,6 +117,7 @@ func TestCacheConcurrentFirstIteration(t *testing.T) {
 }
 
 func TestCachePanic(t *testing.T) {
+	t.Parallel()
 	starts := 0
 	cached := op.Cache(iter.Seq[int](func(yield func(int) bool) {
 		starts++
@@ -130,6 +136,7 @@ func TestCachePanic(t *testing.T) {
 }
 
 func TestCache2(t *testing.T) {
+	t.Parallel()
 	values := []pair[int, string]{
 		{Key: 3, Value: "c"}, {Key: 1, Value: "a"},
 		{Key: 1, Value: "a"}, {Key: 1, Value: "b"},
@@ -169,6 +176,7 @@ func TestCache2(t *testing.T) {
 }
 
 func TestCache2EmptyAndNil(t *testing.T) {
+	t.Parallel()
 	for _, src := range []iter.Seq2[int, string]{nil, func(func(int, string) bool) {}} {
 		cached := op.Cache2(src)
 		if cached == nil {
@@ -181,6 +189,7 @@ func TestCache2EmptyAndNil(t *testing.T) {
 }
 
 func TestCache2ShallowCopyAndNonComparableKeys(t *testing.T) {
+	t.Parallel()
 	keys, values := [][]int{{1}}, [][]int{{10}}
 	cached := op.Cache2(iter.Seq2[[]int, []int](func(yield func([]int, []int) bool) {
 		yield(keys[0], values[0])
@@ -194,6 +203,7 @@ func TestCache2ShallowCopyAndNonComparableKeys(t *testing.T) {
 }
 
 func TestCache2InterleavedAndConcurrent(t *testing.T) {
+	t.Parallel()
 	cached := op.Cache2(slices.All([]string{"a", "b"}))
 	want := []pair[int, string]{{Key: 0, Value: "a"}, {Key: 1, Value: "b"}}
 	next, stop := iter.Pull2(cached)
@@ -214,6 +224,7 @@ func TestCache2InterleavedAndConcurrent(t *testing.T) {
 
 // 初回評価中の反復も完成した同一キャッシュを待ち、上流を重複実行しない。
 func TestCache2ConcurrentFirstIteration(t *testing.T) {
+	t.Parallel()
 	var starts atomic.Int32
 	started, release := make(chan struct{}), make(chan struct{})
 	cached := op.Cache2(iter.Seq2[int, string](func(yield func(int, string) bool) {
@@ -238,6 +249,7 @@ func TestCache2ConcurrentFirstIteration(t *testing.T) {
 }
 
 func TestCache2Panic(t *testing.T) {
+	t.Parallel()
 	starts := 0
 	cached := op.Cache2(iter.Seq2[int, string](func(yield func(int, string) bool) {
 		starts++

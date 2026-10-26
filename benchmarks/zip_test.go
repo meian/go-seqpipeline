@@ -63,7 +63,11 @@ func BenchmarkZipOperator(b *testing.B) {
 }
 
 func TestZipOperator(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipOperatorLibrary(values)
@@ -73,6 +77,8 @@ func TestZipOperator(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipOperatorGo(values)
@@ -143,7 +149,11 @@ func BenchmarkZipAlignBy(b *testing.B) {
 }
 
 func TestZipAlignBy(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipAlignByLibrary(values)
@@ -153,6 +163,8 @@ func TestZipAlignBy(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipAlignByGo(values)
@@ -223,7 +235,11 @@ func BenchmarkZipWithDefaultValue(b *testing.B) {
 }
 
 func TestZipWithDefaultValue(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipWithDefaultValueLibrary(values)
@@ -233,6 +249,8 @@ func TestZipWithDefaultValue(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipWithDefaultValueGo(values)
@@ -304,7 +322,11 @@ func BenchmarkZipWithDefaultKey(b *testing.B) {
 }
 
 func TestZipWithDefaultKey(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipWithDefaultKeyLibrary(values)
@@ -314,6 +336,8 @@ func TestZipWithDefaultKey(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipWithDefaultKeyGo(values)
@@ -379,7 +403,11 @@ func BenchmarkZipKeyOperator(b *testing.B) {
 }
 
 func TestZipKeyOperator(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyOperatorLibrary(values)
@@ -389,6 +417,8 @@ func TestZipKeyOperator(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyOperatorGo(values)
@@ -460,7 +490,11 @@ func BenchmarkZipKeyAlignBy(b *testing.B) {
 }
 
 func TestZipKeyAlignBy(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyAlignByLibrary(values)
@@ -470,6 +504,8 @@ func TestZipKeyAlignBy(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyAlignByGo(values)
@@ -540,7 +576,11 @@ func BenchmarkZipKeyWithDefaultValue(b *testing.B) {
 }
 
 func TestZipKeyWithDefaultValue(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyWithDefaultValueLibrary(values)
@@ -550,6 +590,8 @@ func TestZipKeyWithDefaultValue(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyWithDefaultValueGo(values)
@@ -621,7 +663,11 @@ func BenchmarkZipKeyWithDefaultKey(b *testing.B) {
 }
 
 func TestZipKeyWithDefaultKey(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyWithDefaultKeyLibrary(values)
@@ -631,6 +677,8 @@ func TestZipKeyWithDefaultKey(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := zipKeyWithDefaultKeyGo(values)

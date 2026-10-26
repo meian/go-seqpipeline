@@ -56,7 +56,11 @@ func BenchmarkFromMap(b *testing.B) {
 }
 
 func TestFromMap(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		mapping := make(map[int]int, len(values))
 		for k, v := range values {
@@ -69,6 +73,8 @@ func TestFromMap(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		mapping := make(map[int]int, len(values))
 		for k, v := range values {

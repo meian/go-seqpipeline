@@ -62,7 +62,11 @@ func BenchmarkFromSeq(b *testing.B) {
 }
 
 func TestFromSeq(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := fromSeqLibrary(values)
@@ -72,6 +76,8 @@ func TestFromSeq(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := fromSeqGo(values)
@@ -137,7 +143,11 @@ func BenchmarkFromSeq2(b *testing.B) {
 }
 
 func TestFromSeq2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := fromSeq2Library(values)
@@ -147,6 +157,8 @@ func TestFromSeq2(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := fromSeq2Go(values)

@@ -13,6 +13,7 @@ import (
 
 // 既定の終了条件と、同じ設定から異なるキー型を推論できることを確認する。
 func TestZip(t *testing.T) {
+	t.Parallel()
 	left := slices.Values([]int{3, 3, 1})
 	right := slices.Values([]string{"a", "b"})
 	config := op.Zip(right)
@@ -25,6 +26,7 @@ func TestZip(t *testing.T) {
 
 // 設定コピー・再指定と入力中のゼロ値の保持を確認する。
 func TestZipConfigurationCopies(t *testing.T) {
+	t.Parallel()
 	right := slices.Values([]string{""})
 	left := slices.Values([]int{0, 2})
 	base := op.Zip(right)
@@ -49,6 +51,7 @@ func TestZipConfigurationCopies(t *testing.T) {
 }
 
 func TestZipAlignByInvalid(t *testing.T) {
+	t.Parallel()
 	for _, alignment := range []op.ZipAlign{-1, op.AlignLongest + 1} {
 		for _, configure := range []func(){
 			func() { op.Zip(iter.Seq[string](nil)).AlignBy(alignment) },
@@ -67,6 +70,7 @@ func TestZipAlignByInvalid(t *testing.T) {
 
 // 不等長の左右×4条件で出力・取得数・解放を検証し、順序が異なる経路はイベントも確認する。
 func TestZipAlignBy(t *testing.T) {
+	t.Parallel()
 	first := []pair[int, int]{{1, 10}}
 	leftPadded := []pair[int, int]{{1, 10}, {2, -2}, {3, -2}}
 	rightPadded := []pair[int, int]{{1, 10}, {-1, 20}, {-1, 30}}
@@ -94,6 +98,7 @@ func TestZipAlignBy(t *testing.T) {
 			[]string{"L1", "R10", "out:1,10", "L:end", "R20", "out:-1,20", "R30", "out:-1,30", "R:end"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			var state zipTrace
 			left := state.input(0, []int{1, 2, 3}[:tc.lengths[0]])
 			right := state.input(1, []int{10, 20, 30}[:tc.lengths[1]])
@@ -115,6 +120,7 @@ func TestZipAlignBy(t *testing.T) {
 
 // 空は評価して判定し、nil で空と確定する場合は他方も開始しない。補完は型のゼロ値を使う。
 func TestZipEmpty(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		align op.ZipAlign
 		empty int
@@ -132,6 +138,7 @@ func TestZipEmpty(t *testing.T) {
 	} {
 		for _, isNil := range []bool{false, true} {
 			t.Run(fmt.Sprintf("align=%d/empty=%d/nil=%t", tc.align, tc.empty, isNil), func(t *testing.T) {
+				t.Parallel()
 				var state zipTrace
 				inputs := [2]iter.Seq[int]{state.input(0, []int{1}), state.input(1, []int{1})}
 				inputs[tc.empty] = state.input(tc.empty, nil)
@@ -161,6 +168,7 @@ func TestZipEmpty(t *testing.T) {
 
 // 全件評価の再実行と、左右の駆動ループ・Longest の右残余での停止と panic を確認する。
 func TestZipEvaluation(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name        string
 		align       op.ZipAlign
@@ -178,6 +186,7 @@ func TestZipEvaluation(t *testing.T) {
 	} {
 		for _, panics := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/panic=%t", tc.name, panics), func(t *testing.T) {
+				t.Parallel()
 				var state zipTrace
 				output := op.Zip(state.input(1, tc.right)).AlignBy(tc.align).Operator(state.input(0, tc.left))
 				assertEqual(t, state.started, [2]int{})
@@ -207,6 +216,7 @@ func TestZipEvaluation(t *testing.T) {
 		}
 	}
 	t.Run("reevaluate", func(t *testing.T) {
+		t.Parallel()
 		var state zipTrace
 		output := op.Zip(state.input(1, []int{10})).Operator(state.input(0, []int{1}))
 		assertEqual(t, state.started, [2]int{})
@@ -221,6 +231,7 @@ func TestZipEvaluation(t *testing.T) {
 
 // 直接反復・Pull の両側と Longest の右残余で、入力 panic の伝播と解放を確認する。
 func TestZipInputPanic(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		align      op.ZipAlign
 		panicIndex int
@@ -231,6 +242,7 @@ func TestZipInputPanic(t *testing.T) {
 		{op.AlignLongest, 1, [2]int{1, 2}},
 	} {
 		t.Run(fmt.Sprintf("align=%d/panic=%d", tc.align, tc.panicIndex), func(t *testing.T) {
+			t.Parallel()
 			var state zipTrace
 			input := func(index int) iter.Seq[int] {
 				return func(yield func(int) bool) {
@@ -256,6 +268,7 @@ func TestZipInputPanic(t *testing.T) {
 
 // 比較不能な入力と補完値を使い、同じ出力の並行評価でも状態が混ざらないことを確認する。
 func TestZipNonComparableAndConcurrentEvaluation(t *testing.T) {
+	t.Parallel()
 	left := slices.Values([][]int{{1}})
 	right := slices.Values([]map[string]int{{"a": 1}, {"b": 2}})
 	config := op.Zip(right).WithDefaultKey([]int{-1}).WithDefaultValue(map[string]int{"missing": -1})
@@ -297,6 +310,7 @@ func (s *zipTrace) input(index int, values []int) iter.Seq[int] {
 
 // 一度しか読めない入力は、Zip を再評価しても復元されない。
 func TestZipSingleUseInputs(t *testing.T) {
+	t.Parallel()
 	keys, values := []int{1, 2}, []string{"a", "b"}
 	left := iter.Seq[int](func(yield func(int) bool) {
 		for len(keys) > 0 {
@@ -323,6 +337,7 @@ func TestZipSingleUseInputs(t *testing.T) {
 
 // 有限側を基準に、無限入力も停止して解放する。
 func TestZipFiniteAndInfinite(t *testing.T) {
+	t.Parallel()
 	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight} {
 		var reads, stops int
 		infinite := iter.Seq[int](func(yield func(int) bool) {

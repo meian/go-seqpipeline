@@ -9,6 +9,8 @@ import (
 )
 
 func TestFromChannel(t *testing.T) {
+	t.Parallel()
+
 	ch := make(chan int, 4)
 	for _, v := range []int{3, 1, 1, 2} {
 		ch <- v
@@ -27,18 +29,24 @@ func TestFromChannel(t *testing.T) {
 }
 
 func TestFromChannelClosed(t *testing.T) {
+	t.Parallel()
+
 	ch := make(chan int)
 	close(ch)
 	assertEqual(t, seq.ToSlice(seq.FromChannel(t.Context(), ch)), []int(nil))
 }
 
 func TestFromChannelCancelReceive(t *testing.T) {
+	t.Parallel()
+
 	for _, nilChannel := range []bool{false, true} {
 		name := "open"
 		if nilChannel {
 			name = "nil"
 		}
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			synctest.Test(t, func(t *testing.T) {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
@@ -67,6 +75,8 @@ func TestFromChannelCancelReceive(t *testing.T) {
 }
 
 func TestFromChannelCanceled(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 	ch := make(chan int, 1)
@@ -76,6 +86,8 @@ func TestFromChannelCanceled(t *testing.T) {
 }
 
 func TestFromChannelSharedReceivers(t *testing.T) {
+	t.Parallel()
+
 	ch := make(chan int, 3)
 	for _, v := range []int{1, 2, 3} {
 		ch <- v
@@ -92,6 +104,8 @@ func TestFromChannelSharedReceivers(t *testing.T) {
 }
 
 func TestFromChannelCloseReceive(t *testing.T) {
+	t.Parallel()
+
 	synctest.Test(t, func(t *testing.T) {
 		ch := make(chan int)
 		finished := make(chan struct{})
@@ -109,6 +123,8 @@ func TestFromChannelCloseReceive(t *testing.T) {
 
 // nil context の panic は、反復前の呼び出し元で捕捉できる。
 func TestFromChannelNilContext(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		if recover() == nil {
 			t.Fatal("nil context must panic during FromChannel")
@@ -118,6 +134,8 @@ func TestFromChannelNilContext(t *testing.T) {
 }
 
 func TestToChannel(t *testing.T) {
+	t.Parallel()
+
 	src := seq.FromSlice([]int{3, 1, 1, 2})
 	for round := 0; round < 2; round++ {
 		var ch <-chan int = seq.ToChannel(t.Context(), src)
@@ -131,6 +149,8 @@ func TestToChannel(t *testing.T) {
 }
 
 func TestToChannelEmpty(t *testing.T) {
+	t.Parallel()
+
 	for _, src := range []seq.Seq[int]{nil, seq.FromSlice([]int{})} {
 		ch := seq.ToChannel(t.Context(), src)
 		if ch == nil {
@@ -143,12 +163,16 @@ func TestToChannelEmpty(t *testing.T) {
 }
 
 func TestToChannelCancelSend(t *testing.T) {
+	t.Parallel()
+
 	for _, receiveFirst := range []bool{false, true} {
 		name := "without_receiver"
 		if receiveFirst {
 			name = "after_receiving"
 		}
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			synctest.Test(t, func(t *testing.T) {
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
@@ -187,6 +211,8 @@ func TestToChannelCancelSend(t *testing.T) {
 }
 
 func TestToChannelCanceled(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 	src := seq.Seq[int](func(func(int) bool) { t.Error("canceled input evaluated") })
@@ -197,6 +223,8 @@ func TestToChannelCanceled(t *testing.T) {
 
 // nil context の panic は、goroutine 内ではなく呼び出し元で捕捉できる。
 func TestToChannelNilContext(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		if recover() == nil {
 			t.Fatal("nil context must panic during ToChannel")

@@ -64,7 +64,11 @@ func BenchmarkFilter(b *testing.B) {
 }
 
 func TestFilter(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := filterLibrary(values)
@@ -74,6 +78,8 @@ func TestFilter(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := filterGo(values)
@@ -140,7 +146,11 @@ func BenchmarkFilter2(b *testing.B) {
 }
 
 func TestFilter2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := filter2Library(values)
@@ -150,6 +160,8 @@ func TestFilter2(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := filter2Go(values)

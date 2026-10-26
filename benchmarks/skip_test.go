@@ -63,7 +63,11 @@ func BenchmarkSkipOperator(b *testing.B) {
 }
 
 func TestSkipOperator(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := skipOperatorLibrary(values)
@@ -73,6 +77,8 @@ func TestSkipOperator(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := skipOperatorGo(values)
@@ -138,7 +144,11 @@ func BenchmarkSkipOperator2(b *testing.B) {
 }
 
 func TestSkipOperator2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := skipOperator2Library(values)
@@ -148,6 +158,8 @@ func TestSkipOperator2(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := skipOperator2Go(values)
