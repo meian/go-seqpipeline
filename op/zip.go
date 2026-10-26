@@ -41,7 +41,7 @@ type zipOperator[V any] struct {
 }
 
 // AlignBy selects which input determines the output length.
-// Values other than AlignShortest, AlignLeft, AlignRight, and AlignLongest panic.
+// AlignBy panics if alignment is not AlignShortest, AlignLeft, AlignRight, or AlignLongest.
 func (z zipOperator[V]) AlignBy(alignment ZipAlign) zipOperator[V] {
 	if alignment < AlignShortest || alignment > AlignLongest {
 		panic(fmt.Sprintf("op.Zip: invalid alignment: %d", alignment))
@@ -79,7 +79,7 @@ type zipKeyOperator[K, V any] struct {
 // AlignBy selects which input determines the output length.
 // When the alignment requires padding, missing keys use the configured default
 // key and missing values use the configured default value.
-// Values other than AlignShortest, AlignLeft, AlignRight, and AlignLongest panic.
+// AlignBy panics if alignment is not AlignShortest, AlignLeft, AlignRight, or AlignLongest.
 func (z zipKeyOperator[K, V]) AlignBy(alignment ZipAlign) zipKeyOperator[K, V] {
 	z.zip = z.zip.AlignBy(alignment)
 	return z

@@ -18,7 +18,7 @@ type integer interface {
 // exceeding the integer type's range.
 // When start equals stop, it yields one value; when step points away from stop,
 // it returns an empty, non-nil Seq.
-// A zero step panics when FromRange is called.
+// FromRange panics if step is zero.
 // Step has type int64, so increments or decrements outside its range cannot be
 // specified.
 // Each iteration begins at start.

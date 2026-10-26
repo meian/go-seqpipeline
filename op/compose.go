@@ -2,7 +2,7 @@ package op
 
 import "iter"
 
-// Compose returns a starting value for composing operators with single-value input.
+// Compose returns a starting value for composing operators that accept iter.Seq input.
 // The first call to Pipe or Pipe2 determines the input and output types from
 // the operation passed to it and returns a dedicated composition value.
 // Pass its Operator method to seq.Seq.Pipe or seq.Seq.Pipe2.
@@ -24,7 +24,7 @@ func (compose) Pipe2[I, K, V any](ope ToSeq2Operator[I, K, V]) composedToSeq2[I,
 	return composedToSeq2[I, K, V]{operator: ope}
 }
 
-// Compose2 returns a starting value for composing operators with key-value input.
+// Compose2 returns a starting value for composing operators that accept iter.Seq2 input.
 // The first call to Pipe or Pipe2 determines the input and output types from
 // the operation passed to it and returns a dedicated composition value.
 // Pass its Operator method to seq.Seq2.Pipe or seq.Seq2.Pipe2.

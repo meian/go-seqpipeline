@@ -17,8 +17,8 @@
 // and pass their Operator method to Pipe or Pipe2 in package seq.
 // Composition does not call transformation functions; applying the composition
 // to input calls them in connection order.
-// Each application creates an independent cache even if the composition includes
-// Cache or Cache2; the input is saved on the first iteration.
+// If the composition includes Cache or Cache2, each application creates an
+// independent cache that saves its input on the first iteration.
 // Sharing rules for state referenced by connected operations, such as inputs
 // and callbacks, remain unchanged.
 package op

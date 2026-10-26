@@ -8,7 +8,7 @@ import "context"
 // FromChannel does not close ch, and received values cannot be retrieved again.
 // If multiple sequences read from the same channel, they divide values according
 // to receive timing.
-// A nil ctx panics when FromChannel is called.
+// FromChannel panics if ctx is nil.
 // A nil channel waits until cancellation.
 // A value racing with cancellation may still be yielded; callers are responsible
 // for stopping the sender.
@@ -34,7 +34,7 @@ func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 // ToChannel evaluates a Seq in a goroutine started when called, sending values
 // in order through an unbuffered channel.
 // The goroutine closes the output channel when evaluation ends.
-// A nil ctx panics when ToChannel is called.
+// ToChannel panics if ctx is nil.
 // If the receiver stops early, cancel ctx to release a blocked send.
 // A send racing with cancellation may still complete.
 // The input may be evaluated ahead of the receiver to obtain the next value.
