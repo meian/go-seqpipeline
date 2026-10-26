@@ -2,7 +2,7 @@ package op
 
 import "iter"
 
-// Filter は条件に一致する要素だけを取り出す Operator を返す。
+// Filter returns an Operator that yields only elements matching predicate.
 func Filter[T any](predicate func(T) bool) Operator[T, T] {
 	return func(src iter.Seq[T]) iter.Seq[T] {
 		return func(yield func(T) bool) {
@@ -18,7 +18,7 @@ func Filter[T any](predicate func(T) bool) Operator[T, T] {
 	}
 }
 
-// Filter2 は条件に一致するキーと値の組だけを取り出す Operator2 を返す。
+// Filter2 returns an Operator2 that yields only key-value pairs matching predicate.
 func Filter2[K, V any](predicate func(K, V) bool) Operator2[K, V, K, V] {
 	return func(src iter.Seq2[K, V]) iter.Seq2[K, V] {
 		return func(yield func(K, V) bool) {

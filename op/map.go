@@ -2,7 +2,7 @@ package op
 
 import "iter"
 
-// Map は各要素を指定した関数で変換する Operator を返す。
+// Map returns an Operator that transforms each element with fn.
 func Map[I, O any](fn func(I) O) Operator[I, O] {
 	return func(src iter.Seq[I]) iter.Seq[O] {
 		return func(yield func(O) bool) {
@@ -18,7 +18,7 @@ func Map[I, O any](fn func(I) O) Operator[I, O] {
 	}
 }
 
-// Map2 は各キーと値の組を指定した関数で変換する Operator2 を返す。
+// Map2 returns an Operator2 that transforms each key-value pair with fn.
 func Map2[K, V, K2, V2 any](fn func(K, V) (K2, V2)) Operator2[K, V, K2, V2] {
 	return func(src iter.Seq2[K, V]) iter.Seq2[K2, V2] {
 		return func(yield func(K2, V2) bool) {
@@ -34,7 +34,7 @@ func Map2[K, V, K2, V2 any](fn func(K, V) (K2, V2)) Operator2[K, V, K2, V2] {
 	}
 }
 
-// MapToSeq2 は各要素からキーと値の組を1つ生成する ToSeq2Operator を返す。
+// MapToSeq2 returns a ToSeq2Operator that produces one key-value pair per element.
 func MapToSeq2[I, K, V any](fn func(I) (K, V)) ToSeq2Operator[I, K, V] {
 	return func(src iter.Seq[I]) iter.Seq2[K, V] {
 		return func(yield func(K, V) bool) {
@@ -50,7 +50,7 @@ func MapToSeq2[I, K, V any](fn func(I) (K, V)) ToSeq2Operator[I, K, V] {
 	}
 }
 
-// MapToSeq は各キーと値の組から単一値を1つ生成する ToSeqOperator を返す。
+// MapToSeq returns a ToSeqOperator that produces one value per key-value pair.
 func MapToSeq[K, V, O any](fn func(K, V) O) ToSeqOperator[K, V, O] {
 	return func(src iter.Seq2[K, V]) iter.Seq[O] {
 		return func(yield func(O) bool) {

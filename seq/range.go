@@ -10,14 +10,18 @@ type integer interface {
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
-// FromRange は start から stop に向かう整数列を step ごとに生成する。
-// uintptr を含む組み込み整数型と、それらを基底型とする定義型を受け付ける。
-// step の符号で昇順・降順を決める。
-// 到達した stop は含み、飛び越す前や整数型の範囲を超える前に終了する。
-// start と stop が等しい場合は 1 件返し、step の方向が逆の場合は空の非 nil の Seq を返す。
-// step が 0 の場合は呼び出し時に panic する。
-// step は int64 で、表せない増減値は指定できない。
-// 反復のたびに start から始める。
+// FromRange generates an integer sequence from start toward stop in steps of step.
+// It accepts built-in integer types, including uintptr, and defined types with
+// those underlying types.
+// The sign of step determines the direction.
+// The sequence includes stop if reached and ends before overshooting it or
+// exceeding the integer type's range.
+// When start equals stop, it yields one value; when step points away from stop,
+// it returns an empty, non-nil Seq.
+// FromRange panics if step is zero.
+// Step has type int64, so increments or decrements outside its range cannot be
+// specified.
+// Each iteration begins at start.
 func FromRange[T integer](start, stop T, step int64) Seq[T] {
 	if step == 0 {
 		panic("seq: FromRange step must not be zero")

@@ -2,9 +2,9 @@ package op
 
 import "iter"
 
-// Skip は先頭から最大 n 個の要素を読み飛ばすための設定値を返す。
-// n が 0 以下なら読み飛ばさず、すべての要素を返す。
-// Pipe には Skip(n).Operator、Pipe2 には Skip(n).Operator2 を渡す。
+// Skip returns a configuration value for skipping up to n initial elements.
+// If n is zero or negative, it skips none and yields all elements.
+// Pass Skip(n).Operator to Pipe or Skip(n).Operator2 to Pipe2.
 func Skip(n int) skipOperator {
 	return skipOperator{n: n}
 }
@@ -13,8 +13,10 @@ type skipOperator struct {
 	n int
 }
 
-// Operator は先頭の指定数を読み飛ばし、残りの要素を入力の順序と重複を保って返す。
-// 指定数が 0 以下なら読み飛ばさず、入力件数以上なら空になる。
+// Operator skips the specified number of initial elements and yields the rest,
+// preserving input order and duplicates.
+// It skips none if the count is zero or negative and yields nothing if the
+// count is at least the input length.
 func (s skipOperator) Operator[T any](src iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		if src == nil {
@@ -33,8 +35,10 @@ func (s skipOperator) Operator[T any](src iter.Seq[T]) iter.Seq[T] {
 	}
 }
 
-// Operator2 は先頭の指定数を読み飛ばし、残りのキーと値の組を入力の順序と重複を保って返す。
-// 指定数が 0 以下なら読み飛ばさず、入力件数以上なら空になる。
+// Operator2 skips the specified number of initial key-value pairs and yields
+// the rest, preserving input order and duplicates.
+// It skips none if the count is zero or negative and yields nothing if the
+// count is at least the input length.
 func (s skipOperator) Operator2[K, V any](src iter.Seq2[K, V]) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if src == nil {

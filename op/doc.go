@@ -1,16 +1,24 @@
-// Package op は iter.Seq と iter.Seq2 を変換するオペレーターを提供する。
-// seq パッケージの Pipe / Pipe2 に接続して使用する。
+// Package op provides operators that transform iter.Seq and iter.Seq2 values.
+// Connect them through the Pipe or Pipe2 methods in package seq.
 //
-// 組み込みオペレーターは nil の入力を空として扱い、空でも非 nil のイテレーターを返す。
-// Cache / Cache2 は初回反復時に入力を全件評価する。
-// それ以外は反復時に入力を評価し、下流の停止を上流へ伝え、内部状態を評価ごとに初期化する。
-// 再評価や並行評価の可否は入力とコールバックに従う。
-// 独自オペレーターでは、接続する変換関数が評価時点・停止伝播・nil の扱いを決める。
+// Built-in operators treat nil input as empty and return a non-nil iterator,
+// even when the input is empty.
+// [Cache] and [Cache2] evaluate the entire input on the first iteration.
+// Other built-in operators evaluate input during iteration, propagate downstream
+// stops upstream, and reset their internal state for each evaluation.
+// Whether evaluation can be repeated or run concurrently depends on the input
+// and callbacks.
+// For custom operators, the connected transformation function determines
+// evaluation timing, stop propagation, and nil handling.
 //
-// 入力に処理を接続するには seq の Pipe / Pipe2 を使う。
-// 再利用する複合オペレーターは Compose / Compose2 の専用の合成値で定義し、
-// その Pipe / Pipe2 で処理を追加して、Operator メソッドを seq の Pipe / Pipe2 に渡す。
-// 合成時には変換関数を呼び出さず、合成結果を入力へ適用するときに接続順に呼び出す。
-// Cache / Cache2 を含む場合も適用ごとに独立したキャッシュを作り、初回反復時に入力を保存する。
-// 入力やコールバックなど、接続した処理が参照する状態の共有条件は変わらない。
+// Use Pipe or Pipe2 in package seq to connect operations to an input.
+// Build reusable operator compositions with the dedicated values returned by
+// [Compose] or [Compose2], add operations through their Pipe or Pipe2 methods,
+// and pass their Operator method to Pipe or Pipe2 in package seq.
+// Composition does not call transformation functions; applying the composition
+// to input calls them in connection order.
+// If the composition includes Cache or Cache2, each application creates an
+// independent cache that saves its input on the first iteration.
+// Sharing rules for state referenced by connected operations, such as inputs
+// and callbacks, remain unchanged.
 package op

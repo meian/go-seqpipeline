@@ -2,13 +2,16 @@ package seq
 
 import "context"
 
-// FromChannel は反復時に channel から受信する seq.Seq を返す。
-// 元の channel を close して残りの値を読み終えるか、ctx をキャンセルするか、break することで反復を終了する。
-// FromChannel は入力 channel を close しない。受信済みの値は再取得できない。
-// 同じ channel から複数の seq.Seq を作ると、受信タイミングに応じて値が分配される。
-// ctx に nil を渡すと呼び出し時に panic する。
-// nil の channel はキャンセルまで待機する。
-// キャンセルと競合した値を返すことがある。送信者の停止は呼び出し側で管理する。
+// FromChannel returns a Seq that receives from ch during iteration.
+// Iteration ends when the input channel is closed and drained, ctx is canceled,
+// or the consumer breaks out of iteration.
+// FromChannel does not close ch, and received values cannot be retrieved again.
+// If multiple sequences read from the same channel, they divide values according
+// to receive timing.
+// FromChannel panics if ctx is nil.
+// A nil channel waits until cancellation.
+// A value racing with cancellation may still be yielded; callers are responsible
+// for stopping the sender.
 func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 	done := ctx.Done()
 	return func(yield func(T) bool) {
@@ -28,13 +31,15 @@ func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 	}
 }
 
-// ToChannel は呼び出し時に goroutine で seq.Seq を評価し、バッファなしの channel へ順に送信する。
-// 出力 channel は内部の goroutine が評価終了時に close する。
-// ctx に nil を渡すと呼び出し時に panic する。
-// 受信を途中でやめる場合は ctx をキャンセルして送信待ちを解除する。
-// キャンセルと競合した送信は完了することがある。
-// 次の送信値を得るため、入力は受信側より先に評価されることがある。
-// 入力内部の待機を解除するためには、上流にも同じ ctx などで停止手段を用意する必要がある。
+// ToChannel evaluates a Seq in a goroutine started when called, sending values
+// in order through an unbuffered channel.
+// The goroutine closes the output channel when evaluation ends.
+// ToChannel panics if ctx is nil.
+// If the receiver stops early, cancel ctx to release a blocked send.
+// A send racing with cancellation may still complete.
+// The input may be evaluated ahead of the receiver to obtain the next value.
+// To release waits inside the input, provide an upstream stopping mechanism,
+// such as the same ctx.
 func ToChannel[T any](ctx context.Context, s Seq[T]) <-chan T {
 	done := ctx.Done()
 	ch := make(chan T)
