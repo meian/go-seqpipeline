@@ -4,7 +4,8 @@
 `seq` と `op` の公開関数 26 件と公開メソッド 32 件、計 58 件を棚卸しした。  
 `seq` は入出力変換・生成の 11 関数と接続の 4 メソッド、`op` はオペレーター・合成の 15 関数と設定値・合成値の 28 メソッドを扱う。  
 非公開の設定値型が返す公開メソッドも含む。  
-40 種の API/phase を N64 / N4096 の計 80 条件・Go / Library の 160 ケースで比較する。  
+40 種の API/phase を N64 / N4096 の計 80 条件・160 ケースで比較する。  
+Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照とする。  
 設定値・合成開始値の生成 5 関数と MapToSeq / MapToSeq2 は関連する Unit で、Cache / Cache2 は利用目的に合う Scenario で測定する。  
 この表は今回のスナップショットの対応であり、通常の機能変更時に即時追従を要求する検証ではない。  
 
@@ -73,6 +74,7 @@
 それぞれ入力・Map / Map2・MapToSeq2 / MapToSeq と Pipe / Pipe2 の測定で利用する。  
 合成値の各メソッドは単独の費用を分離せず、4 種類の入出力を扱う合成全体で測る。  
 `Compose.Seq` / `Compose2.Seq` は 4 演算、`Compose.Seq2` / `Compose2.Seq2` は 2 演算で、合成値の構築・入力への接続・全件反復を含める。  
+対照の Pipe は、同じオペレーターを同じ順序で `Seq` / `Seq2` の Pipe / Pipe2 に直接接続する。  
 FromRange は符号付き・符号なしの代表として int / uint を選び、1 から N までと N から 1 までを stop を含めて生成する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
 各ケースの詳しい条件は [測定方法](../../benchmarks/METHOD.md) を参照。  

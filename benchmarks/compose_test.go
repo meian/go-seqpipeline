@@ -8,7 +8,7 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
-func composeSeqLibrary(values []int) int64 {
+func composeSeqComposed(values []int) int64 {
 	transform := op.Compose().
 		Pipe(op.Map(func(v int) int { return v + 1 })).
 		Pipe(op.Map(func(v int) int { return v + 1 })).
@@ -22,70 +22,72 @@ func composeSeqLibrary(values []int) int64 {
 	return sum
 }
 
-func BenchmarkComposeSeqLibrary(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=ComposedLoop/impl=Library/N=64", func(b *testing.B) {
+func BenchmarkComposeSeqComposed(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeqLibrary(values)
+			checksum = composeSeqComposed(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=ComposedLoop/impl=Library/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeqLibrary(values)
+			checksum = composeSeqComposed(values)
 		}
 	})
 }
 
-func TestComposeSeqLibrary(t *testing.T) {
+func TestComposeSeqComposed(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := composeSeqLibrary(values)
+	got := composeSeqComposed(values)
 	const want int64 = 72
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func composeSeqGo(values []int) int64 {
+func composeSeqPipe(values []int) int64 {
+	source := seq.FromSlice(values).
+		Pipe(op.Map(func(v int) int { return v + 1 })).
+		Pipe(op.Map(func(v int) int { return v + 1 })).
+		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 })).
+		Pipe(op.MapToSeq(func(k, v int) int { return k + v }))
 	var sum int64
-	for v := range slices.Values(values) {
-		v++
-		v++
-		k, v := v, v+1
-		sum += int64(k + v)
+	for v := range source {
+		sum += int64(v)
 	}
 	return sum
 }
 
-func BenchmarkComposeSeqGo(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=ComposedLoop/impl=Go/N=64", func(b *testing.B) {
+func BenchmarkComposeSeqPipe(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeqGo(values)
+			checksum = composeSeqPipe(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=ComposedLoop/impl=Go/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeqGo(values)
+			checksum = composeSeqPipe(values)
 		}
 	})
 }
 
-func TestComposeSeqGo(t *testing.T) {
+func TestComposeSeqPipe(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := composeSeqGo(values)
+	got := composeSeqPipe(values)
 	const want int64 = 72
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func composeSeq2Library(values []int) int64 {
+func composeSeq2Composed(values []int) int64 {
 	transform := op.Compose().
 		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 })).
 		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
@@ -97,69 +99,70 @@ func composeSeq2Library(values []int) int64 {
 	return sum
 }
 
-func BenchmarkComposeSeq2Library(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Library/N=64", func(b *testing.B) {
+func BenchmarkComposeSeq2Composed(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeq2Library(values)
+			checksum = composeSeq2Composed(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Library/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeq2Library(values)
+			checksum = composeSeq2Composed(values)
 		}
 	})
 }
 
-func TestComposeSeq2Library(t *testing.T) {
+func TestComposeSeq2Composed(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := composeSeq2Library(values)
+	got := composeSeq2Composed(values)
 	const want int64 = 54
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func composeSeq2Go(values []int) int64 {
+func composeSeq2Pipe(values []int) int64 {
+	source := seq.FromSlice(values).
+		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 })).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
 	var sum int64
-	for v := range slices.Values(values) {
-		k, v := v, v+1
-		v++
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
 }
 
-func BenchmarkComposeSeq2Go(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Go/N=64", func(b *testing.B) {
+func BenchmarkComposeSeq2Pipe(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeq2Go(values)
+			checksum = composeSeq2Pipe(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Go/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = composeSeq2Go(values)
+			checksum = composeSeq2Pipe(values)
 		}
 	})
 }
 
-func TestComposeSeq2Go(t *testing.T) {
+func TestComposeSeq2Pipe(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := composeSeq2Go(values)
+	got := composeSeq2Pipe(values)
 	const want int64 = 54
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func compose2SeqLibrary(values []int) int64 {
+func compose2SeqComposed(values []int) int64 {
 	transform := op.Compose2().
 		Pipe(op.MapToSeq(func(k, v int) int { return k + v })).
 		Pipe(op.Map(func(v int) int { return v + 1 })).
@@ -173,70 +176,72 @@ func compose2SeqLibrary(values []int) int64 {
 	return sum
 }
 
-func BenchmarkCompose2SeqLibrary(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=ComposedLoop/impl=Library/N=64", func(b *testing.B) {
+func BenchmarkCompose2SeqComposed(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2SeqLibrary(values)
+			checksum = compose2SeqComposed(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=ComposedLoop/impl=Library/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2SeqLibrary(values)
+			checksum = compose2SeqComposed(values)
 		}
 	})
 }
 
-func TestCompose2SeqLibrary(t *testing.T) {
+func TestCompose2SeqComposed(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := compose2SeqLibrary(values)
+	got := compose2SeqComposed(values)
 	const want int64 = 90
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func compose2SeqGo(values []int) int64 {
+func compose2SeqPipe(values []int) int64 {
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe(op.MapToSeq(func(k, v int) int { return k + v })).
+		Pipe(op.Map(func(v int) int { return v + 1 })).
+		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 })).
+		Pipe(op.MapToSeq(func(k, v int) int { return k + v }))
 	var sum int64
-	for k, v := range slices.All(values) {
-		v = k + v
-		v++
-		k, v = v, v+1
-		sum += int64(k + v)
+	for v := range source {
+		sum += int64(v)
 	}
 	return sum
 }
 
-func BenchmarkCompose2SeqGo(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=ComposedLoop/impl=Go/N=64", func(b *testing.B) {
+func BenchmarkCompose2SeqPipe(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2SeqGo(values)
+			checksum = compose2SeqPipe(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=ComposedLoop/impl=Go/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2SeqGo(values)
+			checksum = compose2SeqPipe(values)
 		}
 	})
 }
 
-func TestCompose2SeqGo(t *testing.T) {
+func TestCompose2SeqPipe(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := compose2SeqGo(values)
+	got := compose2SeqPipe(values)
 	const want int64 = 90
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func compose2Seq2Library(values []int) int64 {
+func compose2Seq2Composed(values []int) int64 {
 	transform := op.Compose2().
 		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
 		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
@@ -248,62 +253,63 @@ func compose2Seq2Library(values []int) int64 {
 	return sum
 }
 
-func BenchmarkCompose2Seq2Library(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Library/N=64", func(b *testing.B) {
+func BenchmarkCompose2Seq2Composed(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2Seq2Library(values)
+			checksum = compose2Seq2Composed(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Library/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2Seq2Library(values)
+			checksum = compose2Seq2Composed(values)
 		}
 	})
 }
 
-func TestCompose2Seq2Library(t *testing.T) {
+func TestCompose2Seq2Composed(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := compose2Seq2Library(values)
+	got := compose2Seq2Composed(values)
 	const want int64 = 48
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
 	}
 }
 
-func compose2Seq2Go(values []int) int64 {
+func compose2Seq2Pipe(values []int) int64 {
+	source := seq.FromSeq2(slices.All(values)).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
 	var sum int64
-	for k, v := range slices.All(values) {
-		v++
-		v++
+	for k, v := range source {
 		sum += int64(k) + int64(v)
 	}
 	return sum
 }
 
-func BenchmarkCompose2Seq2Go(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Go/N=64", func(b *testing.B) {
+func BenchmarkCompose2Seq2Pipe(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
 		values := input(64)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2Seq2Go(values)
+			checksum = compose2Seq2Pipe(values)
 		}
 	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=ComposedLoop/impl=Go/N=4096", func(b *testing.B) {
+	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
 		values := input(4096)
 		b.ReportAllocs()
 		for b.Loop() {
-			checksum = compose2Seq2Go(values)
+			checksum = compose2Seq2Pipe(values)
 		}
 	})
 }
 
-func TestCompose2Seq2Go(t *testing.T) {
+func TestCompose2Seq2Pipe(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
-	got := compose2Seq2Go(values)
+	got := compose2Seq2Pipe(values)
 	const want int64 = 48
 	if got != want {
 		t.Fatalf("got %d; want %d", got, want)
