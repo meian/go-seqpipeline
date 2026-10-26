@@ -4,7 +4,7 @@ set -eu
 cd "$(dirname "$0")/.."
 GO_BINARY=${GO_BINARY:-go}
 BENCHSTAT=${BENCHSTAT:-benchstat}
-BENCHTIME=${BENCHTIME:-5s}
+BENCHTIME=${BENCHTIME:-500ms}
 COUNT=${COUNT:-10}
 export GOMAXPROCS=${GOMAXPROCS:-2}
 command -v "$GO_BINARY" >/dev/null

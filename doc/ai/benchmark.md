@@ -195,8 +195,8 @@ go test ./... -count=1
 python3 -m unittest discover -s benchmarks -p 'test_*.py'
 # 全件測定・集計・概要更新。raw は処理後に削除される
 BENCHSTAT="$(go env GOPATH)/bin/benchstat" sh benchmarks/measure.sh
-# 精度と実行コストに応じて条件を選ぶ例
-BENCHSTAT="$(go env GOPATH)/bin/benchstat" BENCHTIME=5s COUNT=10 GOMAXPROCS=2 sh benchmarks/measure.sh
+# 測定条件を明示する例
+BENCHSTAT="$(go env GOPATH)/bin/benchstat" BENCHTIME=500ms COUNT=10 GOMAXPROCS=2 sh benchmarks/measure.sh
 ```
 
 `GO_BINARY` / `BENCHSTAT` で取得済み実行ファイルを指定できる。  
@@ -204,7 +204,8 @@ Go の自動取得を避ける場合は、適切な版の `GO_BINARY` を指定�
 `GOCACHE` を省略するとスクリプトが一時ディレクトリ内に作成する。  
 再利用できる書き込み先があれば `GOCACHE` を明示してよいが、raw の出力先は変わらない。  
 実際に使った `BENCHTIME` / `COUNT` / `GOMAXPROCS` は環境記録に出力される。  
-既定値は各ケース `5s × 10`、`GOMAXPROCS=2` とする。  
+既定値は各ケース `500ms × 10`（計測時間の目標は合計 5 秒）、`GOMAXPROCS=2` とする。  
+2026-10-26 の公開結果は `5s × 10` で取得済みのため再測定せず保持し、次回の定期更新から新しい既定値を使う。  
 `COUNT` 巡、全ケースを各 1 回測り、比較する両実装が巡ごとに繰り返されるようにする。  
 片方を全回数測ってから他方を測る順序を避け、各ケースの測定時間と総サンプル数は変えない。  
 測定中は別のテストやビルドを並行実行しない。  
