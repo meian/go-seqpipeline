@@ -203,6 +203,7 @@ def condition(case, omit=()):
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
               'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
+              'Ascending': '昇順', 'Descending': '降順',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
     order = list(labels)+sorted(set(dimensions)-set(labels)-{'api', 'impl', 'ref'})
     return ' / '.join(labels.get(k, k+'=')+values.get(dimensions[k], dimensions[k])
@@ -226,7 +227,7 @@ def unit_category(api):
         return 'Channel'
     if api.startswith(('From', 'To')):
         return '入力変換・出力収集'
-    if '.Pipe' in api:
+    if '.Pipe' in api or api.startswith('Compose'):
         return 'パイプ接続'
     if api in ('Map', 'Map2', 'Filter', 'Filter2', 'Keys', 'Values'):
         return '変換・選別・射影'
@@ -250,6 +251,8 @@ def condition_groups(cases):
 
 
 REFERENCE_DESCRIPTIONS = {
+    'IntegerLoop': '同じ範囲を整数ループで加算',
+    'ComposedLoop': '標準 iterator の反復中に同じ値変換・単一値と組の変換を実行',
     'SliceRange': '`slices.Values` を反復',
     'IteratorRange': '標準 `iter.Seq` を `for range`',
     'Iterator2Range': '標準 `iter.Seq2` を `for range`',

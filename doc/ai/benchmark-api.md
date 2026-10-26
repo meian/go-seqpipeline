@@ -1,11 +1,11 @@
 # 公開 API の測定対応（保守者向け）
 
 対象コミットは [測定環境](../../benchmarks/results/environment.md) に記録する。  
-`seq` と `op` の公開関数 21 件と公開メソッド 16 件、計 37 件を棚卸しした。  
-`seq` は入出力変換の 10 関数と接続の 4 メソッド、`op` はオペレーターの 11 関数と設定値の 12 メソッドを扱う。  
+`seq` と `op` の公開関数 26 件と公開メソッド 32 件、計 58 件を棚卸しした。  
+`seq` は入出力変換・生成の 11 関数と接続の 4 メソッド、`op` はオペレーター・合成の 15 関数と設定値・合成値の 28 メソッドを扱う。  
 非公開の設定値型が返す公開メソッドも含む。  
-32 種の API/phase を N64 / N4096 の計 64 条件・Go / Library の 128 ケースで比較する。  
-設定値の生成 3 関数は関連する Unit で、Cache / Cache2 は利用目的に合う Scenario で測定する。  
+40 種の API/phase を N64 / N4096 の計 80 条件・Go / Library の 160 ケースで比較する。  
+設定値・合成開始値の生成 5 関数と MapToSeq / MapToSeq2 は関連する Unit で、Cache / Cache2 は利用目的に合う Scenario で測定する。  
 この表は今回のスナップショットの対応であり、通常の機能変更時に即時追従を要求する検証ではない。  
 
 | 公開 API | Unit の api キー | 測定範囲・代替理由 |
@@ -14,6 +14,7 @@
 | `op.Cache2` | — | Cache と同じく Scenario の Fill / Warm / Reuse で測定 |
 | `seq.FromChannel` | `FromChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
 | `seq.ToChannel` | `ToChannel` | channel 生成・goroutine 起動・全送受信・終了・チェックサム |
+| `seq.FromRange` | `FromRange.Signed / FromRange.Unsigned` | int / uint の昇順・降順を step=±1 で構築・全件評価・加算 |
 | `seq.FromSlice` | `FromSlice` | 構築・全件評価・チェックサム |
 | `seq.ToSlice` | `ToSlice` | 収集・割り当て・結果保持・チェックサム |
 | `seq.FromSeq` | `FromSeq` | 型変換だけの時間は意味が薄いため、変換後の全件評価を含める |
@@ -26,11 +27,13 @@
 | `op.Filter2` | `Filter2` | 構築・全件評価・チェックサム |
 | `op.Map` | `Map` | 構築・全件評価・チェックサム |
 | `op.Map2` | `Map2` | 構築・全件評価・チェックサム |
+| `op.MapToSeq2` | `Seq.Pipe2` | 接続・全件反復時の変換を測り、単独ケースの重複を避ける |
+| `op.MapToSeq` | `Seq2.Pipe` | 接続・全件反復時の変換を測り、単独ケースの重複を避ける |
 | `op.Keys` | `Keys` | 構築・全件評価・チェックサム |
 | `op.Values` | `Values` | 構築・全件評価・チェックサム |
 | `seq.Seq.Pipe` | `Seq.Pipe` | Map の接続・全件評価 |
-| `seq.Seq.Pipe2` | `Seq.Pipe2` | 単一入力から値と変換値の組を返す変換の接続・全件評価（Zip は使わない） |
-| `seq.Seq2.Pipe` | `Seq2.Pipe` | slices.All を入力とする Values の接続・全件評価 |
+| `seq.Seq.Pipe2` | `Seq.Pipe2` | MapToSeq2 による値と変換値の組への接続・全件評価 |
+| `seq.Seq2.Pipe` | `Seq2.Pipe` | slices.All を入力とし、MapToSeq で値を取り出す接続・全件評価 |
 | `seq.Seq2.Pipe2` | `Seq2.Pipe2` | Map2 の接続・全件評価 |
 | `op.Skip` | `Skip.Operator / Skip.Operator2` | 設定値の生成だけでは実利用の評価費用を表さないため、Operator の生成・評価に含める |
 | `op.skipOperator.Operator` | `Skip.Operator` | 構築・全件評価・チェックサム |
@@ -47,9 +50,30 @@
 | `op.zipKeyOperator.WithDefaultValue` | `ZipKey.WithDefaultValue` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
 | `op.zipKeyOperator.WithDefaultKey` | `ZipKey.WithDefaultKey` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
 | `op.zipKeyOperator.Operator` | `ZipKey.Operator` | 構築・全件評価・チェックサム |
+| `op.Compose` | `Compose.Seq / Compose.Seq2` | 開始値だけの構築は意味が薄いため、合成・接続・評価に含める |
+| `op.Compose2` | `Compose2.Seq / Compose2.Seq2` | Compose と同じく合成・接続・評価に含める |
+| `op.compose.Pipe` | `Compose.Seq` | Map から単一値入力の合成を開始 |
+| `op.compose.Pipe2` | `Compose.Seq2` | MapToSeq2 から単一値入力の合成を開始 |
+| `op.compose2.Pipe` | `Compose2.Seq` | MapToSeq から組入力の合成を開始 |
+| `op.compose2.Pipe2` | `Compose2.Seq2` | Map2 から組入力の合成を開始 |
+| `op.composed.Pipe` | `Compose.Seq` | 単一値から単一値への操作を追加・評価 |
+| `op.composed.Pipe2` | `Compose.Seq` | 単一値から組への操作を追加・評価 |
+| `op.composed.Operator` | `Compose.Seq` | 単一値入力から単一値出力までの合成を接続・評価 |
+| `op.composedToSeq2.Pipe` | `Compose.Seq` | 組から単一値への操作を追加・評価 |
+| `op.composedToSeq2.Pipe2` | `Compose.Seq2` | 組から組への操作を追加・評価 |
+| `op.composedToSeq2.Operator` | `Compose.Seq2` | 単一値入力から組出力までの合成を接続・評価 |
+| `op.composedToSeq.Pipe` | `Compose2.Seq` | 単一値から単一値への操作を追加・評価 |
+| `op.composedToSeq.Pipe2` | `Compose2.Seq` | 単一値から組への操作を追加・評価 |
+| `op.composedToSeq.Operator` | `Compose2.Seq` | 組入力から単一値出力までの合成を接続・評価 |
+| `op.composed2.Pipe` | `Compose2.Seq` | 組から単一値への操作を追加・評価 |
+| `op.composed2.Pipe2` | `Compose2.Seq2` | 組から組への操作を追加・評価 |
+| `op.composed2.Operator` | `Compose2.Seq2` | 組入力から組出力までの合成を接続・評価 |
 
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
-それぞれ入力・Map / Map2・単一入力から組への変換・Values と Pipe / Pipe2 の測定で利用する。  
+それぞれ入力・Map / Map2・MapToSeq2 / MapToSeq と Pipe / Pipe2 の測定で利用する。  
+合成値の各メソッドは単独の費用を分離せず、4 種類の入出力を扱う合成全体で測る。  
+`Compose.Seq` / `Compose2.Seq` は 4 演算、`Compose.Seq2` / `Compose2.Seq2` は 2 演算で、合成値の構築・入力への接続・全件反復を含める。  
+FromRange は符号付き・符号なしの代表として int / uint を選び、1 から N までと N から 1 までを stop を含めて生成する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
 各ケースの詳しい条件は [測定方法](../../benchmarks/METHOD.md) を参照。  
 
@@ -61,13 +85,15 @@
 | Filter / Filter2 | [filter_test.go](../../benchmarks/filter_test.go) |
 | Keys / Values | [keys_test.go](../../benchmarks/keys_test.go)、[values_test.go](../../benchmarks/values_test.go) |
 | Take / Skip と Operator / Operator2 | [take_test.go](../../benchmarks/take_test.go)、[skip_test.go](../../benchmarks/skip_test.go) |
+| FromRange | [from_range_test.go](../../benchmarks/from_range_test.go) |
 | FromSlice / ToSlice | [from_slice_test.go](../../benchmarks/from_slice_test.go)、[to_slice_test.go](../../benchmarks/to_slice_test.go) |
 | FromSeq / FromSeq2 | [from_seq_test.go](../../benchmarks/from_seq_test.go) |
 | ToSeq / ToSeq2 | [to_seq_test.go](../../benchmarks/to_seq_test.go) |
 | FromMap / ToMap | [from_map_test.go](../../benchmarks/from_map_test.go)、[to_map_test.go](../../benchmarks/to_map_test.go) |
 | FromChannel / ToChannel | [from_channel_test.go](../../benchmarks/from_channel_test.go)、[to_channel_test.go](../../benchmarks/to_channel_test.go) |
 | Zip と設定メソッド | [zip_test.go](../../benchmarks/zip_test.go) |
-| Seq / Seq2 の Pipe / Pipe2 | [pipe_test.go](../../benchmarks/pipe_test.go) |
+| Seq / Seq2 の Pipe / Pipe2、MapToSeq / MapToSeq2 | [pipe_test.go](../../benchmarks/pipe_test.go) |
+| Compose / Compose2 と合成値の全メソッド | [compose_test.go](../../benchmarks/compose_test.go) |
 | Cache / Cache2、Fill / Warm / Reuse | [cache_scenario_test.go](../../benchmarks/cache_scenario_test.go) |
 | Channel を含むパイプライン | [channel_scenario_test.go](../../benchmarks/channel_scenario_test.go) |
 | Map / Filter / Take を接続するパイプライン | [pipeline_scenario_test.go](../../benchmarks/pipeline_scenario_test.go) |

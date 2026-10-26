@@ -169,6 +169,7 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 | `benchmarks/take_test.go` / `skip_test.go` | Take / Skip の処理・測定・結果検証 |
 | `benchmarks/from_*_test.go` / `to_*_test.go` | 入出力の変換・収集の処理・測定・結果検証 |
 | `benchmarks/zip_test.go` / `pipe_test.go` | Zip の設定、Pipe / Pipe2 の処理・測定・結果検証 |
+| `benchmarks/from_range_test.go` / `compose_test.go` | 整数範囲の生成、オペレーター合成の処理・測定・結果検証 |
 | `benchmarks/pipeline_scenario_test.go` | 複数段のパイプラインの処理・測定・等価性テスト |
 | `benchmarks/channel_scenario_test.go` | Channel を含むパイプラインの処理・測定・等価性テスト |
 | `benchmarks/cache_scenario_test.go` | Cache / Cache2 の Fill / Warm / Reuse の処理・測定・結果検証 |
