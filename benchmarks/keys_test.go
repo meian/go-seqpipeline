@@ -18,6 +18,14 @@ func keysLibrary(values map[int]int) int64 {
 	return sum
 }
 
+func keysGo(values map[int]int) int64 {
+	var sum int64
+	for k := range maps.All(values) {
+		sum += int64(k)
+	}
+	return sum
+}
+
 func BenchmarkKeysLibrary(b *testing.B) {
 	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Library/N=64", func(b *testing.B) {
 		values := mapInput(64)
@@ -37,24 +45,6 @@ func BenchmarkKeysLibrary(b *testing.B) {
 	})
 }
 
-func TestKeysLibrary(t *testing.T) {
-	values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
-
-	got := keysLibrary(values)
-	const want int64 = 15
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func keysGo(values map[int]int) int64 {
-	var sum int64
-	for k := range maps.All(values) {
-		sum += int64(k)
-	}
-	return sum
-}
-
 func BenchmarkKeysGo(b *testing.B) {
 	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Go/N=64", func(b *testing.B) {
 		values := mapInput(64)
@@ -72,6 +62,16 @@ func BenchmarkKeysGo(b *testing.B) {
 			checksum = keysGo(values)
 		}
 	})
+}
+
+func TestKeysLibrary(t *testing.T) {
+	values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
+
+	got := keysLibrary(values)
+	const want int64 = 15
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestKeysGo(t *testing.T) {

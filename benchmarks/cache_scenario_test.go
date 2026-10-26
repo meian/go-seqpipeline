@@ -146,6 +146,17 @@ func scenarioCacheSeqCached(values []int, work int, reuse int) int64 {
 	return sum
 }
 
+func scenarioCacheSeqUncached(values []int, work int, reuse int) int64 {
+	source := cacheSeq(values, work)
+	var sum int64
+	for r := 0; r < reuse; r++ {
+		for v := range source {
+			sum += int64(v)
+		}
+	}
+	return sum
+}
+
 func BenchmarkScenarioCacheSeqCached(b *testing.B) {
 	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
 		values := input(64)
@@ -245,26 +256,6 @@ func BenchmarkScenarioCacheSeqCached(b *testing.B) {
 	})
 }
 
-func TestScenarioCacheSeqCached(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-	got := scenarioCacheSeqCached(values, 0, 2)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func scenarioCacheSeqUncached(values []int, work int, reuse int) int64 {
-	source := cacheSeq(values, work)
-	var sum int64
-	for r := 0; r < reuse; r++ {
-		for v := range source {
-			sum += int64(v)
-		}
-	}
-	return sum
-}
-
 func BenchmarkScenarioCacheSeqUncached(b *testing.B) {
 	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
 		values := input(64)
@@ -362,6 +353,15 @@ func BenchmarkScenarioCacheSeqUncached(b *testing.B) {
 			checksum = scenarioCacheSeqUncached(values, 32, 16)
 		}
 	})
+}
+
+func TestScenarioCacheSeqCached(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+	got := scenarioCacheSeqCached(values, 0, 2)
+	const want int64 = 42
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestScenarioCacheSeqUncached(t *testing.T) {
@@ -496,6 +496,17 @@ func scenarioCacheSeq2Cached(values []int, work int, reuse int) int64 {
 	return sum
 }
 
+func scenarioCacheSeq2Uncached(values []int, work int, reuse int) int64 {
+	source := cacheSeq2(values, work)
+	var sum int64
+	for r := 0; r < reuse; r++ {
+		for k, v := range source {
+			sum += int64(k) + int64(v)
+		}
+	}
+	return sum
+}
+
 func BenchmarkScenarioCacheSeq2Cached(b *testing.B) {
 	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
 		values := input(64)
@@ -595,26 +606,6 @@ func BenchmarkScenarioCacheSeq2Cached(b *testing.B) {
 	})
 }
 
-func TestScenarioCacheSeq2Cached(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-	got := scenarioCacheSeq2Cached(values, 0, 2)
-	const want int64 = 72
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func scenarioCacheSeq2Uncached(values []int, work int, reuse int) int64 {
-	source := cacheSeq2(values, work)
-	var sum int64
-	for r := 0; r < reuse; r++ {
-		for k, v := range source {
-			sum += int64(k) + int64(v)
-		}
-	}
-	return sum
-}
-
 func BenchmarkScenarioCacheSeq2Uncached(b *testing.B) {
 	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
 		values := input(64)
@@ -712,6 +703,15 @@ func BenchmarkScenarioCacheSeq2Uncached(b *testing.B) {
 			checksum = scenarioCacheSeq2Uncached(values, 32, 16)
 		}
 	})
+}
+
+func TestScenarioCacheSeq2Cached(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+	got := scenarioCacheSeq2Cached(values, 0, 2)
+	const want int64 = 72
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestScenarioCacheSeq2Uncached(t *testing.T) {

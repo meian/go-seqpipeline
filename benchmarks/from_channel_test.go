@@ -18,6 +18,16 @@ func fromChannelLibrary(values []int) int64 {
 	return sum
 }
 
+func fromChannelGo(values []int) int64 {
+	ch, done := producer(values, 0)
+	var sum int64
+	for v := range ch {
+		sum += int64(v)
+	}
+	<-done
+	return sum
+}
+
 func BenchmarkFromChannelLibrary(b *testing.B) {
 	b.Run("class=Unit/api=FromChannel/phase=Evaluate/ref=ChannelReceive/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
@@ -37,26 +47,6 @@ func BenchmarkFromChannelLibrary(b *testing.B) {
 	})
 }
 
-func TestFromChannelLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := fromChannelLibrary(values)
-	const want int64 = 21
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func fromChannelGo(values []int) int64 {
-	ch, done := producer(values, 0)
-	var sum int64
-	for v := range ch {
-		sum += int64(v)
-	}
-	<-done
-	return sum
-}
-
 func BenchmarkFromChannelGo(b *testing.B) {
 	b.Run("class=Unit/api=FromChannel/phase=Evaluate/ref=ChannelReceive/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
@@ -74,6 +64,16 @@ func BenchmarkFromChannelGo(b *testing.B) {
 			checksum = fromChannelGo(values)
 		}
 	})
+}
+
+func TestFromChannelLibrary(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+
+	got := fromChannelLibrary(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestFromChannelGo(t *testing.T) {

@@ -16,6 +16,14 @@ func fromSliceLibrary(values []int) int64 {
 	return sum
 }
 
+func fromSliceGo(values []int) int64 {
+	var sum int64
+	for v := range slices.Values(values) {
+		sum += int64(v)
+	}
+	return sum
+}
+
 func BenchmarkFromSliceLibrary(b *testing.B) {
 	b.Run("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
@@ -35,24 +43,6 @@ func BenchmarkFromSliceLibrary(b *testing.B) {
 	})
 }
 
-func TestFromSliceLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := fromSliceLibrary(values)
-	const want int64 = 21
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func fromSliceGo(values []int) int64 {
-	var sum int64
-	for v := range slices.Values(values) {
-		sum += int64(v)
-	}
-	return sum
-}
-
 func BenchmarkFromSliceGo(b *testing.B) {
 	b.Run("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
@@ -70,6 +60,16 @@ func BenchmarkFromSliceGo(b *testing.B) {
 			checksum = fromSliceGo(values)
 		}
 	})
+}
+
+func TestFromSliceLibrary(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+
+	got := fromSliceLibrary(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestFromSliceGo(t *testing.T) {

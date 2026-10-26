@@ -15,6 +15,20 @@ func fromRangeSignedLibrary(start, stop int, step int64) int64 {
 	return sum
 }
 
+func fromRangeSignedGo(start, stop int, step int64) int64 {
+	var sum int64
+	if step > 0 {
+		for v := start; v <= stop; v += int(step) {
+			sum += int64(v)
+		}
+	} else {
+		for v := start; v >= stop; v -= int(-step) {
+			sum += int64(v)
+		}
+	}
+	return sum
+}
+
 func BenchmarkFromRangeSignedLibrary(b *testing.B) {
 	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
 		b.ReportAllocs()
@@ -40,37 +54,6 @@ func BenchmarkFromRangeSignedLibrary(b *testing.B) {
 			checksum = fromRangeSignedLibrary(4096, 1, -1)
 		}
 	})
-}
-
-func TestFromRangeSignedLibrary(t *testing.T) {
-	t.Run("Ascending", func(t *testing.T) {
-		got := fromRangeSignedLibrary(1, 6, 1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Descending", func(t *testing.T) {
-		got := fromRangeSignedLibrary(6, 1, -1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-}
-
-func fromRangeSignedGo(start, stop int, step int64) int64 {
-	var sum int64
-	if step > 0 {
-		for v := start; v <= stop; v += int(step) {
-			sum += int64(v)
-		}
-	} else {
-		for v := start; v >= stop; v -= int(-step) {
-			sum += int64(v)
-		}
-	}
-	return sum
 }
 
 func BenchmarkFromRangeSignedGo(b *testing.B) {
@@ -100,6 +83,23 @@ func BenchmarkFromRangeSignedGo(b *testing.B) {
 	})
 }
 
+func TestFromRangeSignedLibrary(t *testing.T) {
+	t.Run("Ascending", func(t *testing.T) {
+		got := fromRangeSignedLibrary(1, 6, 1)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Descending", func(t *testing.T) {
+		got := fromRangeSignedLibrary(6, 1, -1)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+}
+
 func TestFromRangeSignedGo(t *testing.T) {
 	t.Run("Ascending", func(t *testing.T) {
 		got := fromRangeSignedGo(1, 6, 1)
@@ -122,6 +122,20 @@ func fromRangeUnsignedLibrary(start, stop uint, step int64) int64 {
 	var sum int64
 	for v := range source {
 		sum += int64(v)
+	}
+	return sum
+}
+
+func fromRangeUnsignedGo(start, stop uint, step int64) int64 {
+	var sum int64
+	if step > 0 {
+		for v := start; v <= stop; v += uint(step) {
+			sum += int64(v)
+		}
+	} else {
+		for v := start; v >= stop; v -= uint(-step) {
+			sum += int64(v)
+		}
 	}
 	return sum
 }
@@ -153,37 +167,6 @@ func BenchmarkFromRangeUnsignedLibrary(b *testing.B) {
 	})
 }
 
-func TestFromRangeUnsignedLibrary(t *testing.T) {
-	t.Run("Ascending", func(t *testing.T) {
-		got := fromRangeUnsignedLibrary(1, 6, 1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Descending", func(t *testing.T) {
-		got := fromRangeUnsignedLibrary(6, 1, -1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-}
-
-func fromRangeUnsignedGo(start, stop uint, step int64) int64 {
-	var sum int64
-	if step > 0 {
-		for v := start; v <= stop; v += uint(step) {
-			sum += int64(v)
-		}
-	} else {
-		for v := start; v >= stop; v -= uint(-step) {
-			sum += int64(v)
-		}
-	}
-	return sum
-}
-
 func BenchmarkFromRangeUnsignedGo(b *testing.B) {
 	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
 		b.ReportAllocs()
@@ -207,6 +190,23 @@ func BenchmarkFromRangeUnsignedGo(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
 			checksum = fromRangeUnsignedGo(4096, 1, -1)
+		}
+	})
+}
+
+func TestFromRangeUnsignedLibrary(t *testing.T) {
+	t.Run("Ascending", func(t *testing.T) {
+		got := fromRangeUnsignedLibrary(1, 6, 1)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Descending", func(t *testing.T) {
+		got := fromRangeUnsignedLibrary(6, 1, -1)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
 		}
 	})
 }

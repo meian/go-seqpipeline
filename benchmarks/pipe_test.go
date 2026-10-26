@@ -18,6 +18,14 @@ func seqPipeLibrary(values []int) int64 {
 	return sum
 }
 
+func seqPipeGo(values []int) int64 {
+	var sum int64
+	for v := range slices.Values(values) {
+		sum += int64((v + 1) & 65535)
+	}
+	return sum
+}
+
 func BenchmarkSeqPipeLibrary(b *testing.B) {
 	b.Run("class=Unit/api=Seq.Pipe/phase=Evaluate/ref=MapLoop/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
@@ -35,24 +43,6 @@ func BenchmarkSeqPipeLibrary(b *testing.B) {
 			checksum = seqPipeLibrary(values)
 		}
 	})
-}
-
-func TestSeqPipeLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := seqPipeLibrary(values)
-	const want int64 = 27
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func seqPipeGo(values []int) int64 {
-	var sum int64
-	for v := range slices.Values(values) {
-		sum += int64((v + 1) & 65535)
-	}
-	return sum
 }
 
 func BenchmarkSeqPipeGo(b *testing.B) {
@@ -74,6 +64,16 @@ func BenchmarkSeqPipeGo(b *testing.B) {
 	})
 }
 
+func TestSeqPipeLibrary(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+
+	got := seqPipeLibrary(values)
+	const want int64 = 27
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
+}
+
 func TestSeqPipeGo(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 
@@ -90,6 +90,14 @@ func seqPipe2Library(values []int) int64 {
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func seqPipe2Go(values []int) int64 {
+	var sum int64
+	for v := range slices.Values(values) {
+		sum += int64(v) + int64((v+1)&65535)
 	}
 	return sum
 }
@@ -113,24 +121,6 @@ func BenchmarkSeqPipe2Library(b *testing.B) {
 	})
 }
 
-func TestSeqPipe2Library(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := seqPipe2Library(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func seqPipe2Go(values []int) int64 {
-	var sum int64
-	for v := range slices.Values(values) {
-		sum += int64(v) + int64((v+1)&65535)
-	}
-	return sum
-}
-
 func BenchmarkSeqPipe2Go(b *testing.B) {
 	b.Run("class=Unit/api=Seq.Pipe2/phase=Evaluate/ref=ValuePair/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
@@ -150,6 +140,16 @@ func BenchmarkSeqPipe2Go(b *testing.B) {
 	})
 }
 
+func TestSeqPipe2Library(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+
+	got := seqPipe2Library(values)
+	const want int64 = 48
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
+}
+
 func TestSeqPipe2Go(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 
@@ -165,6 +165,14 @@ func seq2PipeLibrary(values []int) int64 {
 		Pipe(op.MapToSeq(func(_, v int) int { return v }))
 	var sum int64
 	for v := range source {
+		sum += int64(v)
+	}
+	return sum
+}
+
+func seq2PipeGo(values []int) int64 {
+	var sum int64
+	for _, v := range slices.All(values) {
 		sum += int64(v)
 	}
 	return sum
@@ -189,24 +197,6 @@ func BenchmarkSeq2PipeLibrary(b *testing.B) {
 	})
 }
 
-func TestSeq2PipeLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := seq2PipeLibrary(values)
-	const want int64 = 21
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func seq2PipeGo(values []int) int64 {
-	var sum int64
-	for _, v := range slices.All(values) {
-		sum += int64(v)
-	}
-	return sum
-}
-
 func BenchmarkSeq2PipeGo(b *testing.B) {
 	b.Run("class=Unit/api=Seq2.Pipe/phase=Evaluate/ref=Slice2Values/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
@@ -226,6 +216,16 @@ func BenchmarkSeq2PipeGo(b *testing.B) {
 	})
 }
 
+func TestSeq2PipeLibrary(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+
+	got := seq2PipeLibrary(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
+}
+
 func TestSeq2PipeGo(t *testing.T) {
 	values := []int{1, 2, 3, 4, 5, 6}
 
@@ -242,6 +242,14 @@ func seq2Pipe2Library(values []int) int64 {
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
+	}
+	return sum
+}
+
+func seq2Pipe2Go(values []int) int64 {
+	var sum int64
+	for k, v := range slices.All(values) {
+		sum += int64(k) + int64((v+1)&65535)
 	}
 	return sum
 }
@@ -265,24 +273,6 @@ func BenchmarkSeq2Pipe2Library(b *testing.B) {
 	})
 }
 
-func TestSeq2Pipe2Library(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := seq2Pipe2Library(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func seq2Pipe2Go(values []int) int64 {
-	var sum int64
-	for k, v := range slices.All(values) {
-		sum += int64(k) + int64((v+1)&65535)
-	}
-	return sum
-}
-
 func BenchmarkSeq2Pipe2Go(b *testing.B) {
 	b.Run("class=Unit/api=Seq2.Pipe2/phase=Evaluate/ref=Map2Loop/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
@@ -300,6 +290,16 @@ func BenchmarkSeq2Pipe2Go(b *testing.B) {
 			checksum = seq2Pipe2Go(values)
 		}
 	})
+}
+
+func TestSeq2Pipe2Library(t *testing.T) {
+	values := []int{1, 2, 3, 4, 5, 6}
+
+	got := seq2Pipe2Library(values)
+	const want int64 = 42
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestSeq2Pipe2Go(t *testing.T) {

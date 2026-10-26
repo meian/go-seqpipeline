@@ -18,6 +18,14 @@ func valuesLibrary(values map[int]int) int64 {
 	return sum
 }
 
+func valuesGo(values map[int]int) int64 {
+	var sum int64
+	for _, v := range maps.All(values) {
+		sum += int64(v)
+	}
+	return sum
+}
+
 func BenchmarkValuesLibrary(b *testing.B) {
 	b.Run("class=Unit/api=Values/phase=Evaluate/ref=MapValuesIterator/impl=Library/N=64", func(b *testing.B) {
 		values := mapInput(64)
@@ -37,24 +45,6 @@ func BenchmarkValuesLibrary(b *testing.B) {
 	})
 }
 
-func TestValuesLibrary(t *testing.T) {
-	values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
-
-	got := valuesLibrary(values)
-	const want int64 = 21
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func valuesGo(values map[int]int) int64 {
-	var sum int64
-	for _, v := range maps.All(values) {
-		sum += int64(v)
-	}
-	return sum
-}
-
 func BenchmarkValuesGo(b *testing.B) {
 	b.Run("class=Unit/api=Values/phase=Evaluate/ref=MapValuesIterator/impl=Go/N=64", func(b *testing.B) {
 		values := mapInput(64)
@@ -72,6 +62,16 @@ func BenchmarkValuesGo(b *testing.B) {
 			checksum = valuesGo(values)
 		}
 	})
+}
+
+func TestValuesLibrary(t *testing.T) {
+	values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
+
+	got := valuesLibrary(values)
+	const want int64 = 21
+	if got != want {
+		t.Fatalf("got %d; want %d", got, want)
+	}
 }
 
 func TestValuesGo(t *testing.T) {
