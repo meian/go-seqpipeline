@@ -27,7 +27,7 @@ func takeOperatorGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkTakeOperatorLibrary(b *testing.B) {
+func BenchmarkTakeOperator(b *testing.B) {
 	b.Run("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -44,9 +44,6 @@ func BenchmarkTakeOperatorLibrary(b *testing.B) {
 			checksum = takeOperatorLibrary(values)
 		}
 	})
-}
-
-func BenchmarkTakeOperatorGo(b *testing.B) {
 	b.Run("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -65,24 +62,25 @@ func BenchmarkTakeOperatorGo(b *testing.B) {
 	})
 }
 
-func TestTakeOperatorLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+func TestTakeOperator(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-	got := takeOperatorLibrary(values)
-	const want int64 = 36
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := takeOperatorLibrary(values)
+		const want int64 = 36
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-func TestTakeOperatorGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-	got := takeOperatorGo(values)
-	const want int64 = 36
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := takeOperatorGo(values)
+		const want int64 = 36
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func takeOperator2Library(values []int) int64 {
@@ -104,7 +102,7 @@ func takeOperator2Go(values []int) int64 {
 	return sum
 }
 
-func BenchmarkTakeOperator2Library(b *testing.B) {
+func BenchmarkTakeOperator2(b *testing.B) {
 	b.Run("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -121,9 +119,6 @@ func BenchmarkTakeOperator2Library(b *testing.B) {
 			checksum = takeOperator2Library(values)
 		}
 	})
-}
-
-func BenchmarkTakeOperator2Go(b *testing.B) {
 	b.Run("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -142,22 +137,23 @@ func BenchmarkTakeOperator2Go(b *testing.B) {
 	})
 }
 
-func TestTakeOperator2Library(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+func TestTakeOperator2(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-	got := takeOperator2Library(values)
-	const want int64 = 64
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := takeOperator2Library(values)
+		const want int64 = 64
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-func TestTakeOperator2Go(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-	got := takeOperator2Go(values)
-	const want int64 = 64
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := takeOperator2Go(values)
+		const want int64 = 64
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }

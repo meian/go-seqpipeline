@@ -229,8 +229,8 @@ class SourceLinksTest(unittest.TestCase):
         self.case = publish.key('Unit/api=Map/N=64/phase=Evaluate/ref=MapLoop/impl=Go')
         self.code = {'benchmarks/map_test.go':
                      'func mapGo(values []int) int64 { return 0 }\n'
-                     'func BenchmarkMapGo(b *testing.B) {}\n'
-                     'func TestMapGo(t *testing.T) {}\n'}
+                     'func BenchmarkMap(b *testing.B) {}\n'
+                     'func TestMap(t *testing.T) {}\n'}
 
     def test_link_identifies_processing_at_measured_commit(self):
         sources = publish.SourceLinks(self.code, 'a'*40)
@@ -238,6 +238,27 @@ class SourceLinksTest(unittest.TestCase):
                          '[Go](https://github.com/meian/go-seqpipeline/blob/'+'a'*40+
                          '/benchmarks/map_test.go#L1)')
         sources.verify([self.case])
+
+    def test_grouped_entries_link_each_processing_implementation(self):
+        for condition, suffix, implementations in [
+            ('Unit/api=Map/phase=Evaluate', 'Map', ('Library', 'Go')),
+            ('Unit/api=Compose2.Seq2/phase=Evaluate', 'Compose2Seq2', ('Composed', 'Pipe')),
+            ('ScenarioPipeline/kind=Seq', 'ScenarioPipelineSeq', ('Pipeline', 'Loop', 'Functions')),
+            ('ScenarioPipeline/kind=Seq2', 'ScenarioPipelineSeq2', ('Pipeline', 'Loop', 'Functions')),
+            ('ScenarioChannel', 'ScenarioChannel', ('Seq', 'ToChannel', 'Direct', 'FromChannel', 'RoundTrip')),
+            ('ScenarioCache/kind=Seq/phase=Reuse', 'ScenarioCacheSeqReuse', ('Cached', 'Uncached')),
+            ('ScenarioCache/kind=Seq2/phase=Reuse', 'ScenarioCacheSeq2Reuse', ('Cached', 'Uncached')),
+        ]:
+            cases = [publish.key(condition+'/impl='+implementation) for implementation in implementations]
+            source = ''.join('func '+publish.processing_function(case)+'() {}\n' for case in cases)
+            source += f'func Benchmark{suffix}(b *testing.B) {{}}\nfunc Test{suffix}(t *testing.T) {{}}\n'
+            sources = publish.SourceLinks({'benchmarks/example_test.go': source}, 'a'*40)
+            with self.subTest(condition=condition):
+                for line, (case, implementation) in enumerate(zip(cases, implementations), 1):
+                    self.assertEqual(sources.link(case, implementation),
+                                     f'[{implementation}](https://github.com/meian/go-seqpipeline/blob/'+
+                                     'a'*40+f'/benchmarks/example_test.go#L{line})')
+                sources.verify(cases)
 
     def test_missing_benchmark_or_test_entry_is_rejected(self):
         for prefix in ('Benchmark', 'Test'):
@@ -247,6 +268,12 @@ class SourceLinksTest(unittest.TestCase):
             with self.subTest(prefix=prefix):
                 with self.assertRaisesRegex(ValueError, 'missing processing function or entry'):
                     publish.SourceLinks(code, 'a'*40).link(self.case, 'Go')
+
+    def test_missing_processing_function_is_rejected(self):
+        code = {'benchmarks/map_test.go':
+                'func BenchmarkMap(b *testing.B) {}\nfunc TestMap(t *testing.T) {}\n'}
+        with self.assertRaisesRegex(ValueError, 'missing processing function or entry: mapGo'):
+            publish.SourceLinks(code, 'a'*40).link(self.case, 'Go')
 
     def test_unlinked_processing_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'unlinked processing functions'):
@@ -262,6 +289,13 @@ class SourceLinksTest(unittest.TestCase):
         ]:
             with self.subTest(name=name):
                 self.assertEqual(publish.processing_function(publish.key(name)), function)
+
+    def test_cache_fill_and_warm_keep_separate_entries(self):
+        for kind in ('Seq', 'Seq2'):
+            for phase in ('Fill', 'Warm'):
+                with self.subTest(kind=kind, phase=phase):
+                    case = publish.key(f'ScenarioCache/kind={kind}/phase={phase}')
+                    self.assertEqual(publish.entry_suffix(case), f'ScenarioCache{kind}{phase}')
 
     def test_compose_names_identify_connection_implementation(self):
         for api, stem in [('Compose.Seq', 'composeSeq'), ('Compose.Seq2', 'composeSeq2'),

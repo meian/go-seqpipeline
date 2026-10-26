@@ -108,12 +108,17 @@ Unit のケースは機能別の `*_test.go`、Scenario のケースは機能別
 ## 処理と入口
 
 各 API・実装の処理全体を `mapLibrary` / `mapGo` のような型付き関数に置く。  
-通常の `BenchmarkMapLibrary` / `TestMapLibrary` は、どちらも `mapLibrary` を直接呼ぶ。  
+機能ごとに `mapLibrary` → `mapGo` → `BenchmarkMap` → `TestMap` の順に配置する。  
+`BenchmarkMap` / `TestMap` は比較する実装を明示的な `b.Run` / `t.Run` に分け、それぞれの処理関数を直接呼ぶ。  
 Seq の生成・演算子の構築・評価・収集・結果の加算は処理本体に含め、入力データだけを呼び出し元で準備する。  
 Cache / Cache2 は Scenario のみで扱い、`scenarioCacheSeqFill` / `scenarioCacheSeqWarm` のように段階を分ける。  
 Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のように、種類と実装ごとに分ける。  
 
-ベンチマーク関数内の各 `b.Run` は条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  
+Cache の Fill / Warm はそれぞれ処理・ベンチマーク・テストをまとめ、Reuse は Cached / Uncached を `BenchmarkScenarioCacheSeqReuse` / `TestScenarioCacheSeqReuse` へまとめる。  
+Seq2 も同じ構成とし、Pipeline は Seq / Seq2 ごと、Channel は 5 実装を一つの機能としてまとめる。  
+各 `b.Run` / `t.Run` は親関数の直下へ個別に記述し、実装だけを囲む中間の `Run` やケース列挙用の `for` は設けない。  
+ベンチマークの各ケース名には実装と条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  
 `class=Unit` / `class=ScenarioPipeline` / `class=ScenarioChannel` / `class=ScenarioCache` で分類し、入力や段数などの比較条件も名前へ残す。  
 テストは各処理につき代表入力 1 件で処理本体を直接呼び、簡単な期待値で疎通を確認する。  
 公開表のリンクは測定コミットの関数宣言行から自動生成するため、行番号を手動で転記しない。  
+配置・入口名の整理だけでは再計測せず、公開済みの測定値・日時・対象コミットと固定リンクを保つ。  

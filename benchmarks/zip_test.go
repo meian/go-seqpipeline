@@ -27,7 +27,7 @@ func zipOperatorGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipOperatorLibrary(b *testing.B) {
+func BenchmarkZipOperator(b *testing.B) {
 	b.Run("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -44,9 +44,6 @@ func BenchmarkZipOperatorLibrary(b *testing.B) {
 			checksum = zipOperatorLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipOperatorGo(b *testing.B) {
 	b.Run("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -65,24 +62,25 @@ func BenchmarkZipOperatorGo(b *testing.B) {
 	})
 }
 
-func TestZipOperatorLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipOperator(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipOperatorLibrary(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipOperatorLibrary(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipOperatorGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipOperatorGo(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipOperatorGo(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipAlignByLibrary(values []int) int64 {
@@ -109,7 +107,7 @@ func zipAlignByGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipAlignByLibrary(b *testing.B) {
+func BenchmarkZipAlignBy(b *testing.B) {
 	b.Run("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -126,9 +124,6 @@ func BenchmarkZipAlignByLibrary(b *testing.B) {
 			checksum = zipAlignByLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipAlignByGo(b *testing.B) {
 	b.Run("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -147,24 +142,25 @@ func BenchmarkZipAlignByGo(b *testing.B) {
 	})
 }
 
-func TestZipAlignByLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipAlignBy(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipAlignByLibrary(values)
-	const want int64 = 27
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipAlignByLibrary(values)
+		const want int64 = 27
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipAlignByGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipAlignByGo(values)
-	const want int64 = 27
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipAlignByGo(values)
+		const want int64 = 27
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipWithDefaultValueLibrary(values []int) int64 {
@@ -191,7 +187,7 @@ func zipWithDefaultValueGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipWithDefaultValueLibrary(b *testing.B) {
+func BenchmarkZipWithDefaultValue(b *testing.B) {
 	b.Run("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -208,9 +204,6 @@ func BenchmarkZipWithDefaultValueLibrary(b *testing.B) {
 			checksum = zipWithDefaultValueLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipWithDefaultValueGo(b *testing.B) {
 	b.Run("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -229,24 +222,25 @@ func BenchmarkZipWithDefaultValueGo(b *testing.B) {
 	})
 }
 
-func TestZipWithDefaultValueLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipWithDefaultValue(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipWithDefaultValueLibrary(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipWithDefaultValueLibrary(values)
+		const want int64 = 48
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipWithDefaultValueGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipWithDefaultValueGo(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipWithDefaultValueGo(values)
+		const want int64 = 48
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipWithDefaultKeyLibrary(values []int) int64 {
@@ -274,7 +268,7 @@ func zipWithDefaultKeyGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipWithDefaultKeyLibrary(b *testing.B) {
+func BenchmarkZipWithDefaultKey(b *testing.B) {
 	b.Run("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -291,9 +285,6 @@ func BenchmarkZipWithDefaultKeyLibrary(b *testing.B) {
 			checksum = zipWithDefaultKeyLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipWithDefaultKeyGo(b *testing.B) {
 	b.Run("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -312,24 +303,25 @@ func BenchmarkZipWithDefaultKeyGo(b *testing.B) {
 	})
 }
 
-func TestZipWithDefaultKeyLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipWithDefaultKey(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipWithDefaultKeyLibrary(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipWithDefaultKeyLibrary(values)
+		const want int64 = 48
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipWithDefaultKeyGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipWithDefaultKeyGo(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipWithDefaultKeyGo(values)
+		const want int64 = 48
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipKeyOperatorLibrary(values []int) int64 {
@@ -351,7 +343,7 @@ func zipKeyOperatorGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipKeyOperatorLibrary(b *testing.B) {
+func BenchmarkZipKeyOperator(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -368,9 +360,6 @@ func BenchmarkZipKeyOperatorLibrary(b *testing.B) {
 			checksum = zipKeyOperatorLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipKeyOperatorGo(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -389,24 +378,25 @@ func BenchmarkZipKeyOperatorGo(b *testing.B) {
 	})
 }
 
-func TestZipKeyOperatorLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipKeyOperator(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipKeyOperatorLibrary(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipKeyOperatorLibrary(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipKeyOperatorGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipKeyOperatorGo(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipKeyOperatorGo(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipKeyAlignByLibrary(values []int) int64 {
@@ -434,7 +424,7 @@ func zipKeyAlignByGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipKeyAlignByLibrary(b *testing.B) {
+func BenchmarkZipKeyAlignBy(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -451,9 +441,6 @@ func BenchmarkZipKeyAlignByLibrary(b *testing.B) {
 			checksum = zipKeyAlignByLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipKeyAlignByGo(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -472,24 +459,25 @@ func BenchmarkZipKeyAlignByGo(b *testing.B) {
 	})
 }
 
-func TestZipKeyAlignByLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipKeyAlignBy(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipKeyAlignByLibrary(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipKeyAlignByLibrary(values)
+		const want int64 = 48
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipKeyAlignByGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipKeyAlignByGo(values)
-	const want int64 = 48
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipKeyAlignByGo(values)
+		const want int64 = 48
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipKeyWithDefaultValueLibrary(values []int) int64 {
@@ -516,7 +504,7 @@ func zipKeyWithDefaultValueGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipKeyWithDefaultValueLibrary(b *testing.B) {
+func BenchmarkZipKeyWithDefaultValue(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -533,9 +521,6 @@ func BenchmarkZipKeyWithDefaultValueLibrary(b *testing.B) {
 			checksum = zipKeyWithDefaultValueLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipKeyWithDefaultValueGo(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -554,24 +539,25 @@ func BenchmarkZipKeyWithDefaultValueGo(b *testing.B) {
 	})
 }
 
-func TestZipKeyWithDefaultValueLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipKeyWithDefaultValue(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipKeyWithDefaultValueLibrary(values)
-	const want int64 = 54
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipKeyWithDefaultValueLibrary(values)
+		const want int64 = 54
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipKeyWithDefaultValueGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipKeyWithDefaultValueGo(values)
-	const want int64 = 54
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipKeyWithDefaultValueGo(values)
+		const want int64 = 54
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func zipKeyWithDefaultKeyLibrary(values []int) int64 {
@@ -599,7 +585,7 @@ func zipKeyWithDefaultKeyGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkZipKeyWithDefaultKeyLibrary(b *testing.B) {
+func BenchmarkZipKeyWithDefaultKey(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -616,9 +602,6 @@ func BenchmarkZipKeyWithDefaultKeyLibrary(b *testing.B) {
 			checksum = zipKeyWithDefaultKeyLibrary(values)
 		}
 	})
-}
-
-func BenchmarkZipKeyWithDefaultKeyGo(b *testing.B) {
 	b.Run("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -637,22 +620,23 @@ func BenchmarkZipKeyWithDefaultKeyGo(b *testing.B) {
 	})
 }
 
-func TestZipKeyWithDefaultKeyLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestZipKeyWithDefaultKey(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := zipKeyWithDefaultKeyLibrary(values)
-	const want int64 = 54
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := zipKeyWithDefaultKeyLibrary(values)
+		const want int64 = 54
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestZipKeyWithDefaultKeyGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := zipKeyWithDefaultKeyGo(values)
-	const want int64 = 54
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := zipKeyWithDefaultKeyGo(values)
+		const want int64 = 54
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }

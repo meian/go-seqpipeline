@@ -26,7 +26,7 @@ func toSeqGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkToSeqLibrary(b *testing.B) {
+func BenchmarkToSeq(b *testing.B) {
 	b.Run("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -43,9 +43,6 @@ func BenchmarkToSeqLibrary(b *testing.B) {
 			checksum = toSeqLibrary(values)
 		}
 	})
-}
-
-func BenchmarkToSeqGo(b *testing.B) {
 	b.Run("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -64,24 +61,25 @@ func BenchmarkToSeqGo(b *testing.B) {
 	})
 }
 
-func TestToSeqLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestToSeq(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := toSeqLibrary(values)
-	const want int64 = 21
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := toSeqLibrary(values)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestToSeqGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := toSeqGo(values)
-	const want int64 = 21
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := toSeqGo(values)
+		const want int64 = 21
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func toSeq2Library(values []int) int64 {
@@ -103,7 +101,7 @@ func toSeq2Go(values []int) int64 {
 	return sum
 }
 
-func BenchmarkToSeq2Library(b *testing.B) {
+func BenchmarkToSeq2(b *testing.B) {
 	b.Run("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -120,9 +118,6 @@ func BenchmarkToSeq2Library(b *testing.B) {
 			checksum = toSeq2Library(values)
 		}
 	})
-}
-
-func BenchmarkToSeq2Go(b *testing.B) {
 	b.Run("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -141,22 +136,23 @@ func BenchmarkToSeq2Go(b *testing.B) {
 	})
 }
 
-func TestToSeq2Library(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestToSeq2(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := toSeq2Library(values)
-	const want int64 = 36
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := toSeq2Library(values)
+		const want int64 = 36
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestToSeq2Go(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := toSeq2Go(values)
-	const want int64 = 36
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := toSeq2Go(values)
+		const want int64 = 36
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }

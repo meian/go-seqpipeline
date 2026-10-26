@@ -97,14 +97,16 @@
 ### コードの配置
 
 - Unit / Scenario を分離した上で、Map / Filter / Take / Skip などの機能ごとにファイルを分ける
-- 対応する Seq / Seq2 は同じファイルへ置いてよいが、各 API の処理・ベンチマーク・テストを連続して記述する
+- 対応する Seq / Seq2 は同じファイルへ置いてよいが、各機能を対象の処理・比較対象の処理・ベンチマーク・テストの順に連続して記述する
 - Unit は機能別の `*_test.go`、Scenario は機能別の `*_scenario_test.go` へ分け、同じファイルにケースを混在させない
 - 複数機能を組み合わせる Scenario は独立した機能群として扱う
 - 各 API・実装に `mapLibrary` / `mapGo` のような処理全体の関数を用意する
 - Library は `source := seq.FromSlice(...).Pipe(...)` などで接続を終えてから `for ... range source` で評価する
-- 通常の `BenchmarkMapLibrary` / `TestMapLibrary` から、同じ `mapLibrary` を直接呼ぶ
+- 比較する実装は `BenchmarkMap` / `TestMap` のように、1 機能につき 1 つのベンチマーク関数・テスト関数へまとめる
+- 比較対象のない機能も、処理・ベンチマーク・テストの順に記述する
 - 共通化するのは処理全体と低水準の入力生成などに限り、ケース登録表・汎用状態構造体・共通の測定ループ・テストディスパッチャーを作らない
-- ベンチマークとテストをテーブル駆動にせず、条件は各 `b.Run` / `t.Run` へ明記する
+- 各 `b.Run` / `t.Run` は親関数の直下へ個別に記述し、実装だけを囲む中間の `Run` やケース列挙用の `for` を設けない
+- ベンチマーク名には実装と入力条件を含む既存の項目を保ち、テスト名にも実装と固有の条件を含める
 - ベンチマークは各条件で入力を用意し、`for b.Loop()` 内から処理関数を直接呼ぶ
 - 各処理のテストは代表入力 1 件の疎通確認に絞り、処理関数を直接呼んで簡単な期待値と比較する
 - 境界値・入力サイズ・全測定条件の検証をテストへ展開せず、ライブラリ本体の仕様検証は `seq` と `op` のテストに任せる
@@ -114,6 +116,9 @@
 - `b.Loop()` の初回呼び出しで時間・割り当ての計測がリセットされるため、その準備を除くための `ResetTimer()` は不要
 - 測定分類は `class`、比較軸は `api`・`phase`・`kind`・`N`・`impl` 等の名前で識別する
 - 定期更新で追加する機能も同じ構成にし、全件の試行実行で条件の欠落・重複を確認する
+
+配置や入口名だけを整理する場合は、処理本体・直接呼び出し・計測範囲・入力条件・期待値を保つ。  
+再計測を伴わない整理では、公開済みの測定値・日時・対象コミットと、そのコミットに固定したソースリンクを維持する。  
 
 ファイルの分割だけを目的に細分化せず、機能のまとまりと保守性を優先する。  
 処理と入口の対応・ファイル一覧は [API 対応表](benchmark-api.md) に記録する。  
@@ -220,7 +225,7 @@ Unit の名前には `class=Unit`・`api`・`N`・`phase`・`ref`・`impl` を�
 Compose / Compose2 は Pipe / Composed、その他は Go / Library を使う。  
 `benchstat -ignore .name -filter "/class:Unit /impl:(Go OR Library)" -col "/impl@(Go Library)" -format=csv` で同じスナップショット内を比較し、条件を行から除外しない。  
 Compose / Compose2 は `/impl:(Pipe OR Composed)` と `/impl@(Pipe Composed)` で別の比較 CSV にする。  
-`.name` は各実装の入口名なので比較の行から除き、`class` と処理条件は残す。  
+`.name` は機能ごとの入口名なので比較の行から除き、`class` と処理条件は残す。  
 Cache の Warm / Fill は単独の Scenario として掲載し、構築範囲の異なる Warm / Uncached の倍率は作らない。  
 Scenario の比較相手がない Warm / Fill は全件掲載する。  
 `publish.py` は統計計算をせず、benchstat の中央値・信頼区間・検定結果を Markdown に整形する。  

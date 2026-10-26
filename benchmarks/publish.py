@@ -70,6 +70,17 @@ def processing_function(case):
     return stem+dimensions.get('kind', '')+implementation
 
 
+def entry_suffix(case):
+    kind, entries = case
+    dimensions = dict(entries)
+    if kind == 'Unit':
+        return dimensions['api'].replace('.', '')
+    suffix = kind+dimensions.get('kind', '')
+    if kind == 'ScenarioCache':
+        suffix += dimensions['phase']
+    return suffix
+
+
 class SourceLinks:
     """測定コミットの名前付き処理へリンクし、対応する入口も検証する。"""
     def __init__(self, files, commit):
@@ -95,7 +106,7 @@ class SourceLinks:
 
     def link(self, case, label):
         name = processing_function(case)
-        suffix = name[0].upper()+name[1:]
+        suffix = entry_suffix(case)
         for function in (name, 'Benchmark'+suffix, 'Test'+suffix):
             if function not in self.locations:
                 raise ValueError(f'missing processing function or entry: {function}')

@@ -26,7 +26,7 @@ func mapGo(values []int) int64 {
 	return sum
 }
 
-func BenchmarkMapLibrary(b *testing.B) {
+func BenchmarkMap(b *testing.B) {
 	b.Run("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -43,9 +43,6 @@ func BenchmarkMapLibrary(b *testing.B) {
 			checksum = mapLibrary(values)
 		}
 	})
-}
-
-func BenchmarkMapGo(b *testing.B) {
 	b.Run("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -64,24 +61,25 @@ func BenchmarkMapGo(b *testing.B) {
 	})
 }
 
-func TestMapLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestMap(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := mapLibrary(values)
-	const want int64 = 27
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := mapLibrary(values)
+		const want int64 = 27
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestMapGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := mapGo(values)
-	const want int64 = 27
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := mapGo(values)
+		const want int64 = 27
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func map2Library(values []int) int64 {
@@ -102,7 +100,7 @@ func map2Go(values []int) int64 {
 	return sum
 }
 
-func BenchmarkMap2Library(b *testing.B) {
+func BenchmarkMap2(b *testing.B) {
 	b.Run("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -119,9 +117,6 @@ func BenchmarkMap2Library(b *testing.B) {
 			checksum = map2Library(values)
 		}
 	})
-}
-
-func BenchmarkMap2Go(b *testing.B) {
 	b.Run("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -140,22 +135,23 @@ func BenchmarkMap2Go(b *testing.B) {
 	})
 }
 
-func TestMap2Library(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestMap2(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := map2Library(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
+		got := map2Library(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-func TestMap2Go(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := map2Go(values)
-	const want int64 = 42
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := map2Go(values)
+		const want int64 = 42
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
