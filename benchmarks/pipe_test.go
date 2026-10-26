@@ -1,7 +1,6 @@
 package benchmarks
 
 import (
-	"iter"
 	"slices"
 	"testing"
 
@@ -87,15 +86,7 @@ func TestSeqPipeGo(t *testing.T) {
 
 func seqPipe2Library(values []int) int64 {
 	source := seq.FromSlice(values).
-		Pipe2(func(input iter.Seq[int]) iter.Seq2[int, int] {
-			return func(yield func(int, int) bool) {
-				for v := range input {
-					if !yield(v, (v+1)&65535) {
-						return
-					}
-				}
-			}
-		})
+		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, (v + 1) & 65535 }))
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -171,7 +162,7 @@ func TestSeqPipe2Go(t *testing.T) {
 
 func seq2PipeLibrary(values []int) int64 {
 	source := seq.FromSeq2(slices.All(values)).
-		Pipe(op.Values)
+		Pipe(op.MapToSeq(func(_, v int) int { return v }))
 	var sum int64
 	for v := range source {
 		sum += int64(v)

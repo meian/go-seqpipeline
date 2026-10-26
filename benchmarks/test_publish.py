@@ -62,6 +62,34 @@ class PublishTest(unittest.TestCase):
         self.assertIn('保存済み反復 Warm', scenario)
         self.assertIn('| 8 | Pipeline | 4 ±2% | 4 ±2% |', scenario)
 
+    def test_compose_compares_individual_and_composed_connections(self):
+        compose_rows = []
+        apis = ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
+        for metric in publish.METRICS:
+            self.all_rows += [['', '-', ''], ['', metric, 'CI']]
+            compose_rows += [['', 'Pipe', '', 'Composed', '', '', ''],
+                             ['', metric, 'CI', metric, 'CI', 'vs base', 'P']]
+            for api in apis:
+                case = f'class=Unit/api={api}/N=8/phase=Evaluate/ref=DirectPipe'
+                self.all_rows += [[f'{api}/{case}/impl={impl}-2', value, '2%']
+                                  for impl, value in (('Pipe', 2), ('Composed', 1))]
+                compose_rows += [[f'*/{case}-2', 2, '2%', 1, '2%', '-50.00%', 'p=0.000 n=10']]
+        self.write('all.csv', self.all_rows)
+        self.write('unit-compose.csv', compose_rows)
+        destination = self.directory/'output/results'
+        snapshot = publish.render(self.directory, destination)
+        unit = (destination/'unit.md').read_text()
+        self.assertEqual(len(snapshot.seen), 39)
+        self.assertIn('| N | Go ns/op | Library ns/op | 倍率 |', unit)
+        self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 4)
+        for api in apis:
+            self.assertIn(f'### {api}：構築・評価', unit)
+        self.assertIn('Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。', unit)
+        self.assertIn('| 8 | 2,000,000,000 ±2% | 1,000,000,000 ±2% | 0.500× |', unit)
+        self.assertIn('| 8 | Pipe | 2 ±2% | 2 ±2% |', unit)
+        self.assertIn('| 8 | Composed | 1 ±2% | 1 ±2% |', unit)
+        self.assertNotIn('倍率は Library / Go', unit)
+
     def test_result_tables_keep_conditions_and_comparisons_separate(self):
         snapshot = publish.Snapshot(self.directory)
         # 概要の代表ケースも、同じ条件を持つ比較から自動生成する。
@@ -142,9 +170,17 @@ class PublishTest(unittest.TestCase):
     def test_unit_comparison_with_wrong_implementation_is_rejected(self):
         snapshot = publish.Snapshot(self.directory)
         comparison = next(c for c in snapshot.comparisons if c.base[0] == 'Unit')
-        comparison.base, comparison.target = comparison.target, comparison.base
-        with self.assertRaisesRegex(ValueError, 'unit comparison must be Go / Library'):
-            publish.render_unit(snapshot)
+        for api, base, target, expected in (
+            ('FutureAPI', 'Library', 'Go', 'Go / Library'),
+            ('FutureAPI', 'Pipe', 'Composed', 'Go / Library'),
+            ('Compose.Seq', 'Go', 'Library', 'Pipe / Composed'),
+        ):
+            with self.subTest(api=api, base=base, target=target):
+                dimensions = dict(comparison.base[1], api=api)
+                comparison.base = ('Unit', tuple(sorted(dict(dimensions, impl=base).items())))
+                comparison.target = ('Unit', tuple(sorted(dict(dimensions, impl=target).items())))
+                with self.assertRaisesRegex(ValueError, 'unit comparison must be '+expected):
+                    publish.render_unit(snapshot)
 
     def test_missing_metric_is_rejected(self):
         self.write('all.csv', self.all_rows[:-1])
@@ -226,6 +262,14 @@ class SourceLinksTest(unittest.TestCase):
         ]:
             with self.subTest(name=name):
                 self.assertEqual(publish.processing_function(publish.key(name)), function)
+
+    def test_compose_names_identify_connection_implementation(self):
+        for api, stem in [('Compose.Seq', 'composeSeq'), ('Compose.Seq2', 'composeSeq2'),
+                          ('Compose2.Seq', 'compose2Seq'), ('Compose2.Seq2', 'compose2Seq2')]:
+            for implementation in ('Pipe', 'Composed'):
+                with self.subTest(api=api, implementation=implementation):
+                    name = f'Unit/api={api}/N=64/phase=Evaluate/ref=DirectPipe/impl={implementation}'
+                    self.assertEqual(publish.processing_function(publish.key(name)), stem+implementation)
 
 
 class MeasureCleanupTest(unittest.TestCase):

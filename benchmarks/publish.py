@@ -203,6 +203,7 @@ def condition(case, omit=()):
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
               'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
+              'Ascending': '昇順', 'Descending': '降順',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
     order = list(labels)+sorted(set(dimensions)-set(labels)-{'api', 'impl', 'ref'})
     return ' / '.join(labels.get(k, k+'=')+values.get(dimensions[k], dimensions[k])
@@ -226,7 +227,7 @@ def unit_category(api):
         return 'Channel'
     if api.startswith(('From', 'To')):
         return '入力変換・出力収集'
-    if '.Pipe' in api:
+    if '.Pipe' in api or api.startswith('Compose'):
         return 'パイプ接続'
     if api in ('Map', 'Map2', 'Filter', 'Filter2', 'Keys', 'Values'):
         return '変換・選別・射影'
@@ -250,6 +251,8 @@ def condition_groups(cases):
 
 
 REFERENCE_DESCRIPTIONS = {
+    'IntegerLoop': '同じ範囲を整数ループで加算',
+    'DirectPipe': '`Pipe` / `Pipe2` で同じオペレーター列を個別に接続',
     'SliceRange': '`slices.Values` を反復',
     'IteratorRange': '標準 `iter.Seq` を `for range`',
     'Iterator2Range': '標準 `iter.Seq2` を `for range`',
@@ -292,8 +295,9 @@ def comparison_statistics(snapshot, comparisons, headers, fields):
 def render_unit(snapshot):
     text = preface('API 別の比較')
     text += '''Go はライブラリを使わない同一処理、Library は対応する API を使った処理。  
-倍率は Library / Go で、1 を超えると Library が遅い。  
-検定の `~` は差が不明確で、増減率の正値は Library の時間・割り当ての増加を表す。  
+Compose の Pipe は個別接続、Composed は合成したオペレーターを接続する処理。  
+倍率は各表の右側の実装の時間 / 左側の実装の時間で、1 を超えると右側が遅い。  
+検定の `~` は差が不明確で、増減率の正値は右側の時間・割り当ての増加を表す。  
 
 '''
     pairs = [c for c in snapshot.comparisons if c.base[0] == 'Unit']
@@ -301,8 +305,11 @@ def render_unit(snapshot):
     groups = {}
     for c in pairs:
         dims = dict(c.base[1])
-        if dims.get('impl') != 'Go' or dict(c.target[1]).get('impl') != 'Library':
-            raise ValueError('unit comparison must be Go / Library')
+        expected = ('Pipe', 'Composed') if dims['api'] in (
+            'Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2',
+        ) else ('Go', 'Library')
+        if (dims.get('impl'), dict(c.target[1]).get('impl')) != expected:
+            raise ValueError('unit comparison must be '+' / '.join(expected))
         covered.update((c.base, c.target))
         identity = dims['api'], dims['ref'], condition(c.base, omit=('N',))
         groups.setdefault(unit_category(dims['api']), {}).setdefault(identity, []).append(c)
@@ -316,9 +323,11 @@ def render_unit(snapshot):
             if api.startswith('ZipKey.'):
                 label += '（キー既定値あり）'
             text += f'### {label}：{phase_label}\n\n'
-            text += 'Go：'+REFERENCE_DESCRIPTIONS.get(reference, reference)+'。  \n\n'
-            text += table(['N', snapshot.source(comparisons[0].base, 'Go ns/op'),
-                           snapshot.source(comparisons[0].target, 'Library ns/op'), '倍率'],
+            base = dict(comparisons[0].base[1])['impl']
+            target = dict(comparisons[0].target[1])['impl']
+            text += base+'：'+REFERENCE_DESCRIPTIONS.get(reference, reference)+'。  \n\n'
+            text += table(['N', snapshot.source(comparisons[0].base, base+' ns/op'),
+                           snapshot.source(comparisons[0].target, target+' ns/op'), '倍率'],
                           [[dict(c.base[1])['N'], snapshot.cell(c.base, 'sec/op'),
                             snapshot.cell(c.target, 'sec/op'), snapshot.ratio(c)] for c in comparisons])
             text += table(['N', '実装', 'B/op', 'allocs/op'],

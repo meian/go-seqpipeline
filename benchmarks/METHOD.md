@@ -19,8 +19,8 @@
 ## API 別結果（Unit）
 
 入力は 64 / 4096 件の整数で、入力データの準備を除き、入力 iterator の生成・API 呼び出し・評価・収集を含む。  
-Go は標準 iterator による同一処理、Library は各 API を使った処理全体を測る。  
-各 API の比較表に Go の書き方を示し、入力・出力・収集・結果保持の範囲をそろえている。  
+Compose / Compose2 以外では、Go は標準 iterator（整数範囲の生成は通常の整数ループ）による同一処理、Library は各 API を使った処理全体を測る。  
+各 API の比較表に対照実装を示し、入力・出力・収集・結果保持の範囲をそろえている。  
 部分スライスを使える Take / Skip も、対応する標準 iterator で反復する。  
 比較は入力から結果までの総費用であり、演算子単独の費用ではない。  
 インライン化など通常の最適化も結果に含む。  
@@ -35,8 +35,12 @@ Go は標準 iterator による同一処理、Library は各 API を使った処
 Map は値に 1 を加算し、Filter は 3 の倍数を除き、Skip は先頭 8 件を除外する。  
 Keys / Values は map のキー / 値を取り出し、`slices.All` を入力元とする `seq.Seq2` のキーはスライスの添字とする。  
 Zip の既定ケースは等長入力、補完設定のケースは片側を半分の件数にし、出力はいずれも N 件とする。  
-`seq.Seq.Pipe` は Map、`seq.Seq.Pipe2` は単一入力の値 `v` から `(v, (v+1)&65535)` を返す変換、`seq.Seq2.Pipe` / `Pipe2` は Values / Map2 を接続した費用を含む。  
+`seq.Seq.Pipe` は Map、`seq.Seq.Pipe2` は単一入力の値 `v` から `(v, (v+1)&65535)` を返す MapToSeq2、`seq.Seq2.Pipe` / `Pipe2` は MapToSeq / Map2 を接続した費用を含む。  
 設定・型変換も反復まで含むため、呼び出し単独の費用ではない。  
+FromRange は `int` / `uint` を使い、刻み幅 1 / -1 で終点を含む N 件を生成・加算する。  
+Compose / Compose2 は、単一値と組を行き来する変換の合成、入力への接続、全件の加算を含む。  
+出力が単一値のケースは 4 演算、組のケースは 2 演算を合成する。  
+この比較では、Pipe は同じオペレーターを `Seq.Pipe` / `Pipe2` または `Seq2.Pipe` / `Pipe2` で直接接続し、Composed は Compose / Compose2 で合成してから入力に接続する。  
 
 ## 利用場面別結果（Scenario）
 
@@ -58,5 +62,7 @@ Direct / FromChannel / ToChannel は送信用 1 goroutine、RoundTrip は 2 goro
 途中終了・キャンセルの費用はこの Channel 比較に含まない。  
 
 Cache の負荷 0 は軽い上流、32 は整数の乗算・加算を繰り返す上流を表す。  
+Fill は Cache の構築と初回反復による全件保存を含み、保存後の出力は先頭 1 件で停止する。  
+Warm は計測前に全件保存を済ませ、保存済みの全件反復・加算を測る。  
 同じ利用回数の Uncached / Cached は初回保存も含む合計時間で、保存済みの反復だけの Warm とは区別する。  
 保持する値データは 1 件につき `seq.Seq` が 8 bytes、`seq.Seq2` がキーを含め 16 bytes で、余剰容量等は別に必要になる。  

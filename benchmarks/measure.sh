@@ -4,7 +4,7 @@ set -eu
 cd "$(dirname "$0")/.."
 GO_BINARY=${GO_BINARY:-go}
 BENCHSTAT=${BENCHSTAT:-benchstat}
-BENCHTIME=${BENCHTIME:-100ms}
+BENCHTIME=${BENCHTIME:-500ms}
 COUNT=${COUNT:-10}
 export GOMAXPROCS=${GOMAXPROCS:-2}
 command -v "$GO_BINARY" >/dev/null
@@ -15,7 +15,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 export GOCACHE=${GOCACHE:-"$workdir/go-cache"}
 "$GO_BINARY" test ./benchmarks -count=1
-# 各巡で Go / Library を一組ずつ測り、長い連続測定の偏りを減らす。
+# 各巡で比較する実装を一組ずつ測り、長い連続測定の偏りを減らす。
 round=0
 while [ "$round" -lt "$COUNT" ]; do
  "$GO_BINARY" test ./benchmarks -run '^$' -bench . -benchmem \
@@ -31,7 +31,8 @@ compare() {
  "$BENCHSTAT" -ignore .name -filter "$filter" -col "$columns" -format=csv - \
    < "$workdir/raw.txt" > "$workdir/$name.csv"
 }
-compare unit '/class:Unit' '/impl@(Go Library)'
+compare unit '/class:Unit /impl:(Go OR Library)' '/impl@(Go Library)'
+compare unit-compose '/class:Unit /impl:(Pipe OR Composed)' '/impl@(Pipe Composed)'
 compare pipeline-loop '/class:ScenarioPipeline' '/impl@(Loop Pipeline)'
 compare pipeline-functions '/class:ScenarioPipeline' '/impl@(Functions Pipeline)'
 compare channel-from '/class:ScenarioChannel' '/impl@(Direct FromChannel)'

@@ -68,6 +68,7 @@
 - 通常の機能PRやリリースに測定コードの即時更新を要求しない
 - 原則としてAPIごとに独立して測定し、適切な実行条件（入力件数、データ型、分岐条件など）を設ける
 - 標準の処理を置き換える各 API に Go の比較実装を用意し、入力・処理・出力・収集・結果保持・終了待ちをそろえる
+- Compose / Compose2 は同じオペレーターを Pipe / Pipe2 に直接接続した実装を対照とし、合成による追加費用を比較する
 - Cache / Cache2 は標準 API の代替ではないため Unit を設けず、保存と再利用を Scenario で測る
 - Unit は Library の入力元と同じ標準 iterator を用い、スライス直接反復と iterator 反復の差を混ぜない
 - `FromSlice` は `slices.Values`、Seq2 のスライス入力は `slices.All`、`FromMap` は `maps.All` に対応させる
@@ -76,7 +77,7 @@
 - Seq.Pipe2 は両実装とも `slices.Values`、Seq2.Pipe は両実装とも `slices.All` を入力元とする
 - Keys / Values は map を受け取り、`FromMap(...).Pipe(...)` と `maps.All` からの射影を比較する
 - 通常の最適化は有効とし、結果を演算子単独の費用とは解釈しない
-- ライブラリ側と Go 側の計測範囲・結果保持をそろえ、代表入力で処理を実行できることを確認する
+- 比較する両実装の計測範囲・結果保持をそろえ、代表入力で処理を実行できることを確認する
 - 単独測定に意味がないAPIは、関連APIの測定に含める
 - その場合は対象API・代替ケース・理由を記録する
 - 遅延評価のAPIは構築だけを測って性能を代表させない
@@ -169,6 +170,7 @@ raw と benchstat の TXT・CSV は一時入力・中間データに限り、処
 | `benchmarks/take_test.go` / `skip_test.go` | Take / Skip の処理・測定・結果検証 |
 | `benchmarks/from_*_test.go` / `to_*_test.go` | 入出力の変換・収集の処理・測定・結果検証 |
 | `benchmarks/zip_test.go` / `pipe_test.go` | Zip の設定、Pipe / Pipe2 の処理・測定・結果検証 |
+| `benchmarks/from_range_test.go` / `compose_test.go` | 整数範囲の生成、オペレーター合成の処理・測定・結果検証 |
 | `benchmarks/pipeline_scenario_test.go` | 複数段のパイプラインの処理・測定・等価性テスト |
 | `benchmarks/channel_scenario_test.go` | Channel を含むパイプラインの処理・測定・等価性テスト |
 | `benchmarks/cache_scenario_test.go` | Cache / Cache2 の Fill / Warm / Reuse の処理・測定・結果検証 |
@@ -193,8 +195,8 @@ go test ./... -count=1
 python3 -m unittest discover -s benchmarks -p 'test_*.py'
 # 全件測定・集計・概要更新。raw は処理後に削除される
 BENCHSTAT="$(go env GOPATH)/bin/benchstat" sh benchmarks/measure.sh
-# 精度と実行コストに応じて条件を選ぶ例
-BENCHSTAT="$(go env GOPATH)/bin/benchstat" BENCHTIME=1s COUNT=10 GOMAXPROCS=2 sh benchmarks/measure.sh
+# 測定条件を明示する例
+BENCHSTAT="$(go env GOPATH)/bin/benchstat" BENCHTIME=500ms COUNT=10 GOMAXPROCS=2 sh benchmarks/measure.sh
 ```
 
 `GO_BINARY` / `BENCHSTAT` で取得済み実行ファイルを指定できる。  
@@ -202,7 +204,9 @@ Go の自動取得を避ける場合は、適切な版の `GO_BINARY` を指定�
 `GOCACHE` を省略するとスクリプトが一時ディレクトリ内に作成する。  
 再利用できる書き込み先があれば `GOCACHE` を明示してよいが、raw の出力先は変わらない。  
 実際に使った `BENCHTIME` / `COUNT` / `GOMAXPROCS` は環境記録に出力される。  
-`COUNT` 巡、全ケースを各 1 回測り、Go / Library が巡ごとに繰り返されるようにする。  
+既定値は各ケース `500ms × 10`（計測時間の目標は合計 5 秒）、`GOMAXPROCS=2` とする。  
+2026-10-26 の公開結果は `5s × 10` で取得済みのため再測定せず保持し、次回の定期更新から新しい既定値を使う。  
+`COUNT` 巡、全ケースを各 1 回測り、比較する両実装が巡ごとに繰り返されるようにする。  
 片方を全回数測ってから他方を測る順序を避け、各ケースの測定時間と総サンプル数は変えない。  
 測定中は別のテストやビルドを並行実行しない。  
 
@@ -212,15 +216,17 @@ SIGKILL や OS 停止では trap が動かないため、残った該当一時�
 再集計が必要なら過去の raw を探さず、全件を再測定する。  
 
 benchstat の列は `impl` を使い、他の条件が同じ行の実装だけを比較する。  
-Unit の名前には `class=Unit`・`api`・`N`・`phase`・`ref`・`impl` を含め、`ref` は Go の書き方、`impl` は Go / Library を表す。  
-`benchstat -ignore .name -filter "/class:Unit" -col "/impl@(Go Library)" -format=csv` で同じスナップショット内を比較し、条件を行から除外しない。  
+Unit の名前には `class=Unit`・`api`・`N`・`phase`・`ref`・`impl` を含め、`ref` は対照の処理、`impl` は比較する実装を表す。  
+Compose / Compose2 は Pipe / Composed、その他は Go / Library を使う。  
+`benchstat -ignore .name -filter "/class:Unit /impl:(Go OR Library)" -col "/impl@(Go Library)" -format=csv` で同じスナップショット内を比較し、条件を行から除外しない。  
+Compose / Compose2 は `/impl:(Pipe OR Composed)` と `/impl@(Pipe Composed)` で別の比較 CSV にする。  
 `.name` は各実装の入口名なので比較の行から除き、`class` と処理条件は残す。  
 Cache の Warm / Fill は単独の Scenario として掲載し、構築範囲の異なる Warm / Uncached の倍率は作らない。  
 Scenario の比較相手がない Warm / Fill は全件掲載する。  
 `publish.py` は統計計算をせず、benchstat の中央値・信頼区間・検定結果を Markdown に整形する。  
 全 API・全 Scenario と全指標を詳細表に掲載し、API 名や条件を長いケース名から分離する。  
 各ケースの ns/op・B/op・allocs/op の存在と公開表への掲載、比較 CSV と全件 CSV の一致を検証する。  
-未知の API・Scenario も詳細表に自動追加し、Unit は全ケースの Go / Library の組がそろわなければ失敗させる。  
+未知の API・Scenario も詳細表に自動追加し、Unit は全ケースの期待する実装対がそろわなければ失敗させる。  
 Scenario の比較対象がないケースも省略しない。  
 概要の代表例だけは定期更新時に選択を見直し、値を手動転記しない。  
 生成・検証がすべて成功してから現在の公開 Markdown を置き換える。  
@@ -229,7 +235,7 @@ Scenario の比較対象がないケースも省略しない。
 ### 更新時チェックリスト
 
 - [ ] 全公開関数・メソッドと代替測定の理由を benchmark-api.md に記録した
-- [ ] Unit / Scenario の対象・条件・名前を現行コードに合わせ、全 Unit に一般的な Go 実装を対応させた
+- [ ] Unit / Scenario の対象・条件・名前を現行コードに合わせ、全 Unit に目的に合う対照実装を対応させた
 - [ ] 各処理の代表入力 1 件の疎通テストと、全ベンチマークの試行実行が通った
 - [ ] 測定コードをコミットし、そのコミットで全件を複数回測定した
 - [ ] 欠測・信頼区間・検定・警告を確認し、不明確な差を断定していない
