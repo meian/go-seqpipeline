@@ -8,6 +8,8 @@ import (
 )
 
 func TestFromRange(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		start, stop int
@@ -25,6 +27,8 @@ func TestFromRange(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			source := seq.FromRange(tt.start, tt.stop, tt.step)
 			if source == nil {
 				t.Fatal("FromRange returned a nil Seq")
@@ -35,6 +39,8 @@ func TestFromRange(t *testing.T) {
 }
 
 func TestFromRangeZeroStep(t *testing.T) {
+	t.Parallel()
+
 	for _, tt := range []struct {
 		name        string
 		start, stop int
@@ -43,6 +49,8 @@ func TestFromRangeZeroStep(t *testing.T) {
 		{name: "ascending", start: 1, stop: 3},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			defer func() {
 				if recover() == nil {
 					t.Fatal("FromRange with step 0 must panic at the call")
@@ -54,6 +62,8 @@ func TestFromRangeZeroStep(t *testing.T) {
 }
 
 func TestFromRangeIntegerKinds(t *testing.T) {
+	t.Parallel()
+
 	assertEqual(t, seq.ToSlice(seq.FromRange(int8(-2), int8(2), 2)), []int8{-2, 0, 2})
 	assertEqual(t, seq.ToSlice(seq.FromRange(int16(3), int16(-1), -2)), []int16{3, 1, -1})
 	assertEqual(t, seq.ToSlice(seq.FromRange(int32(-2), int32(2), 2)), []int32{-2, 0, 2})
@@ -67,6 +77,8 @@ func TestFromRangeIntegerKinds(t *testing.T) {
 }
 
 func TestFromRangeDefinedTypes(t *testing.T) {
+	t.Parallel()
+
 	type signed int16
 	type unsigned uint32
 	type pointer uintptr
@@ -78,6 +90,8 @@ func TestFromRangeDefinedTypes(t *testing.T) {
 
 // 狭い要素型を超える step と各型の端点でも、値を切り詰めたり折り返したりしない。
 func TestFromRangeBounds(t *testing.T) {
+	t.Parallel()
+
 	assertEqual(t, seq.ToSlice(seq.FromRange(int8(math.MinInt8), int8(math.MaxInt8), 256)), []int8{math.MinInt8})
 	assertEqual(t, seq.ToSlice(seq.FromRange(uint8(math.MaxUint8), uint8(0), -256)), []uint8{math.MaxUint8})
 	assertEqual(t, seq.ToSlice(seq.FromRange(int(math.MaxInt-1), int(math.MaxInt), 1)), []int{math.MaxInt - 1, math.MaxInt})
@@ -104,6 +118,8 @@ func TestFromRangeBounds(t *testing.T) {
 
 // 全幅の残距離を扱い、下流停止後も次の反復は初期値から始まる。
 func TestFromRangeStopAndRepeat(t *testing.T) {
+	t.Parallel()
+
 	source := seq.FromRange(int64(math.MinInt64), int64(math.MaxInt64), 1)
 	for i := 0; i < 2; i++ {
 		var got []int64

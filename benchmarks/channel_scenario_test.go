@@ -186,7 +186,11 @@ func BenchmarkScenarioChannel(b *testing.B) {
 }
 
 func TestScenarioChannel(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Seq", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioChannelSeq(values, 0)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -195,6 +199,8 @@ func TestScenarioChannel(t *testing.T) {
 		}
 	})
 	t.Run("ToChannel", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioChannelToChannel(values, 0)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -203,6 +209,8 @@ func TestScenarioChannel(t *testing.T) {
 		}
 	})
 	t.Run("Direct", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioChannelDirect(values, 64)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -211,6 +219,8 @@ func TestScenarioChannel(t *testing.T) {
 		}
 	})
 	t.Run("FromChannel", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioChannelFromChannel(values, 64)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
@@ -219,6 +229,8 @@ func TestScenarioChannel(t *testing.T) {
 		}
 	})
 	t.Run("RoundTrip", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := scenarioChannelRoundTrip(values, 64)
 		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}

@@ -30,6 +30,8 @@ func repeat(src iter.Seq[int]) iter.Seq[string] {
 
 // Map・Filter の生成関数の戻り値の型を確認し、名前付き関数型を直接適用・Pipe 接続する。
 func TestOperatorDirectCall(t *testing.T) {
+	t.Parallel()
+
 	var mapFactory func(func(int) string) op.Operator[int, string] = op.Map[int, string]
 	var filterFactory func(func(string) bool) op.Operator[string, string] = op.Filter[string]
 	mapped := mapFactory(strconv.Itoa)
@@ -46,6 +48,8 @@ func TestOperatorDirectCall(t *testing.T) {
 }
 
 func TestComposedOperator(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	ope := takeWith(2, func(v int) bool { return v%2 == 0 })
 	pipeline := seq.FromSlice([]int{1, 2, 3, 4, 5, 6}).
@@ -67,6 +71,8 @@ func TestComposedOperator(t *testing.T) {
 
 // 独自の変換関数を Map・Take に接続し、遅延評価と再評価ごとの上流停止を確認する。
 func TestTransformPipeline(t *testing.T) {
+	t.Parallel()
+
 	ope := repeat
 	calls := 0
 	pipeline := seq.FromSlice([]int{1, 2, 3}).
@@ -93,6 +99,8 @@ func keyText(src iter.Seq2[int, int]) iter.Seq2[string, int] {
 
 // Map2・Filter2 の生成関数の戻り値の型を確認し、名前付き関数型を直接適用・Pipe2 接続する。
 func TestOperator2DirectCall(t *testing.T) {
+	t.Parallel()
+
 	var mapFactory func(func(int, int) (string, string)) op.Operator2[int, int, string, string] = op.Map2[int, int, string, string]
 	var filterFactory func(func(string, string) bool) op.Operator2[string, string, string, string] = op.Filter2[string, string]
 	mapped := mapFactory(func(k, v int) (string, string) { return strconv.Itoa(k), strconv.Itoa(v) })
@@ -112,6 +120,8 @@ func TestOperator2DirectCall(t *testing.T) {
 }
 
 func TestComposedOperator2(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	var ope op.Operator2[int, int, int, int] = func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
 		return op.Take(2).Operator2(op.Filter2(func(k, v int) bool { return v%2 == 0 })(src))
@@ -136,6 +146,8 @@ func TestComposedOperator2(t *testing.T) {
 
 // 独自の組変換を直接適用・Pipe2 接続でき、接続時の遅延評価と下流の停止を保つ。
 func TestExternalTransforms2(t *testing.T) {
+	t.Parallel()
+
 	ope := func(src iter.Seq2[string, int]) iter.Seq2[string, string] {
 		return func(yield func(string, string) bool) {
 			for k, v := range src {
@@ -174,6 +186,8 @@ func TestExternalTransforms2(t *testing.T) {
 
 // 単一値を組に変換する名前付き関数型を直接適用・Pipe2 接続し、nil 入力も確認する。
 func TestToSeq2OperatorDirectCall(t *testing.T) {
+	t.Parallel()
+
 	var ope op.ToSeq2Operator[string, []int, string] = withLength
 	src := seq.FromSlice([]string{"a", "bbb"})
 	want := []pair[[]int, string]{{Key: []int{1}, Value: "a"}, {Key: []int{3}, Value: "bbb"}}
@@ -184,6 +198,8 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 
 // 組を単一値に変換する名前付き関数型を Pipe に接続できる。
 func TestToSeqOperatorPipeline(t *testing.T) {
+	t.Parallel()
+
 	var ope op.ToSeqOperator[int, string, string] = op.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
 	assertEqual(t, seq.ToSlice(src.Pipe(ope)), []string{"a", "bbb"})

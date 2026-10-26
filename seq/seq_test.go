@@ -10,6 +10,8 @@ import (
 )
 
 func TestSeqDefinedFunctionType(t *testing.T) {
+	t.Parallel()
+
 	src := slices.Values([]string{"1", "2"})
 	pipeline := seq.Seq[string](src)
 	var got []string
@@ -28,6 +30,8 @@ func TestSeqDefinedFunctionType(t *testing.T) {
 
 // 入力を評価する変換関数も接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeqPipe(t *testing.T) {
+	t.Parallel()
+
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
 		reads++
@@ -62,6 +66,8 @@ func TestSeqPipe(t *testing.T) {
 
 // 単一値から組への変換関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeqPipe2(t *testing.T) {
+	t.Parallel()
+
 	reads, calls := 0, 0
 	var src seq.Seq[int] = func(yield func(int) bool) {
 		reads++
@@ -95,6 +101,8 @@ func TestSeqPipe2(t *testing.T) {
 }
 
 func TestSeq2DefinedFunctionType(t *testing.T) {
+	t.Parallel()
+
 	src2 := func(yield func(string, int) bool) {
 		if !yield("0", 1) {
 			return
@@ -121,6 +129,8 @@ func TestSeq2DefinedFunctionType(t *testing.T) {
 
 // 組から単一値への変換関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeq2Pipe(t *testing.T) {
+	t.Parallel()
+
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
 		reads++
@@ -156,6 +166,8 @@ func TestSeq2Pipe(t *testing.T) {
 
 // 組を変換する関数を接続時に呼び出し、入力・戻り値と nil を保持する。
 func TestSeq2Pipe2(t *testing.T) {
+	t.Parallel()
+
 	reads, calls := 0, 0
 	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
 		reads++

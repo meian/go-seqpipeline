@@ -11,6 +11,8 @@ import (
 
 // 同じ context のキャンセルで上流の受信待ちを解除し、パイプラインの出力を閉じる。
 func TestChannelPipelineCancelReceive(t *testing.T) {
+	t.Parallel()
+
 	synctest.Test(t, func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()

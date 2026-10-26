@@ -62,7 +62,11 @@ func BenchmarkValues(b *testing.B) {
 }
 
 func TestValues(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
 
 		got := valuesLibrary(values)
@@ -72,6 +76,8 @@ func TestValues(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
 
 		got := valuesGo(values)

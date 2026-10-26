@@ -67,7 +67,11 @@ func BenchmarkComposeSeq(b *testing.B) {
 }
 
 func TestComposeSeq(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Composed", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := composeSeqComposed(values)
 		const want int64 = 72
@@ -76,6 +80,8 @@ func TestComposeSeq(t *testing.T) {
 		}
 	})
 	t.Run("Pipe", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := composeSeqPipe(values)
 		const want int64 = 72
@@ -140,7 +146,11 @@ func BenchmarkComposeSeq2(b *testing.B) {
 }
 
 func TestComposeSeq2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Composed", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := composeSeq2Composed(values)
 		const want int64 = 54
@@ -149,6 +159,8 @@ func TestComposeSeq2(t *testing.T) {
 		}
 	})
 	t.Run("Pipe", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := composeSeq2Pipe(values)
 		const want int64 = 54
@@ -217,7 +229,11 @@ func BenchmarkCompose2Seq(b *testing.B) {
 }
 
 func TestCompose2Seq(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Composed", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := compose2SeqComposed(values)
 		const want int64 = 90
@@ -226,6 +242,8 @@ func TestCompose2Seq(t *testing.T) {
 		}
 	})
 	t.Run("Pipe", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := compose2SeqPipe(values)
 		const want int64 = 90
@@ -290,7 +308,11 @@ func BenchmarkCompose2Seq2(b *testing.B) {
 }
 
 func TestCompose2Seq2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Composed", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := compose2Seq2Composed(values)
 		const want int64 = 48
@@ -299,6 +321,8 @@ func TestCompose2Seq2(t *testing.T) {
 		}
 	})
 	t.Run("Pipe", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := compose2Seq2Pipe(values)
 		const want int64 = 48

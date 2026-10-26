@@ -65,6 +65,9 @@ func BenchmarkToSlice(b *testing.B) {
 }
 
 func TestToSlice(t *testing.T) {
+	t.Parallel()
+
+	// 検証対象がベンチマーク用の collectedValues を共有するため、子テストは直列に実行する。
 	t.Run("Library", func(t *testing.T) {
 		values := []int{1, 2, 3, 4, 5, 6}
 

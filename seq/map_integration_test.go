@@ -12,6 +12,8 @@ import (
 
 // 型引数なしで両方向を接続し、途中終了と再評価が変換をまたいで上流へ伝わることを確認する。
 func TestMapAcrossShapes(t *testing.T) {
+	t.Parallel()
+
 	reads, pairCalls, valueCalls := 0, 0, 0
 	src := iter.Seq[string](func(yield func(string) bool) {
 		for _, v := range []string{"Go", "iter", "Go"} {
@@ -48,6 +50,8 @@ func TestMapAcrossShapes(t *testing.T) {
 
 // どちらの入力形からも新 API で合成を開始し、往復前後の出力型に応じて seq に接続する。
 func TestMapComposeAcrossShapes(t *testing.T) {
+	t.Parallel()
+
 	toPairs := op.MapToSeq2(func(s string) ([]int, []byte) { return []int{len(s)}, []byte(s) })
 	toValue := op.MapToSeq(func(length []int, text []byte) string {
 		return fmt.Sprintf("%s:%d", text, length[0])

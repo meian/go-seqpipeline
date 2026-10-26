@@ -19,6 +19,7 @@ func trackTransform[I, O any](calls *[]string, name string, transform func(I) O)
 }
 
 func TestComposePipe(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	transform := op.Compose().Pipe(trackTransform(&calls, "map", op.Map(strconv.Itoa)))
 	assertEqual(t, calls, []string(nil))
@@ -33,6 +34,7 @@ func TestComposePipe(t *testing.T) {
 }
 
 func TestComposePipe2(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	zip := op.Zip(slices.Values([]string{"a", "b"}))
 	transform := op.Compose().Pipe2(trackTransform(&calls, "zip", zip.Operator[int]))
@@ -49,6 +51,7 @@ func TestComposePipe2(t *testing.T) {
 }
 
 func TestCompose2Pipe(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	transform := op.Compose2().Pipe(trackTransform(&calls, "values", op.Values[int, string]))
 	assertEqual(t, calls, []string(nil))
@@ -63,6 +66,7 @@ func TestCompose2Pipe(t *testing.T) {
 }
 
 func TestCompose2Pipe2(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	lengths := op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })
 	transform := op.Compose2().Pipe2(trackTransform(&calls, "map", lengths))
@@ -82,6 +86,7 @@ func TestCompose2Pipe2(t *testing.T) {
 // 各合成メソッドで、構築中は変換関数を呼ばず、適用時に接続順に呼ぶことを確認する。
 // 要素・キー・値を異なる型へ変換し、合成全体の入力型と途中の出力型の接続も検証する。
 func TestComposedPipe(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	first := op.Compose().Pipe(trackTransform(&calls, "first", op.Map(strconv.Itoa)))
 	next := op.Map(func(v string) []byte { return []byte(v + "!") })
@@ -94,6 +99,7 @@ func TestComposedPipe(t *testing.T) {
 }
 
 func TestComposedPipe2(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	first := op.Compose().Pipe(trackTransform(&calls, "first", op.Map(strconv.Itoa)))
 	transform := first.Pipe2(trackTransform(&calls, "next", withLength))
@@ -106,6 +112,7 @@ func TestComposedPipe2(t *testing.T) {
 }
 
 func TestComposedOperator(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	composed := op.Compose().Pipe(func(src iter.Seq[int]) iter.Seq[string] {
 		calls++
@@ -125,6 +132,7 @@ func TestComposedOperator(t *testing.T) {
 }
 
 func TestComposedToSeq2Pipe(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	first := op.Compose().Pipe2(trackTransform(&calls, "first", withLength))
 	transform := first.Pipe(trackTransform(&calls, "next", op.Keys[[]int, string]))
@@ -136,6 +144,7 @@ func TestComposedToSeq2Pipe(t *testing.T) {
 }
 
 func TestComposedToSeq2Pipe2(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	first := op.Compose().Pipe2(trackTransform(&calls, "first", withLength))
 	next := op.Map2(func(k []int, v string) (string, int) { return v, k[0] })
@@ -149,6 +158,7 @@ func TestComposedToSeq2Pipe2(t *testing.T) {
 }
 
 func TestComposedToSeq2Operator(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	composed := op.Compose().Pipe2(func(src iter.Seq[string]) iter.Seq2[[]int, string] {
 		calls++
@@ -169,6 +179,7 @@ func TestComposedToSeq2Operator(t *testing.T) {
 }
 
 func TestComposedToSeqPipe(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	first := op.Compose2().Pipe(trackTransform(&calls, "first", op.Values[int, string]))
 	transform := first.Pipe(trackTransform(&calls, "next", op.Map(func(v string) int { return len(v) })))
@@ -180,6 +191,7 @@ func TestComposedToSeqPipe(t *testing.T) {
 }
 
 func TestComposedToSeqPipe2(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	first := op.Compose2().Pipe(trackTransform(&calls, "first", op.Values[int, string]))
 	transform := first.Pipe2(trackTransform(&calls, "next", withLength))
@@ -192,6 +204,7 @@ func TestComposedToSeqPipe2(t *testing.T) {
 }
 
 func TestComposedToSeqOperator(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	composed := op.Compose2().Pipe(func(src iter.Seq2[int, string]) iter.Seq[string] {
 		calls++
@@ -211,6 +224,7 @@ func TestComposedToSeqOperator(t *testing.T) {
 }
 
 func TestComposed2Pipe(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	lengths := op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })
 	first := op.Compose2().Pipe2(trackTransform(&calls, "first", lengths))
@@ -223,6 +237,7 @@ func TestComposed2Pipe(t *testing.T) {
 }
 
 func TestComposed2Pipe2(t *testing.T) {
+	t.Parallel()
 	var calls []string
 	lengths := op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })
 	first := op.Compose2().Pipe2(trackTransform(&calls, "first", lengths))
@@ -237,6 +252,7 @@ func TestComposed2Pipe2(t *testing.T) {
 }
 
 func TestComposed2Operator(t *testing.T) {
+	t.Parallel()
 	calls := 0
 	composed := op.Compose2().Pipe2(func(src iter.Seq2[int, string]) iter.Seq2[string, int] {
 		calls++
@@ -258,6 +274,7 @@ func TestComposed2Operator(t *testing.T) {
 
 // 独自オペレーター間で nil をそのまま渡し、戻り値も保持することを確認する。
 func TestCompositionCustomNil(t *testing.T) {
+	t.Parallel()
 	var first op.Operator[int, string] = func(src iter.Seq[int]) iter.Seq[string] {
 		if src != nil {
 			t.Fatal("expected nil input")

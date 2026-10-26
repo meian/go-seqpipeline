@@ -8,6 +8,8 @@ import (
 )
 
 func TestFromSlice(t *testing.T) {
+	t.Parallel()
+
 	values := []int{3, 1, 2}
 	source := seq.FromSlice(values)
 	values[0] = 4
@@ -18,6 +20,8 @@ func TestFromSlice(t *testing.T) {
 }
 
 func TestToSlice(t *testing.T) {
+	t.Parallel()
+
 	values := []int{3, 1, 2}
 	source := seq.FromSlice(values)
 	got := seq.ToSlice(source)
@@ -27,6 +31,8 @@ func TestToSlice(t *testing.T) {
 }
 
 func TestToSliceEmpty(t *testing.T) {
+	t.Parallel()
+
 	for _, src := range []seq.Seq[int]{
 		seq.FromSlice([]int{}),
 		seq.FromSlice([]int(nil)),
@@ -37,6 +43,8 @@ func TestToSliceEmpty(t *testing.T) {
 }
 
 func TestToSliceNil(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		if recover() == nil {
 			t.Fatal("ToSlice(nil) must panic")
@@ -46,6 +54,8 @@ func TestToSliceNil(t *testing.T) {
 }
 
 func TestFromSeq(t *testing.T) {
+	t.Parallel()
+
 	source := seq.FromSeq(slices.Values([]int{3, 1, 2}))
 	for i := 0; i < 2; i++ {
 		assertEqual(t, seq.ToSlice(source), []int{3, 1, 2})
@@ -53,12 +63,16 @@ func TestFromSeq(t *testing.T) {
 }
 
 func TestFromSeqNil(t *testing.T) {
+	t.Parallel()
+
 	if seq.FromSeq[int](nil) != nil {
 		t.Fatal("FromSeq must preserve nil")
 	}
 }
 
 func TestToSeqNil(t *testing.T) {
+	t.Parallel()
+
 	var zero seq.Seq[int]
 	if seq.ToSeq(zero) != nil {
 		t.Fatal("ToSeq must preserve nil")
@@ -66,6 +80,8 @@ func TestToSeqNil(t *testing.T) {
 }
 
 func TestToSeq(t *testing.T) {
+	t.Parallel()
+
 	starts, reads, stops := 0, 0, 0
 	source := seq.FromSeq(func(yield func(int) bool) {
 		starts++
@@ -91,6 +107,8 @@ func TestToSeq(t *testing.T) {
 }
 
 func TestFromMap(t *testing.T) {
+	t.Parallel()
+
 	values := map[string]int{"a": 1, "b": 2}
 	pipeline := seq.FromMap(values)
 	values["c"] = 3
@@ -106,6 +124,8 @@ func TestFromMap(t *testing.T) {
 }
 
 func TestToMap(t *testing.T) {
+	t.Parallel()
+
 	reads := 0
 	src := func(yield func(string, int) bool) {
 		for _, p := range []pair[string, int]{
@@ -130,6 +150,8 @@ func TestToMap(t *testing.T) {
 }
 
 func TestToMapEmpty(t *testing.T) {
+	t.Parallel()
+
 	for _, src := range []seq.Seq2[string, int]{
 		seq.FromMap(map[string]int{}),
 		seq.FromMap(map[string]int(nil)),
@@ -146,6 +168,8 @@ func TestToMapEmpty(t *testing.T) {
 }
 
 func TestToMapNil(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		if recover() == nil {
 			t.Fatal("ToMap(nil) must panic")
@@ -155,6 +179,8 @@ func TestToMapNil(t *testing.T) {
 }
 
 func TestFromSeq2(t *testing.T) {
+	t.Parallel()
+
 	source := seq.FromSeq2(slices.All([]string{"b", "a"}))
 	want := []pair[int, string]{{Key: 0, Value: "b"}, {Key: 1, Value: "a"}}
 	for i := 0; i < 2; i++ {
@@ -163,12 +189,16 @@ func TestFromSeq2(t *testing.T) {
 }
 
 func TestFromSeq2Nil(t *testing.T) {
+	t.Parallel()
+
 	if seq.FromSeq2[int, string](nil) != nil {
 		t.Fatal("FromSeq2 must preserve nil")
 	}
 }
 
 func TestToSeq2Nil(t *testing.T) {
+	t.Parallel()
+
 	var zero seq.Seq2[int, string]
 	if seq.ToSeq2(zero) != nil {
 		t.Fatal("ToSeq2 must preserve nil")
@@ -176,6 +206,8 @@ func TestToSeq2Nil(t *testing.T) {
 }
 
 func TestToSeq2(t *testing.T) {
+	t.Parallel()
+
 	src := func(yield func(string, int) bool) {
 		if !yield("a", 1) {
 			return

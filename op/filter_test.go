@@ -9,6 +9,7 @@ import (
 
 // 採用・不採用・重複を含む入力で、順序・再評価・途中停止と全件不採用を確認する。
 func TestFilter(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	calls := 0
 	minimum := 1
@@ -38,6 +39,7 @@ func TestFilter(t *testing.T) {
 }
 
 func TestFilterNilInput(t *testing.T) {
+	t.Parallel()
 	iterator := op.Filter(func(v int) bool {
 		t.Fatal("Filter callback called")
 		return true
@@ -49,6 +51,7 @@ func TestFilterNilInput(t *testing.T) {
 
 // 採用・不採用・重複を含む入力で、順序・再評価・途中停止と全件不採用を確認する。
 func TestFilter2(t *testing.T) {
+	t.Parallel()
 	var state inputTrace
 	calls := 0
 	minimum := 1
@@ -80,6 +83,7 @@ func TestFilter2(t *testing.T) {
 }
 
 func TestFilter2NilInput(t *testing.T) {
+	t.Parallel()
 	iterator := op.Filter2(func(k int, v string) bool {
 		t.Fatal("Filter2 callback called")
 		return true

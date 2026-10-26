@@ -69,7 +69,11 @@ func BenchmarkToChannel(b *testing.B) {
 }
 
 func TestToChannel(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := toChannelLibrary(values)
@@ -79,6 +83,8 @@ func TestToChannel(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6}
 
 		got := toChannelGo(values)

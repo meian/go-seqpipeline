@@ -63,7 +63,11 @@ func BenchmarkTakeOperator(b *testing.B) {
 }
 
 func TestTakeOperator(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := takeOperatorLibrary(values)
@@ -73,6 +77,8 @@ func TestTakeOperator(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := takeOperatorGo(values)
@@ -138,7 +144,11 @@ func BenchmarkTakeOperator2(b *testing.B) {
 }
 
 func TestTakeOperator2(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Library", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := takeOperator2Library(values)
@@ -148,6 +158,8 @@ func TestTakeOperator2(t *testing.T) {
 		}
 	})
 	t.Run("Go", func(t *testing.T) {
+		t.Parallel()
+
 		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
 		got := takeOperator2Go(values)
