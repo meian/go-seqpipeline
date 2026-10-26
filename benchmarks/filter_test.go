@@ -18,7 +18,17 @@ func filterLibrary(values []int) int64 {
 	return sum
 }
 
-func BenchmarkFilterLibrary(b *testing.B) {
+func filterGo(values []int) int64 {
+	var sum int64
+	for v := range slices.Values(values) {
+		if v%3 != 0 {
+			sum += int64(v)
+		}
+	}
+	return sum
+}
+
+func BenchmarkFilter(b *testing.B) {
 	b.Run("class=Unit/api=Filter/phase=Evaluate/ref=FilterLoop/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -35,29 +45,6 @@ func BenchmarkFilterLibrary(b *testing.B) {
 			checksum = filterLibrary(values)
 		}
 	})
-}
-
-func TestFilterLibrary(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := filterLibrary(values)
-	const want int64 = 12
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func filterGo(values []int) int64 {
-	var sum int64
-	for v := range slices.Values(values) {
-		if v%3 != 0 {
-			sum += int64(v)
-		}
-	}
-	return sum
-}
-
-func BenchmarkFilterGo(b *testing.B) {
 	b.Run("class=Unit/api=Filter/phase=Evaluate/ref=FilterLoop/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -76,14 +63,25 @@ func BenchmarkFilterGo(b *testing.B) {
 	})
 }
 
-func TestFilterGo(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestFilter(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := filterGo(values)
-	const want int64 = 12
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := filterLibrary(values)
+		const want int64 = 12
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := filterGo(values)
+		const want int64 = 12
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
 
 func filter2Library(values []int) int64 {
@@ -96,7 +94,17 @@ func filter2Library(values []int) int64 {
 	return sum
 }
 
-func BenchmarkFilter2Library(b *testing.B) {
+func filter2Go(values []int) int64 {
+	var sum int64
+	for k, v := range slices.All(values) {
+		if v%3 != 0 {
+			sum += int64(k) + int64(v)
+		}
+	}
+	return sum
+}
+
+func BenchmarkFilter2(b *testing.B) {
 	b.Run("class=Unit/api=Filter2/phase=Evaluate/ref=Filter2Loop/impl=Library/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -113,29 +121,6 @@ func BenchmarkFilter2Library(b *testing.B) {
 			checksum = filter2Library(values)
 		}
 	})
-}
-
-func TestFilter2Library(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
-
-	got := filter2Library(values)
-	const want int64 = 20
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
-}
-
-func filter2Go(values []int) int64 {
-	var sum int64
-	for k, v := range slices.All(values) {
-		if v%3 != 0 {
-			sum += int64(k) + int64(v)
-		}
-	}
-	return sum
-}
-
-func BenchmarkFilter2Go(b *testing.B) {
 	b.Run("class=Unit/api=Filter2/phase=Evaluate/ref=Filter2Loop/impl=Go/N=64", func(b *testing.B) {
 		values := input(64)
 
@@ -154,12 +139,23 @@ func BenchmarkFilter2Go(b *testing.B) {
 	})
 }
 
-func TestFilter2Go(t *testing.T) {
-	values := []int{1, 2, 3, 4, 5, 6}
+func TestFilter2(t *testing.T) {
+	t.Run("Library", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
 
-	got := filter2Go(values)
-	const want int64 = 20
-	if got != want {
-		t.Fatalf("got %d; want %d", got, want)
-	}
+		got := filter2Library(values)
+		const want int64 = 20
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
+	t.Run("Go", func(t *testing.T) {
+		values := []int{1, 2, 3, 4, 5, 6}
+
+		got := filter2Go(values)
+		const want int64 = 20
+		if got != want {
+			t.Fatalf("got %d; want %d", got, want)
+		}
+	})
 }
