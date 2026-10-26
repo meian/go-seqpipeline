@@ -21,7 +21,7 @@ const (
 
 // Zip returns a configuration value for pairing elements of two sequences in
 // iteration order.
-// The connected sequence supplies keys, and values supplies values.
+// The connected sequence supplies keys, and the sequence passed to Zip supplies values.
 // Pass Operator to seq.Seq.Pipe2; by default, iteration stops with the shorter input.
 // AlignBy sets the stopping condition, while WithDefaultKey and WithDefaultValue
 // set values used when one input ends first.
@@ -77,6 +77,8 @@ type zipKeyOperator[K, V any] struct {
 }
 
 // AlignBy selects which input determines the output length.
+// When the alignment requires padding, missing keys use the configured default
+// key and missing values use the configured default value.
 // Values other than AlignShortest, AlignLeft, AlignRight, and AlignLongest panic.
 func (z zipKeyOperator[K, V]) AlignBy(alignment ZipAlign) zipKeyOperator[K, V] {
 	z.zip = z.zip.AlignBy(alignment)
@@ -84,6 +86,7 @@ func (z zipKeyOperator[K, V]) AlignBy(alignment ZipAlign) zipKeyOperator[K, V] {
 }
 
 // WithDefaultValue sets the value used when the value input ends first.
+// Missing keys continue to use the default key configured by WithDefaultKey.
 func (z zipKeyOperator[K, V]) WithDefaultValue(defaultValue V) zipKeyOperator[K, V] {
 	z.zip = z.zip.WithDefaultValue(defaultValue)
 	return z
