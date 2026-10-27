@@ -130,6 +130,7 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
 </details>
+
 ### Seq.Pipe：構築・評価
 
 Go：`slices.Values` で値を変換。  

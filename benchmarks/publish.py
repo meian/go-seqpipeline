@@ -493,7 +493,7 @@ def render_compose(directory, destination, benchtime, count, procs):
     prior_environment = (ROOT/'results/environment.md').read_text().split('\n## Compose / Compose2\n', 1)[0]
     updated_environment = prior_environment.rstrip('\n')+'\n\n## Compose / Compose2\n\n'
     updated_environment += '以下は Compose / Compose2 の測定情報で、他の結果には冒頭の測定情報を適用する。  \n\n'+metadata+'\n'
-    replacement = unit.split('## パイプ接続\n\n', 1)[1]
+    replacement = unit.split('## パイプ接続\n\n', 1)[1]+'\n'
     updated = replace_compose_sections((ROOT/'results/unit.md').read_text(), replacement)
     destination.mkdir(parents=True, exist_ok=True)
     (destination/'unit.md').write_text(updated)

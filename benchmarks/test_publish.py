@@ -120,6 +120,7 @@ class PublishTest(unittest.TestCase):
         with mock.patch.object(publish.SourceLinks, 'from_commit', return_value=sources):
             publish.render_compose(self.directory, destination, '500ms', '1', '2')
         updated = (destination/'unit.md').read_text()
+        self.assertTrue('</details>\n\n### Seq.Pipe：構築・評価\n' in updated)
         original = (publish.ROOT/'results/unit.md').read_text()
         self.assertEqual(publish.replace_compose_sections(updated, ''),
                          publish.replace_compose_sections(original, ''))
