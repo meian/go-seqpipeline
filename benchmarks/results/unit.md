@@ -15,27 +15,27 @@ Compose の Pipe は個別接続、Composed は合成したオペレーターを
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L25) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L11) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L25) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 438.3 ±2% | 585.8 ±2% | 1.337× |
-| 4096 | 27,082 ±3% | 28,103.5 ±1% | 1.038× |
+| 64 | 430.25 ±2% | 586.15 ±2% | 1.362× |
+| 4096 | 26,885.5 ±3% | 27,909 ±3% | 1.038× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L25) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L11) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L25) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L11) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L25) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L11) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L25) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L11) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +33.65% | p=0.000 n=10 |
+| 64 | sec/op | +36.23% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +3.77% | p=0.000 n=10 |
+| 4096 | sec/op | +3.81% | p=0.007 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -45,27 +45,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L95) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L81) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L108) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L94) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 500.45 ±11% | 588.9 ±2% | 1.177× |
-| 4096 | 31,142 ±9% | 31,449 ±2% | 1.010× |
+| 64 | 501.3 ±10% | 587.45 ±2% | 1.172× |
+| 4096 | 31,181.5 ±9% | 32,030.5 ±1% | 1.027× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L95) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L81) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L95) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L81) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L108) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L94) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L108) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L94) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +17.67% | p=0.000 n=10 |
+| 64 | sec/op | +17.19% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | ~ | p=0.971 n=10 |
+| 4096 | sec/op | ~ | p=0.143 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -75,27 +75,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L165) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L151) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L191) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L177) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 472.75 ±1% | 587.2 ±2% | 1.242× |
-| 4096 | 29,696 ±1% | 29,469 ±1% | 0.992× |
+| 64 | 468.35 ±1% | 581.55 ±2% | 1.242× |
+| 4096 | 29,217.5 ±1% | 29,290 ±1% | 1.002× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L165) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L151) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L165) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L151) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L191) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L177) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L191) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L177) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +24.21% | p=0.000 n=10 |
+| 64 | sec/op | +24.17% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | -0.76% | p=0.043 n=10 |
+| 4096 | sec/op | ~ | p=0.315 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -105,27 +105,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L235) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L221) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L274) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L260) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 425.5 ±1% | 568.75 ±2% | 1.337× |
-| 4096 | 26,261.5 ±1% | 27,130.5 ±1% | 1.033× |
+| 64 | 445.2 ±1% | 581.65 ±1% | 1.306× |
+| 4096 | 27,950.5 ±1% | 28,295.5 ±1% | 1.012× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L235) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L221) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L235) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b/benchmarks/compose_test.go#L221) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L274) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L260) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L274) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L260) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +33.67% | p=0.000 n=10 |
+| 64 | sec/op | +30.65% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +3.31% | p=0.000 n=10 |
+| 4096 | sec/op | +1.23% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
