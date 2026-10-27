@@ -18,8 +18,8 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 測定日時（UTC） | 2026-10-27T14:13:25+00:00 |
-| 対象コード（Compose のみ） | [91a380220ef7](https://github.com/meian/go-seqpipeline/commit/91a380220ef7780c7d41b069f3d829b506ae6c39) |
+| 測定日時（UTC） | 2026-10-27T15:03:31+00:00 |
+| 対象コード（Compose のみ） | [ca9348c5aa26](https://github.com/meian/go-seqpipeline/commit/ca9348c5aa2627bac7a10ab1cd22cba8da394c2b) |
 | Go | go version go1.27.3 darwin/arm64 |
 | OS / CPU | macOS-27.0.1-arm64-arm-64bit / Apple M4 |
 | GOMAXPROCS | 2 |
