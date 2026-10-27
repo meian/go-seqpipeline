@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 METRICS = ('sec/op', 'B/op', 'allocs/op')
+COMPOSE_APIS = ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
 
 
 def validate(path, count):
@@ -62,7 +63,8 @@ def processing_function(case):
     dimensions = dict(entries)
     if kind == 'Unit':
         api = dimensions['api'].replace('.', '')
-        return api[0].lower()+api[1:]+dimensions['impl']
+        suffix = f"Depth{dimensions['depth']}{dimensions['scope']}" if dimensions['api'] in COMPOSE_APIS else ''
+        return api[0].lower()+api[1:]+suffix+dimensions['impl']
     implementation = dimensions.get('impl', dimensions.get('phase'))
     if kind == 'ScenarioPipeline':
         implementation = 'Library' if implementation == 'Pipeline' else implementation
@@ -212,10 +214,15 @@ def displayed_dimensions(case):
 def condition(case, omit=()):
     dimensions = displayed_dimensions(case)
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
-              'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
+              'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'scope': '', 'phase': ''}
+    if dimensions.get('api') in COMPOSE_APIS and dimensions.get('phase') == 'Evaluate':
+        dimensions.pop('phase')
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
               'Ascending': '昇順', 'Descending': '降順',
+              'Build': '構築込み',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
+    if dimensions.get('scope') == 'Reuse':
+        dimensions['scope'] = '構築済みを利用'
     order = list(labels)+sorted(set(dimensions)-set(labels)-{'api', 'impl', 'ref'})
     return ' / '.join(labels.get(k, k+'=')+values.get(dimensions[k], dimensions[k])
                       for k in order if k in dimensions and k not in omit)
@@ -316,9 +323,7 @@ Compose の Pipe は個別接続、Composed は合成したオペレーターを
     groups = {}
     for c in pairs:
         dims = dict(c.base[1])
-        expected = ('Pipe', 'Composed') if dims['api'] in (
-            'Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2',
-        ) else ('Go', 'Library')
+        expected = ('Pipe', 'Composed') if dims['api'] in COMPOSE_APIS else ('Go', 'Library')
         if (dims.get('impl'), dict(c.target[1]).get('impl')) != expected:
             raise ValueError('unit comparison must be '+' / '.join(expected))
         covered.update((c.base, c.target))
@@ -464,6 +469,46 @@ def render(directory, destination):
     return snapshot
 
 
+def replace_compose_sections(current, replacement):
+    sections = re.split(r'(?=^#{2,3} )', current, flags=re.MULTILINE)
+    positions = [i for i, section in enumerate(sections)
+                 if re.match(r'^### Compose(?:2)?\.Seq2?：', section)
+                 or section.startswith('### Compose / Compose2 の測定条件\n')]
+    if not positions or positions != list(range(positions[0], positions[-1]+1)):
+        raise ValueError('missing or noncontiguous Compose sections')
+    return ''.join(sections[:positions[0]])+replacement+''.join(sections[positions[-1]+1:])
+
+
+def render_compose(directory, destination, benchtime, count, procs):
+    snapshot = Snapshot(directory)
+    expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/depth={depth}'
+                    f'/scope={scope}/impl={impl}/N={n}')
+                for api in COMPOSE_APIS for depth in ('2', '4')
+                for scope in ('Build', 'Reuse') for impl in ('Pipe', 'Composed')
+                for n in ('64', '4096')}
+    if set(snapshot.cases) != expected:
+        raise ValueError('Compose update requires exactly the 64 depth/scope/input/implementation cases')
+    if len(snapshot.cases) != validate(directory/'raw.txt', int(count)):
+        raise ValueError('raw and aggregate case counts differ')
+    commit = (directory/'commit.txt').read_text().strip()
+    snapshot.sources = SourceLinks.from_commit(ROOT.parent, commit)
+    unit = render_unit(snapshot)
+    snapshot.verify()
+    snapshot.sources.verify(snapshot.cases)
+    environment(directory, benchtime, count, procs, directory/'compose-environment.md')
+    metadata = (directory/'compose-environment.md').read_text().split('\n\n', 1)[1]
+    replacement = '### Compose / Compose2 の測定条件\n\n'
+    replacement += '以下の Compose / Compose2 の表には、この測定情報を適用する。  \n'
+    replacement += '他の API の測定情報は [実行環境](environment.md) を参照。  \n'
+    replacement += '入力・処理・構築範囲は [測定条件](../METHOD.md#compose--compose2) を参照。  \n\n'+metadata+'\n'
+    replacement += unit.split('## パイプ接続\n\n', 1)[1]
+    updated = replace_compose_sections((ROOT/'results/unit.md').read_text(), replacement)
+    destination.mkdir(parents=True, exist_ok=True)
+    (destination/'unit.md').write_text(updated)
+    print(f'{len(snapshot.cases)} Compose cases / {len(snapshot.values)} metrics published')
+    return snapshot
+
+
 def environment(workdir, benchtime, count, procs, destination):
     commit = (workdir/'commit.txt').read_text().strip()
     version = (workdir/'go-version.txt').read_text().strip()
@@ -496,6 +541,9 @@ if __name__ == '__main__':
         validate(Path(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == 'render':
         render(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif sys.argv[1] == 'report-compose':
+        workdir = Path(sys.argv[2])
+        render_compose(workdir, workdir/'published/results', *sys.argv[3:])
     elif sys.argv[1] == 'report':
         workdir = Path(sys.argv[2])
         destination = workdir/'published/results'
@@ -504,4 +552,4 @@ if __name__ == '__main__':
             raise ValueError('raw and aggregate case counts differ')
         environment(workdir, *sys.argv[3:], destination/'environment.md')
     else:
-        raise SystemExit('use validate, render or report')
+        raise SystemExit('use validate, render, report or report-compose')

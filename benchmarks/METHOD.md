@@ -38,9 +38,35 @@ Zip の既定ケースは等長入力、補完設定のケースは片側を半�
 `seq.Seq.Pipe` は Map、`seq.Seq.Pipe2` は単一入力の値 `v` から `(v, (v+1)&65535)` を返す MapToSeq2、`seq.Seq2.Pipe` / `Pipe2` は MapToSeq / Map2 を接続した費用を含む。  
 設定・型変換も反復まで含むため、呼び出し単独の費用ではない。  
 FromRange は `int` / `uint` を使い、刻み幅 1 / -1 で終点を含む N 件を生成・加算する。  
-Compose / Compose2 は、単一値と組を行き来する変換の合成、入力への接続、全件の加算を含む。  
-出力が単一値のケースは 4 演算、組のケースは 2 演算を合成する。  
-この比較では、Pipe は同じオペレーターを `Seq.Pipe` / `Pipe2` または `Seq2.Pipe` / `Pipe2` で直接接続し、Composed は Compose / Compose2 で合成してから入力に接続する。  
+### Compose / Compose2
+
+`Compose.Seq` / `Compose.Seq2` は単一値入力、`Compose2.Seq` / `Compose2.Seq2` は添字と値の組を入力とする。  
+末尾の `Seq` / `Seq2` は出力が単一値 / キーと値の組であることを表す。  
+各 API で 2 段 / 4 段、64 / 4096 件を比較する。  
+Pipe は個別のオペレーターを入力へ直接接続し、Composed は同じ順序で合成した値の `.Operator` を接続する。  
+
+構築込み（Build）は毎回オペレーターを構築し、Composed は合成値の構築も含む。  
+構築済みを利用（Reuse）はループ前に構築を済ませ、個別のオペレーターまたは合成値を繰り返し入力へ接続する。  
+直接接続側の Reuse は個別のオペレーターを合成しない。  
+両構築範囲とも入力 iterator の生成・入力への接続・全件反復・加算を含む。  
+入力生成はどちらも計測に含めず、入力は 0 から N−1 の整数とする。  
+出力が単一値なら値を、組ならキーと値を `int64` に変換して加算する。  
+
+| API | 段数 | 1 段目 | 2 段目 | 3 段目 | 4 段目 |
+| --- | --- | --- | --- | --- | --- |
+| Compose.Seq | 2 | Map(v+1) | Map(v*2) | — | — |
+| Compose.Seq | 4 | Map(v+1) | Map(v*2) | MapToSeq2(v,v+3) | MapToSeq(k+v) |
+| Compose.Seq2 | 2 | MapToSeq2(v,v+3) | Map2(k+1,v*2) | — | — |
+| Compose.Seq2 | 4 | MapToSeq2(v,v+3) | Map2(k+1,v*2) | Map2(k*2,v+3) | Map2(k+3,v*2) |
+| Compose2.Seq | 2 | MapToSeq(k+v) | Map(v*2) | — | — |
+| Compose2.Seq | 4 | MapToSeq(k+v) | Map(v*2) | MapToSeq2(v,v+3) | MapToSeq(k+v) |
+| Compose2.Seq2 | 2 | Map2(k+1,v*2) | Map2(k*2,v+3) | — | — |
+| Compose2.Seq2 | 4 | Map2(k+1,v*2) | Map2(k*2,v+3) | MapToSeq(k+v) | MapToSeq2(v,v+3) |
+
+表の `k` / `v` は各段への入力のキー / 値を表す。  
+通常の最適化は両実装で有効とし、インライン化や割り当て除去の成否による差も含む。  
+倍率は同じ API・段数・構築範囲・件数の処理構成と測定時の Go バージョンに限り、Seq / Seq2 全般の性能差を表さない。  
+Compose / Compose2 の測定情報は [API 別結果](results/unit.md) の各表に共通する測定条件を参照。  
 
 ## 利用場面別結果（Scenario）
 

@@ -6,6 +6,7 @@ import subprocess
 import time
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import publish
@@ -62,33 +63,93 @@ class PublishTest(unittest.TestCase):
         self.assertIn('保存済み反復 Warm', scenario)
         self.assertIn('| 8 | Pipeline | 4 ±2% | 4 ±2% |', scenario)
 
-    def test_compose_compares_individual_and_composed_connections(self):
-        compose_rows = []
-        apis = ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
+    def compose_rows(self):
+        all_rows, comparisons = [], []
         for metric in publish.METRICS:
-            self.all_rows += [['', '-', ''], ['', metric, 'CI']]
-            compose_rows += [['', 'Pipe', '', 'Composed', '', '', ''],
-                             ['', metric, 'CI', metric, 'CI', 'vs base', 'P']]
-            for api in apis:
-                case = f'class=Unit/api={api}/N=8/phase=Evaluate/ref=DirectPipe'
-                self.all_rows += [[f'{api}/{case}/impl={impl}-2', value, '2%']
-                                  for impl, value in (('Pipe', 2), ('Composed', 1))]
-                compose_rows += [[f'*/{case}-2', 2, '2%', 1, '2%', '-50.00%', 'p=0.000 n=10']]
-        self.write('all.csv', self.all_rows)
-        self.write('unit-compose.csv', compose_rows)
+            all_rows += [['', '-', ''], ['', metric, 'CI']]
+            comparisons += [['', 'Pipe', '', 'Composed', '', '', ''],
+                            ['', metric, 'CI', metric, 'CI', 'vs base', 'P']]
+            for api_index, api in enumerate(publish.COMPOSE_APIS, 1):
+                for depth in (2, 4):
+                    for scope in ('Build', 'Reuse'):
+                        for n in (64, 4096):
+                            case = (f'class=Unit/api={api}/N={n}/phase=Evaluate/ref=DirectPipe'
+                                    f'/depth={depth}/scope={scope}')
+                            value = api_index*10000+depth*1000+n+(scope == 'Reuse')
+                            all_rows += [[f'{api}/{case}/impl={impl}-2', v, '2%']
+                                         for impl, v in (('Pipe', value), ('Composed', value*2))]
+                            comparisons += [[f'*/{case}-2', value, '2%', value*2, '2%',
+                                             '+100.00%', 'p=0.000 n=10']]
+        return all_rows, comparisons
+
+    def test_compose_compares_only_equal_depth_scope_and_input(self):
+        all_rows, comparisons = self.compose_rows()
+        self.write('all.csv', self.all_rows+all_rows)
+        self.write('unit-compose.csv', comparisons)
         destination = self.directory/'output/results'
         snapshot = publish.render(self.directory, destination)
         unit = (destination/'unit.md').read_text()
-        self.assertEqual(len(snapshot.seen), 39)
-        self.assertIn('| N | Go ns/op | Library ns/op | 倍率 |', unit)
-        self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 4)
-        for api in apis:
-            self.assertIn(f'### {api}：構築・評価', unit)
-        self.assertIn('Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。', unit)
-        self.assertIn('| 8 | 2,000,000,000 ±2% | 1,000,000,000 ±2% | 0.500× |', unit)
-        self.assertIn('| 8 | Pipe | 2 ±2% | 2 ±2% |', unit)
-        self.assertIn('| 8 | Composed | 1 ±2% | 1 ±2% |', unit)
-        self.assertNotIn('倍率は Library / Go', unit)
+        self.assertEqual(len(snapshot.seen), 207)
+        self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 16)
+        for api in publish.COMPOSE_APIS:
+            for depth in (2, 4):
+                for scope in ('構築込み', '構築済みを利用'):
+                    self.assertIn(f'### {api}：段数={depth} / {scope}', unit)
+        self.assertEqual(unit.count('2.000×'), 33)
+        # 段数・構築範囲の片方を別条件に変えると、中央値の不一致で拒否する。
+        for dimension, changed in (('depth=2', 'depth=4'), ('scope=Build', 'scope=Reuse')):
+            rows = [row[:] for row in comparisons]
+            rows[2][0] = rows[2][0].replace(dimension, changed)
+            self.write('unit-compose.csv', rows)
+            with self.subTest(dimension=dimension):
+                with self.assertRaisesRegex(ValueError, 'inconsistent median'):
+                    publish.Snapshot(self.directory)
+
+    def test_compose_partial_update_preserves_other_results_and_metadata(self):
+        all_rows, comparisons = self.compose_rows()
+        self.write('all.csv', all_rows)
+        self.write('unit-compose.csv', comparisons)
+        (self.directory/'unit.csv').unlink()
+        (self.directory/'future.csv').unlink()
+        (self.directory/'commit.txt').write_text('a'*40+'\n')
+        (self.directory/'go-version.txt').write_text('go version test\n')
+        (self.directory/'go-env.txt').write_text('darwin\narm64\nv8.0\n\n\n\n\n')
+        cases = publish.Snapshot(self.directory).cases
+        raw = 'cpu: Test CPU\n'+''.join(
+            'Benchmark/class='+case[0]+'/'+ '/'.join(k+'='+v for k, v in case[1])+
+            '-2 1 1 ns/op 0 B/op 0 allocs/op\n' for case in cases)+'PASS\n'
+        (self.directory/'raw.txt').write_text(raw)
+        sources = publish.SourceLinks({'benchmarks/compose_test.go':
+                                       (publish.ROOT/'compose_test.go').read_text()}, 'a'*40)
+        original = (publish.ROOT/'results/unit.md').read_text()
+        untouched = publish.replace_compose_sections(original, 'COMPOSE\n')
+        destination = self.directory/'partial/results'
+        with mock.patch.object(publish.SourceLinks, 'from_commit', return_value=sources):
+            publish.render_compose(self.directory, destination, '500ms', '1', '2')
+        updated = (destination/'unit.md').read_text()
+        self.assertEqual(publish.replace_compose_sections(updated, 'COMPOSE\n'), untouched)
+        self.assertIn('500ms / 1', updated)
+        self.assertIn('Test CPU', updated)
+        self.assertIn('go version test', updated)
+        self.assertIn('/blob/'+'a'*40+'/benchmarks/compose_test.go#L', updated)
+        self.assertEqual(updated.count('### Compose / Compose2 の測定条件'), 1)
+        self.assertEqual(list(destination.iterdir()), [destination/'unit.md'])
+        self.assertFalse((destination.parent/'REPORT.md').exists())
+        # 全件 CSV の一つの実装を欠落させても、部分公開を進めない。
+        self.write('all.csv', [row for row in all_rows
+                              if not (row and str(row[0]).endswith('scope=Build/impl=Pipe-2')
+                                      and '/api=Compose.Seq/N=64/' in str(row[0])
+                                      and '/depth=2/' in str(row[0]))])
+        (self.directory/'unit-compose.csv').unlink()
+        with self.assertRaisesRegex(ValueError, 'exactly the 64'):
+            publish.render_compose(self.directory, destination, '500ms', '1', '2')
+        self.assertEqual((destination/'unit.md').read_text(), updated)
+
+    def test_compose_sections_must_exist_and_be_contiguous(self):
+        for current in ('# Empty\n', '### Compose.Seq：old\n### Map：keep\n### Compose2.Seq：old\n'):
+            with self.subTest(current=current):
+                with self.assertRaisesRegex(ValueError, 'Compose sections'):
+                    publish.replace_compose_sections(current, 'new\n')
 
     def test_result_tables_keep_conditions_and_comparisons_separate(self):
         snapshot = publish.Snapshot(self.directory)
@@ -242,7 +303,7 @@ class SourceLinksTest(unittest.TestCase):
     def test_grouped_entries_link_each_processing_implementation(self):
         for condition, suffix, implementations in [
             ('Unit/api=Map/phase=Evaluate', 'Map', ('Library', 'Go')),
-            ('Unit/api=Compose2.Seq2/phase=Evaluate', 'Compose2Seq2', ('Composed', 'Pipe')),
+            ('Unit/api=Compose2.Seq2/phase=Evaluate/depth=4/scope=Build', 'Compose2Seq2', ('Composed', 'Pipe')),
             ('ScenarioPipeline/kind=Seq', 'ScenarioPipelineSeq', ('Pipeline', 'Loop', 'Functions')),
             ('ScenarioPipeline/kind=Seq2', 'ScenarioPipelineSeq2', ('Pipeline', 'Loop', 'Functions')),
             ('ScenarioChannel', 'ScenarioChannel', ('Seq', 'ToChannel', 'Direct', 'FromChannel', 'RoundTrip')),
@@ -297,13 +358,17 @@ class SourceLinksTest(unittest.TestCase):
                     case = publish.key(f'ScenarioCache/kind={kind}/phase={phase}')
                     self.assertEqual(publish.entry_suffix(case), f'ScenarioCache{kind}{phase}')
 
-    def test_compose_names_identify_connection_implementation(self):
+    def test_compose_names_identify_depth_scope_and_connection(self):
         for api, stem in [('Compose.Seq', 'composeSeq'), ('Compose.Seq2', 'composeSeq2'),
                           ('Compose2.Seq', 'compose2Seq'), ('Compose2.Seq2', 'compose2Seq2')]:
-            for implementation in ('Pipe', 'Composed'):
-                with self.subTest(api=api, implementation=implementation):
-                    name = f'Unit/api={api}/N=64/phase=Evaluate/ref=DirectPipe/impl={implementation}'
-                    self.assertEqual(publish.processing_function(publish.key(name)), stem+implementation)
+            for depth in (2, 4):
+                for scope in ('Build', 'Reuse'):
+                    for impl in ('Pipe', 'Composed'):
+                        with self.subTest(api=api, depth=depth, scope=scope, impl=impl):
+                            name = (f'Unit/api={api}/N=64/phase=Evaluate/ref=DirectPipe'
+                                    f'/depth={depth}/scope={scope}/impl={impl}')
+                            self.assertEqual(publish.processing_function(publish.key(name)),
+                                             f'{stem}Depth{depth}{scope}{impl}')
 
 
 class MeasureCleanupTest(unittest.TestCase):
