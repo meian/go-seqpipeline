@@ -12,7 +12,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 METRICS = ('sec/op', 'B/op', 'allocs/op')
-COMPOSE_APIS = ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
 
 
 def validate(path, count):
@@ -214,9 +213,6 @@ def condition(case, omit=()):
     dimensions = displayed_dimensions(case)
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
               'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
-    if dimensions.get('api') in COMPOSE_APIS:
-        dimensions.pop('depth', None)
-        dimensions.pop('scope', None)
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
               'Ascending': '昇順', 'Descending': '降順',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
@@ -320,7 +316,9 @@ Compose の Pipe は個別接続、Composed は合成したオペレーターを
     groups = {}
     for c in pairs:
         dims = dict(c.base[1])
-        expected = ('Pipe', 'Composed') if dims['api'] in COMPOSE_APIS else ('Go', 'Library')
+        expected = ('Pipe', 'Composed') if dims['api'] in (
+            'Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2',
+        ) else ('Go', 'Library')
         if (dims.get('impl'), dict(c.target[1]).get('impl')) != expected:
             raise ValueError('unit comparison must be '+' / '.join(expected))
         covered.update((c.base, c.target))
@@ -469,8 +467,7 @@ def render(directory, destination):
 def replace_compose_sections(current, replacement):
     sections = re.split(r'(?=^#{2,3} )', current, flags=re.MULTILINE)
     positions = [i for i, section in enumerate(sections)
-                 if re.match(r'^### Compose(?:2)?\.Seq2?(?:：|\n)', section)
-                 or section.startswith('### Compose / Compose2 の測定条件\n')]
+                 if re.match(r'^### Compose(?:2)?\.Seq2?：', section)]
     if not positions or positions != list(range(positions[0], positions[-1]+1)):
         raise ValueError('missing or noncontiguous Compose sections')
     return ''.join(sections[:positions[0]])+replacement+''.join(sections[positions[-1]+1:])
@@ -478,11 +475,11 @@ def replace_compose_sections(current, replacement):
 
 def render_compose(directory, destination, benchtime, count, procs):
     snapshot = Snapshot(directory)
-    expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/depth=4'
-                    f'/scope=Build/impl={impl}/N={n}')
-                for api in COMPOSE_APIS for impl in ('Pipe', 'Composed') for n in ('64', '4096')}
+    expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/impl={impl}/N={n}')
+                for api in ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
+                for impl in ('Pipe', 'Composed') for n in ('64', '4096')}
     if set(snapshot.cases) != expected:
-        raise ValueError('Compose update requires exactly the 16 four-stage build cases')
+        raise ValueError('Compose update requires exactly the 16 cases')
     if len(snapshot.cases) != validate(directory/'raw.txt', int(count)):
         raise ValueError('raw and aggregate case counts differ')
     commit = (directory/'commit.txt').read_text().strip()

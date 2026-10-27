@@ -63,36 +63,47 @@ class PublishTest(unittest.TestCase):
         self.assertIn('保存済み反復 Warm', scenario)
         self.assertIn('| 8 | Pipeline | 4 ±2% | 4 ±2% |', scenario)
 
-    def test_compose_comparison_and_partial_update(self):
+    def test_compose_compares_individual_and_composed_connections(self):
+        compose_rows = []
+        apis = ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
+        for metric in publish.METRICS:
+            self.all_rows += [['', '-', ''], ['', metric, 'CI']]
+            compose_rows += [['', 'Pipe', '', 'Composed', '', '', ''],
+                             ['', metric, 'CI', metric, 'CI', 'vs base', 'P']]
+            for api in apis:
+                case = f'class=Unit/api={api}/N=8/phase=Evaluate/ref=DirectPipe'
+                self.all_rows += [[f'{api}/{case}/impl={impl}-2', value, '2%']
+                                  for impl, value in (('Pipe', 2), ('Composed', 1))]
+                compose_rows += [[f'*/{case}-2', 2, '2%', 1, '2%', '-50.00%', 'p=0.000 n=10']]
+        self.write('all.csv', self.all_rows)
+        self.write('unit-compose.csv', compose_rows)
+        destination = self.directory/'output/results'
+        snapshot = publish.render(self.directory, destination)
+        unit = (destination/'unit.md').read_text()
+        self.assertEqual(len(snapshot.seen), 39)
+        self.assertIn('| N | Go ns/op | Library ns/op | 倍率 |', unit)
+        self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 4)
+        for api in apis:
+            self.assertIn(f'### {api}：構築・評価', unit)
+        self.assertIn('Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。', unit)
+        self.assertIn('| 8 | 2,000,000,000 ±2% | 1,000,000,000 ±2% | 0.500× |', unit)
+        self.assertIn('| 8 | Pipe | 2 ±2% | 2 ±2% |', unit)
+        self.assertIn('| 8 | Composed | 1 ±2% | 1 ±2% |', unit)
+        self.assertNotIn('倍率は Library / Go', unit)
+
+    def test_compose_partial_update_preserves_other_results(self):
         all_rows, compose_rows = [], []
         for metric in publish.METRICS:
             all_rows += [['', '-', ''], ['', metric, 'CI']]
             compose_rows += [['', 'Pipe', '', 'Composed', '', '', ''],
                              ['', metric, 'CI', metric, 'CI', 'vs base', 'P']]
-            for api in publish.COMPOSE_APIS:
+            for api in ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2'):
                 for n in (64, 4096):
-                    case = (f'class=Unit/api={api}/N={n}/phase=Evaluate/ref=DirectPipe'
-                            '/depth=4/scope=Build')
+                    case = f'class=Unit/api={api}/N={n}/phase=Evaluate/ref=DirectPipe'
                     all_rows += [[f'{api}/{case}/impl={impl}-2', value, '2%']
                                  for impl, value in (('Pipe', 2), ('Composed', 1))]
                     compose_rows += [[f'*/{case}-2', 2, '2%', 1, '2%', '-50.00%', 'p=0.000 n=10']]
-        self.write('all.csv', self.all_rows+all_rows)
         self.write('unit-compose.csv', compose_rows)
-        destination = self.directory/'output/results'
-        snapshot = publish.render(self.directory, destination)
-        unit = (destination/'unit.md').read_text()
-        self.assertEqual(len(snapshot.seen), 63)
-        self.assertIn('| N | Go ns/op | Library ns/op | 倍率 |', unit)
-        self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 4)
-        for api in publish.COMPOSE_APIS:
-            self.assertIn(f'### {api}：構築・評価\n', unit)
-        self.assertNotIn('段数=4', unit)
-        self.assertNotIn('scope=Build', unit)
-        self.assertIn('Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。', unit)
-        self.assertIn('| 64 | 2,000,000,000 ±2% | 1,000,000,000 ±2% | 0.500× |', unit)
-        self.assertIn('| 4096 | Pipe | 2 ±2% | 2 ±2% |', unit)
-        self.assertIn('| 4096 | Composed | 1 ±2% | 1 ±2% |', unit)
-
         self.write('all.csv', all_rows)
         (self.directory/'unit.csv').unlink()
         (self.directory/'future.csv').unlink()
@@ -345,8 +356,7 @@ class SourceLinksTest(unittest.TestCase):
                           ('Compose2.Seq', 'compose2Seq'), ('Compose2.Seq2', 'compose2Seq2')]:
             for implementation in ('Pipe', 'Composed'):
                 with self.subTest(api=api, implementation=implementation):
-                    name = (f'Unit/api={api}/N=64/phase=Evaluate/ref=DirectPipe'
-                            f'/depth=4/scope=Build/impl={implementation}')
+                    name = f'Unit/api={api}/N=64/phase=Evaluate/ref=DirectPipe/impl={implementation}'
                     self.assertEqual(publish.processing_function(publish.key(name)), stem+implementation)
 
 

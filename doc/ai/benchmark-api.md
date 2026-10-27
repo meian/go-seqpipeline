@@ -7,7 +7,7 @@
 40 種の API/phase を N64 / N4096 の計 80 条件・160 ケースで比較する。  
 Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照とする。  
 設定値・合成開始値の生成 5 関数と MapToSeq / MapToSeq2 は関連する Unit で、Cache / Cache2 は利用目的に合う Scenario で測定する。  
-この表は現在の測定コードとの対応であり、通常の機能変更時に即時追従を要求する検証ではない。  
+この表は今回のスナップショットの対応であり、通常の機能変更時に即時追従を要求する検証ではない。  
 
 | 公開 API | Unit の api キー | 測定範囲・代替理由 |
 | --- | --- | --- |
@@ -51,8 +51,8 @@ Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照と�
 | `op.zipKeyOperator.WithDefaultValue` | `ZipKey.WithDefaultValue` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
 | `op.zipKeyOperator.WithDefaultKey` | `ZipKey.WithDefaultKey` | 設定だけの時間は意味が薄いため、不等長入力の設定・接続・評価で代替 |
 | `op.zipKeyOperator.Operator` | `ZipKey.Operator` | 構築・全件評価・チェックサム |
-| `op.Compose` | `Compose.Seq / Compose.Seq2` | 開始値の独立測定を避け、合成値の接続・評価で比較 |
-| `op.Compose2` | `Compose2.Seq / Compose2.Seq2` | Compose と同じく合成値の接続・評価で比較 |
+| `op.Compose` | `Compose.Seq / Compose.Seq2` | 開始値だけの構築は意味が薄いため、合成・接続・評価に含める |
+| `op.Compose2` | `Compose2.Seq / Compose2.Seq2` | Compose と同じく合成・接続・評価に含める |
 | `op.compose.Pipe` | `Compose.Seq` | Map から単一値入力の合成を開始 |
 | `op.compose.Pipe2` | `Compose.Seq2` | MapToSeq2 から単一値入力の合成を開始 |
 | `op.compose2.Pipe` | `Compose2.Seq` | MapToSeq から組入力の合成を開始 |
@@ -73,7 +73,7 @@ Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照と�
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
 それぞれ入力・Map / Map2・MapToSeq2 / MapToSeq と Pipe / Pipe2 の測定で利用する。  
 合成値の各メソッドは単独の費用を分離せず、4 種類の入出力を扱う合成全体で測る。  
-4 種類とも 4 段（`depth=4`）とし、個別オペレーターと合成値の構築・接続・全件反復を測る（`scope=Build`）。  
+4 種類とも 4 段を合成し、構築・入力への接続・全件反復を含める。  
 対照の Pipe は、同じオペレーターを同じ順序で `Seq` / `Seq2` の Pipe / Pipe2 に直接接続する。  
 FromRange は符号付き・符号なしの代表として int / uint を選び、1 から N までと N から 1 までを stop を含めて生成する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
@@ -109,7 +109,7 @@ Unit のケースは機能別の `*_test.go`、Scenario のケースは機能別
 
 各 API・実装の処理全体を `mapLibrary` / `mapGo` のような型付き関数に置く。  
 機能ごとに `mapLibrary` → `mapGo` → `BenchmarkMap` → `TestMap` の順に配置する。  
-`BenchmarkMap` は比較する実装を `b.Run` に分け、`TestMap` とともに各処理関数を直接呼ぶ。  
+`BenchmarkMap` / `TestMap` は比較する実装を明示的な `b.Run` / `t.Run` に分け、それぞれの処理関数を直接呼ぶ。  
 Seq の生成・演算子の構築・評価・収集・結果の加算は処理本体に含め、入力データだけを呼び出し元で準備する。  
 Cache / Cache2 は Scenario のみで扱い、`scenarioCacheSeqFill` / `scenarioCacheSeqWarm` のように段階を分ける。  
 Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のように、種類と実装ごとに分ける。  

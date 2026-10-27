@@ -38,25 +38,9 @@ Zip の既定ケースは等長入力、補完設定のケースは片側を半�
 `seq.Seq.Pipe` は Map、`seq.Seq.Pipe2` は単一入力の値 `v` から `(v, (v+1)&65535)` を返す MapToSeq2、`seq.Seq2.Pipe` / `Pipe2` は MapToSeq / Map2 を接続した費用を含む。  
 設定・型変換も反復まで含むため、呼び出し単独の費用ではない。  
 FromRange は `int` / `uint` を使い、刻み幅 1 / -1 で終点を含む N 件を生成・加算する。  
-
-### Compose / Compose2
-
-4 種類の入出力で 4 段、64 / 4096 件を比較する。  
-入力は 0 から N−1 の整数で、`Compose2` は添字と値の組を使う。  
-Pipe は個別のオペレーター、Composed は同じ順序の合成値を構築し、入力への接続・全件反復・加算までを測る。  
-両実装とも入力データの生成だけを除き、直接接続側のオペレーターは合成しない。  
-出力が単一値なら値を、組ならキーと値を `int64` に変換して加算する。  
-
-| API | 1 段目 | 2 段目 | 3 段目 | 4 段目 |
-| --- | --- | --- | --- | --- |
-| Compose.Seq | Map(v+1) | Map(v*2) | MapToSeq2(v,v+3) | MapToSeq(k+v) |
-| Compose.Seq2 | MapToSeq2(v,v+3) | Map2(k+1,v*2) | Map2(k*2,v+3) | Map2(k+3,v*2) |
-| Compose2.Seq | MapToSeq(k+v) | Map(v*2) | MapToSeq2(v,v+3) | MapToSeq(k+v) |
-| Compose2.Seq2 | Map2(k+1,v*2) | Map2(k*2,v+3) | MapToSeq(k+v) | MapToSeq2(v,v+3) |
-
-表の `k` / `v` は各段への入力のキー / 値を表す。  
-通常の最適化の成否も含む比較で、倍率はこの処理構成と測定時の Go バージョンに限る。  
-測定情報は [実行環境](results/environment.md) を参照。  
+Compose / Compose2 は、単一値と組を行き来する変換の合成、入力への接続、全件の加算を含む。  
+4 種類とも 4 演算を合成する。  
+この比較では、Pipe は同じオペレーターを `Seq.Pipe` / `Pipe2` または `Seq2.Pipe` / `Pipe2` で直接接続し、Composed は Compose / Compose2 で合成してから入力に接続する。  
 
 ## 利用場面別結果（Scenario）
 

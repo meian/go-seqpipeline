@@ -31,22 +31,21 @@ done
 python3 benchmarks/publish.py validate "$workdir/raw.txt" "$COUNT"
 "$BENCHSTAT" -format=csv - < "$workdir/raw.txt" > "$workdir/all.csv"
 compare() {
+ [ "$mode" = all ] || [ "$1" = unit-compose ] || return 0
  name=$1
  filter=$2
  columns=$3
  "$BENCHSTAT" -ignore .name -filter "$filter" -col "$columns" -format=csv - \
    < "$workdir/raw.txt" > "$workdir/$name.csv"
 }
-if [ "$mode" = all ]; then
- compare unit '/class:Unit /impl:(Go OR Library)' '/impl@(Go Library)'
- compare pipeline-loop '/class:ScenarioPipeline' '/impl@(Loop Pipeline)'
- compare pipeline-functions '/class:ScenarioPipeline' '/impl@(Functions Pipeline)'
- compare channel-from '/class:ScenarioChannel' '/impl@(Direct FromChannel)'
- compare channel-roundtrip '/class:ScenarioChannel' '/impl@(Direct RoundTrip)'
- compare channel-to '/class:ScenarioChannel' '/impl@(Seq ToChannel)'
- compare cache-reuse '/class:ScenarioCache /phase:Reuse' '/impl@(Uncached Cached)'
-fi
+compare unit '/class:Unit /impl:(Go OR Library)' '/impl@(Go Library)'
 compare unit-compose '/class:Unit /impl:(Pipe OR Composed)' '/impl@(Pipe Composed)'
+compare pipeline-loop '/class:ScenarioPipeline' '/impl@(Loop Pipeline)'
+compare pipeline-functions '/class:ScenarioPipeline' '/impl@(Functions Pipeline)'
+compare channel-from '/class:ScenarioChannel' '/impl@(Direct FromChannel)'
+compare channel-roundtrip '/class:ScenarioChannel' '/impl@(Direct RoundTrip)'
+compare channel-to '/class:ScenarioChannel' '/impl@(Seq ToChannel)'
+compare cache-reuse '/class:ScenarioCache /phase:Reuse' '/impl@(Uncached Cached)'
 "$GO_BINARY" version > "$workdir/go-version.txt"
 "$GO_BINARY" env GOOS GOARCH GOARM64 GOAMD64 GOGC GOMEMLIMIT GOEXPERIMENT > "$workdir/go-env.txt"
 git rev-parse HEAD > "$workdir/commit.txt"
