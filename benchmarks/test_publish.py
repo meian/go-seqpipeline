@@ -85,7 +85,8 @@ class PublishTest(unittest.TestCase):
         self.assertIn('| N | Go ns/op | Library ns/op | 倍率 |', unit)
         self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 4)
         for api in publish.COMPOSE_APIS:
-            self.assertIn(f'### {api}：段数=4 / 構築済みを利用', unit)
+            self.assertIn(f'### {api}\n', unit)
+        self.assertNotIn('段数=4 / 構築済みを利用', unit)
         self.assertIn('Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。', unit)
         self.assertIn('| 64 | 2,000,000,000 ±2% | 1,000,000,000 ±2% | 0.500× |', unit)
         self.assertIn('| 4096 | Pipe | 2 ±2% | 2 ±2% |', unit)
@@ -110,15 +111,26 @@ class PublishTest(unittest.TestCase):
         original = (publish.ROOT/'results/unit.md').read_text()
         self.assertEqual(publish.replace_compose_sections(updated, ''),
                          publish.replace_compose_sections(original, ''))
-        for text in ('500ms / 1', 'Test CPU', 'go version test', '/blob/'+'a'*40+'/'):
-            self.assertIn(text, updated)
-        self.assertEqual(list(destination.iterdir()), [destination/'unit.md'])
+        env = (destination/'environment.md').read_text()
+        for text in ('500ms / 1', 'Test CPU', 'go version test'):
+            self.assertIn(text, env)
+            self.assertNotIn(text, updated)
+        self.assertIn('/blob/'+'a'*40+'/', updated)
+        original_env = (publish.ROOT/'results/environment.md').read_text().split('\n## Compose / Compose2\n', 1)[0]
+        self.assertEqual(env.split('\n## Compose / Compose2\n', 1)[0], original_env.rstrip('\n')+'\n')
+        self.assertEqual(env.count('| 対象コード（ライブラリ・測定） |'), 1)
+        self.assertEqual(env.count('## Compose / Compose2'), 1)
+        self.assertEqual(set(destination.iterdir()), {destination/'unit.md', destination/'environment.md'})
+        publish.environment(self.directory, '500ms', '1', '2', destination/'environment.md')
+        self.assertNotIn('## Compose / Compose2', (destination/'environment.md').read_text())
         self.assertFalse((destination.parent/'REPORT.md').exists())
+        published_environment = (destination/'environment.md').read_text()
         self.write('all.csv', [row for row in all_rows if not (row and '/impl=Pipe-' in str(row[0]))])
         (self.directory/'unit-compose.csv').unlink()
         with self.assertRaisesRegex(ValueError, 'exactly the 16'):
             publish.render_compose(self.directory, destination, '500ms', '1', '2')
         self.assertEqual((destination/'unit.md').read_text(), updated)
+        self.assertEqual((destination/'environment.md').read_text(), published_environment)
 
     def test_result_tables_keep_conditions_and_comparisons_separate(self):
         snapshot = publish.Snapshot(self.directory)

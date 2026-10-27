@@ -124,7 +124,8 @@
 
 ファイルの分割だけを目的に細分化せず、機能のまとまりと保守性を優先する。  
 処理と入口の対応・ファイル一覧は [API 対応表](benchmark-api.md) に記録する。  
-測定する範囲を変えた場合は全件を測り直すが、Issue #86 は以下の Compose 部分更新を例外とする。  
+測定する範囲を変えた場合は、全件を測り直して結果・測定条件をそろえる。  
+Issue #86 は以下の Compose 部分更新を例外とする。  
 
 ### 測定の正確性
 
@@ -248,12 +249,14 @@ BENCHSTAT="$(go env GOPATH)/bin/benchstat" sh benchmarks/measure.sh --compose
 ```
 
 `publish.py report-compose` は 4 API × 2 件数 × 2 実装、`depth=4`・`scope=Reuse` の一致と全指標・検定・ソースリンクを検証する。  
-`results/unit.md` の Compose 見出し群だけを置き換え、その範囲に測定対象コミット・日時・環境・条件を記録する。  
-他の API、Scenario、概要、`results/environment.md` と週次チェックの比較基準は維持し、次の定期更新は全件を測る。  
+`results/unit.md` の Compose 部分と `results/environment.md` の Compose 節だけを更新する。  
+他の API、Scenario、概要、実行環境の冒頭にある全件測定情報と週次チェックの比較基準は維持する。  
+Compose の個別測定情報は、次回の全件更新で環境レポート全体とともに置き換わる。  
 raw と中間ファイルは通常更新と同じく終了時に削除する。  
 
 ### 更新時チェックリスト
 
+- [ ] Issue #86 後の全件更新では、部分更新の節・例外記述・本チェック項目を削除した
 - [ ] 全公開関数・メソッドと代替測定の理由を benchmark-api.md に記録した
 - [ ] Unit / Scenario の対象・条件・名前を現行コードに合わせ、全 Unit に目的に合う対照実装を対応させた
 - [ ] 各処理の代表入力 1 件の疎通テストと、全ベンチマークの試行実行が通った

@@ -56,7 +56,7 @@ Pipe は個別のオペレーター、Composed は同じ順序の合成値を計
 
 表の `k` / `v` は各段への入力のキー / 値を表す。  
 通常の最適化の成否も含む比較で、倍率はこの処理構成と測定時の Go バージョンに限る。  
-Compose の測定情報は [API 別結果](results/unit.md) の Compose / Compose2 の測定条件を参照。  
+測定情報は [実行環境](results/environment.md) を参照。  
 
 ## 利用場面別結果（Scenario）
 

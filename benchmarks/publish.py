@@ -335,7 +335,7 @@ Compose の Pipe は個別接続、Composed は合成したオペレーターを
             label = api.replace('ZipKey.', 'Zip.', 1)
             if api.startswith('ZipKey.'):
                 label += '（キー既定値あり）'
-            text += f'### {label}：{phase_label}\n\n'
+            text += f'### {label}'+('' if api in COMPOSE_APIS else '：'+phase_label)+'\n\n'
             base = dict(comparisons[0].base[1])['impl']
             target = dict(comparisons[0].target[1])['impl']
             text += base+'：'+REFERENCE_DESCRIPTIONS.get(reference, reference)+'。  \n\n'
@@ -469,7 +469,7 @@ def render(directory, destination):
 def replace_compose_sections(current, replacement):
     sections = re.split(r'(?=^#{2,3} )', current, flags=re.MULTILINE)
     positions = [i for i, section in enumerate(sections)
-                 if re.match(r'^### Compose(?:2)?\.Seq2?：', section)
+                 if re.match(r'^### Compose(?:2)?\.Seq2?(?:：|\n)', section)
                  or section.startswith('### Compose / Compose2 の測定条件\n')]
     if not positions or positions != list(range(positions[0], positions[-1]+1)):
         raise ValueError('missing or noncontiguous Compose sections')
@@ -491,14 +491,16 @@ def render_compose(directory, destination, benchtime, count, procs):
     snapshot.verify()
     snapshot.sources.verify(snapshot.cases)
     environment(directory, benchtime, count, procs, directory/'compose-environment.md')
-    metadata = (directory/'compose-environment.md').read_text().split('\n\n', 1)[1]
-    replacement = '### Compose / Compose2 の測定条件\n\n'
-    replacement += '以下の表の測定情報を示す。  \n'
-    replacement += '入力・処理は [測定条件](../METHOD.md#compose--compose2)、他の API は [実行環境](environment.md) を参照。  \n\n'+metadata+'\n'
-    replacement += unit.split('## パイプ接続\n\n', 1)[1]
+    metadata = (directory/'compose-environment.md').read_text().split('\n\n')[1]
+    metadata = metadata.replace('対象コード（ライブラリ・測定）', '対象コード（Compose のみ）')
+    prior_environment = (ROOT/'results/environment.md').read_text().split('\n## Compose / Compose2\n', 1)[0]
+    updated_environment = prior_environment.rstrip('\n')+'\n\n## Compose / Compose2\n\n'
+    updated_environment += '以下は Compose / Compose2 の測定情報で、他の結果には冒頭の測定情報を適用する。  \n\n'+metadata+'\n'
+    replacement = unit.split('## パイプ接続\n\n', 1)[1]
     updated = replace_compose_sections((ROOT/'results/unit.md').read_text(), replacement)
     destination.mkdir(parents=True, exist_ok=True)
     (destination/'unit.md').write_text(updated)
+    (destination/'environment.md').write_text(updated_environment)
     print(f'{len(snapshot.cases)} Compose cases / {len(snapshot.values)} metrics published')
     return snapshot
 
