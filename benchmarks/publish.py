@@ -63,8 +63,7 @@ def processing_function(case):
     dimensions = dict(entries)
     if kind == 'Unit':
         api = dimensions['api'].replace('.', '')
-        suffix = f"Depth{dimensions['depth']}{dimensions['scope']}" if dimensions['api'] in COMPOSE_APIS else ''
-        return api[0].lower()+api[1:]+suffix+dimensions['impl']
+        return api[0].lower()+api[1:]+dimensions['impl']
     implementation = dimensions.get('impl', dimensions.get('phase'))
     if kind == 'ScenarioPipeline':
         implementation = 'Library' if implementation == 'Pipeline' else implementation
@@ -214,15 +213,13 @@ def displayed_dimensions(case):
 def condition(case, omit=()):
     dimensions = displayed_dimensions(case)
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
-              'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'scope': '', 'phase': ''}
-    if dimensions.get('api') in COMPOSE_APIS and dimensions.get('phase') == 'Evaluate':
-        dimensions.pop('phase')
+              'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
+    if dimensions.get('api') in COMPOSE_APIS and dimensions.get('scope') == 'Reuse':
+        dimensions['phase'] = '構築済みを利用'
+        dimensions.pop('scope')
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
               'Ascending': '昇順', 'Descending': '降順',
-              'Build': '構築込み',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
-    if dimensions.get('scope') == 'Reuse':
-        dimensions['scope'] = '構築済みを利用'
     order = list(labels)+sorted(set(dimensions)-set(labels)-{'api', 'impl', 'ref'})
     return ' / '.join(labels.get(k, k+'=')+values.get(dimensions[k], dimensions[k])
                       for k in order if k in dimensions and k not in omit)
@@ -481,13 +478,11 @@ def replace_compose_sections(current, replacement):
 
 def render_compose(directory, destination, benchtime, count, procs):
     snapshot = Snapshot(directory)
-    expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/depth={depth}'
-                    f'/scope={scope}/impl={impl}/N={n}')
-                for api in COMPOSE_APIS for depth in ('2', '4')
-                for scope in ('Build', 'Reuse') for impl in ('Pipe', 'Composed')
-                for n in ('64', '4096')}
+    expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/depth=4'
+                    f'/scope=Reuse/impl={impl}/N={n}')
+                for api in COMPOSE_APIS for impl in ('Pipe', 'Composed') for n in ('64', '4096')}
     if set(snapshot.cases) != expected:
-        raise ValueError('Compose update requires exactly the 64 depth/scope/input/implementation cases')
+        raise ValueError('Compose update requires exactly the 16 four-stage reuse cases')
     if len(snapshot.cases) != validate(directory/'raw.txt', int(count)):
         raise ValueError('raw and aggregate case counts differ')
     commit = (directory/'commit.txt').read_text().strip()
@@ -498,9 +493,8 @@ def render_compose(directory, destination, benchtime, count, procs):
     environment(directory, benchtime, count, procs, directory/'compose-environment.md')
     metadata = (directory/'compose-environment.md').read_text().split('\n\n', 1)[1]
     replacement = '### Compose / Compose2 の測定条件\n\n'
-    replacement += '以下の Compose / Compose2 の表には、この測定情報を適用する。  \n'
-    replacement += '他の API の測定情報は [実行環境](environment.md) を参照。  \n'
-    replacement += '入力・処理・構築範囲は [測定条件](../METHOD.md#compose--compose2) を参照。  \n\n'+metadata+'\n'
+    replacement += '以下の表の測定情報を示す。  \n'
+    replacement += '入力・処理は [測定条件](../METHOD.md#compose--compose2)、他の API は [実行環境](environment.md) を参照。  \n\n'+metadata+'\n'
     replacement += unit.split('## パイプ接続\n\n', 1)[1]
     updated = replace_compose_sections((ROOT/'results/unit.md').read_text(), replacement)
     destination.mkdir(parents=True, exist_ok=True)

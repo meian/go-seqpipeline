@@ -8,8 +8,8 @@ BENCHTIME=${BENCHTIME:-500ms}
 COUNT=${COUNT:-10}
 mode=${1:-all}
 case "$mode" in
- all) benchmark='.' ;;
- --compose) benchmark='^BenchmarkCompose(2)?Seq(2)?$' ;;
+ all) benchmark='.'; report=report ;;
+ --compose) benchmark='^BenchmarkCompose(2)?Seq(2)?$'; report=report-compose ;;
  *) printf '%s\n' 'usage: measure.sh [--compose]' >&2; exit 2 ;;
 esac
 export GOMAXPROCS=${GOMAXPROCS:-2}
@@ -50,11 +50,7 @@ compare unit-compose '/class:Unit /impl:(Pipe OR Composed)' '/impl@(Pipe Compose
 "$GO_BINARY" version > "$workdir/go-version.txt"
 "$GO_BINARY" env GOOS GOARCH GOARM64 GOAMD64 GOGC GOMEMLIMIT GOEXPERIMENT > "$workdir/go-env.txt"
 git rev-parse HEAD > "$workdir/commit.txt"
-if [ "$mode" = --compose ]; then
- python3 benchmarks/publish.py report-compose "$workdir" "$BENCHTIME" "$COUNT" "$GOMAXPROCS"
-else
- python3 benchmarks/publish.py report "$workdir" "$BENCHTIME" "$COUNT" "$GOMAXPROCS"
-fi
+python3 benchmarks/publish.py "$report" "$workdir" "$BENCHTIME" "$COUNT" "$GOMAXPROCS"
 # 検証・全ファイルの生成が成功してから公開結果を置き換える。
 mkdir -p benchmarks/results
 cp "$workdir/published/results/"*.md benchmarks/results/
