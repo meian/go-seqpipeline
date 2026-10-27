@@ -109,7 +109,7 @@ Unit のケースは機能別の `*_test.go`、Scenario のケースは機能別
 
 各 API・実装の処理全体を `mapLibrary` / `mapGo` のような型付き関数に置く。  
 機能ごとに `mapLibrary` → `mapGo` → `BenchmarkMap` → `TestMap` の順に配置する。  
-`BenchmarkMap` / `TestMap` は比較する実装を明示的な `b.Run` / `t.Run` に分け、それぞれの処理関数を直接呼ぶ。  
+`BenchmarkMap` は比較する実装を `b.Run` に分け、`TestMap` とともに各処理関数を直接呼ぶ。  
 Seq の生成・演算子の構築・評価・収集・結果の加算は処理本体に含め、入力データだけを呼び出し元で準備する。  
 Compose は同じ処理関数内の `b.N` ループ前で構築し、`b.ResetTimer()` で準備を除く。  
 Cache / Cache2 は Scenario のみで扱い、`scenarioCacheSeqFill` / `scenarioCacheSeqWarm` のように段階を分ける。  
