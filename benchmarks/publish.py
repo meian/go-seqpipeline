@@ -214,9 +214,9 @@ def condition(case, omit=()):
     dimensions = displayed_dimensions(case)
     labels = {'kind': '', 'N': 'N=', 'depth': '段数=', 'mode': '',
               'buffer': '入力容量=', 'work': '負荷=', 'reuse': '利用回数=', 'phase': ''}
-    if dimensions.get('api') in COMPOSE_APIS and dimensions.get('scope') == 'Reuse':
-        dimensions['phase'] = '構築済みを利用'
-        dimensions.pop('scope')
+    if dimensions.get('api') in COMPOSE_APIS:
+        dimensions.pop('depth', None)
+        dimensions.pop('scope', None)
     values = {'All': '全件', 'Early8': '先頭8件', 'Evaluate': '構築・評価',
               'Ascending': '昇順', 'Descending': '降順',
               'Collect': '収集', 'Fill': '初回保存 Fill', 'Warm': '保存済み反復 Warm', 'Reuse': '保存費用込み Reuse'}
@@ -335,7 +335,7 @@ Compose の Pipe は個別接続、Composed は合成したオペレーターを
             label = api.replace('ZipKey.', 'Zip.', 1)
             if api.startswith('ZipKey.'):
                 label += '（キー既定値あり）'
-            text += f'### {label}'+('' if api in COMPOSE_APIS else '：'+phase_label)+'\n\n'
+            text += f'### {label}：{phase_label}\n\n'
             base = dict(comparisons[0].base[1])['impl']
             target = dict(comparisons[0].target[1])['impl']
             text += base+'：'+REFERENCE_DESCRIPTIONS.get(reference, reference)+'。  \n\n'
@@ -479,10 +479,10 @@ def replace_compose_sections(current, replacement):
 def render_compose(directory, destination, benchtime, count, procs):
     snapshot = Snapshot(directory)
     expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/depth=4'
-                    f'/scope=Reuse/impl={impl}/N={n}')
+                    f'/scope=Build/impl={impl}/N={n}')
                 for api in COMPOSE_APIS for impl in ('Pipe', 'Composed') for n in ('64', '4096')}
     if set(snapshot.cases) != expected:
-        raise ValueError('Compose update requires exactly the 16 four-stage reuse cases')
+        raise ValueError('Compose update requires exactly the 16 four-stage build cases')
     if len(snapshot.cases) != validate(directory/'raw.txt', int(count)):
         raise ValueError('raw and aggregate case counts differ')
     commit = (directory/'commit.txt').read_text().strip()

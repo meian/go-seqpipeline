@@ -73,7 +73,7 @@ Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照と�
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
 それぞれ入力・Map / Map2・MapToSeq2 / MapToSeq と Pipe / Pipe2 の測定で利用する。  
 合成値の各メソッドは単独の費用を分離せず、4 種類の入出力を扱う合成全体で測る。  
-4 種類とも 4 段（`depth=4`）とし、個別オペレーターと合成値を事前構築して接続・全件反復を測る（`scope=Reuse`）。  
+4 種類とも 4 段（`depth=4`）とし、個別オペレーターと合成値の構築・接続・全件反復を測る（`scope=Build`）。  
 対照の Pipe は、同じオペレーターを同じ順序で `Seq` / `Seq2` の Pipe / Pipe2 に直接接続する。  
 FromRange は符号付き・符号なしの代表として int / uint を選び、1 から N までと N から 1 までを stop を含めて生成する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
@@ -111,14 +111,13 @@ Unit のケースは機能別の `*_test.go`、Scenario のケースは機能別
 機能ごとに `mapLibrary` → `mapGo` → `BenchmarkMap` → `TestMap` の順に配置する。  
 `BenchmarkMap` は比較する実装を `b.Run` に分け、`TestMap` とともに各処理関数を直接呼ぶ。  
 Seq の生成・演算子の構築・評価・収集・結果の加算は処理本体に含め、入力データだけを呼び出し元で準備する。  
-Compose は同じ処理関数内の `b.N` ループ前で構築し、`b.ResetTimer()` で準備を除く。  
 Cache / Cache2 は Scenario のみで扱い、`scenarioCacheSeqFill` / `scenarioCacheSeqWarm` のように段階を分ける。  
 Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のように、種類と実装ごとに分ける。  
 
 Cache の Fill / Warm はそれぞれ処理・ベンチマーク・テストをまとめ、Reuse は Cached / Uncached を `BenchmarkScenarioCacheSeqReuse` / `TestScenarioCacheSeqReuse` へまとめる。  
 Seq2 も同じ構成とし、Pipeline は Seq / Seq2 ごと、Channel は 5 実装を一つの機能としてまとめる。  
 各 `b.Run` / `t.Run` は親関数の直下へ個別に記述し、実装だけを囲む中間の `Run` やケース列挙用の `for` は設けない。  
-ベンチマークの各ケース名には実装と条件を明記し、Compose 以外は `b.Loop()` 内から処理本体を直接呼ぶ。  
+ベンチマークの各ケース名には実装と条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  
 `class=Unit` / `class=ScenarioPipeline` / `class=ScenarioChannel` / `class=ScenarioCache` で分類し、入力や段数などの比較条件も名前へ残す。  
 テストは各処理につき代表入力 1 件で処理本体を直接呼び、簡単な期待値で疎通を確認する。  
 公開表のリンクは測定コミットの関数宣言行から自動生成するため、行番号を手動で転記しない。  

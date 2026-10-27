@@ -72,7 +72,7 @@ class PublishTest(unittest.TestCase):
             for api in publish.COMPOSE_APIS:
                 for n in (64, 4096):
                     case = (f'class=Unit/api={api}/N={n}/phase=Evaluate/ref=DirectPipe'
-                            '/depth=4/scope=Reuse')
+                            '/depth=4/scope=Build')
                     all_rows += [[f'{api}/{case}/impl={impl}-2', value, '2%']
                                  for impl, value in (('Pipe', 2), ('Composed', 1))]
                     compose_rows += [[f'*/{case}-2', 2, '2%', 1, '2%', '-50.00%', 'p=0.000 n=10']]
@@ -85,8 +85,9 @@ class PublishTest(unittest.TestCase):
         self.assertIn('| N | Go ns/op | Library ns/op | 倍率 |', unit)
         self.assertEqual(unit.count('| N | Pipe ns/op | Composed ns/op | 倍率 |'), 4)
         for api in publish.COMPOSE_APIS:
-            self.assertIn(f'### {api}\n', unit)
-        self.assertNotIn('段数=4 / 構築済みを利用', unit)
+            self.assertIn(f'### {api}：構築・評価\n', unit)
+        self.assertNotIn('段数=4', unit)
+        self.assertNotIn('scope=Build', unit)
         self.assertIn('Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。', unit)
         self.assertIn('| 64 | 2,000,000,000 ±2% | 1,000,000,000 ±2% | 0.500× |', unit)
         self.assertIn('| 4096 | Pipe | 2 ±2% | 2 ±2% |', unit)
@@ -345,7 +346,7 @@ class SourceLinksTest(unittest.TestCase):
             for implementation in ('Pipe', 'Composed'):
                 with self.subTest(api=api, implementation=implementation):
                     name = (f'Unit/api={api}/N=64/phase=Evaluate/ref=DirectPipe'
-                            f'/depth=4/scope=Reuse/impl={implementation}')
+                            f'/depth=4/scope=Build/impl={implementation}')
                     self.assertEqual(publish.processing_function(publish.key(name)), stem+implementation)
 
 
