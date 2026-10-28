@@ -15,8 +15,6 @@ PR の CI とローカルで `.golangci.yml` を使って全 Go パッケージ�
 `go.mod` の要件を満たす Go、Bash、curl、tar を使い、リポジトリのルートで実行する。  
 タグを固定した公式インストーラーから配布バイナリを `bin/` へ導入する。  
 golangci-lint の各 linter は、この配布バイナリに同梱されたバージョンを使う。  
-複雑性の解析には同梱の gocyclo v0.6.0 と gocognit v1.3.0 を使う。  
-セキュリティの解析には同梱の gosec v2.29.0 を使う。  
 golangci-lint が推奨する[バイナリ導入](https://golangci-lint.run/docs/welcome/install/local/)を使い、ライブラリの `go.mod` にツール依存を追加しない。  
 
 ```bash
