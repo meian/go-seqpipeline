@@ -1,10 +1,10 @@
 # lint の運用
 
-[Issue #90](https://github.com/meian/go-seqpipeline/issues/90) に基づき、PR の CI とローカルで `.golangci.yml` を使って全 Go パッケージを解析する。  
+PR の CI とローカルで `.golangci.yml` を使って全 Go パッケージを解析する。  
 
 ## ツールと導入
 
-2026-10-29 時点の最新安定版を固定し、更新時は CI の入力とローカル導入コマンドを同期する。  
+ツールのバージョンを固定し、更新時は CI の入力とローカル導入コマンドを同期する。  
 
 | ツール | バージョン |
 | --- | --- |
@@ -17,7 +17,6 @@
 golangci-lint の各 linter は、この配布バイナリに同梱されたバージョンを使う。  
 複雑性の解析には同梱の gocyclo v0.6.0 と gocognit v1.3.0 を使う。  
 セキュリティの解析には同梱の gosec v2.29.0 を使う。  
-gosec 単体の最新安定版は [v2.30.0](https://github.com/securego/gosec/releases/tag/v2.30.0) だが、内部の linter は golangci-lint が組み込んだ版に固定される。  
 golangci-lint が推奨する[バイナリ導入](https://golangci-lint.run/docs/welcome/install/local/)を使い、ライブラリの `go.mod` にツール依存を追加しない。  
 
 ```bash
@@ -68,27 +67,18 @@ linter 全体を変更する場合は `linters` を条件とするルールを�
 
 `.github/workflows/ci.yml` の `Static checks` は `pull_request` で実行する。  
 reviewdog Action の `github-pr-review` reporter と `added` フィルターにより、追加・変更行だけをレビューコメントと失敗判定の対象にする。  
-govet はこのジョブに統合し、独立した vet の matrix 項目・ステップを置かない。  
 
-Action 既定のテキスト形式を Checkstyle へ切り替え、linter・位置・Error / Warning を保持する。  
+golangci-lint の指摘は Checkstyle 形式で reviewdog へ渡し、linter・位置・Error / Warning を保持する。  
 golangci-lint の終了コード 1 は指摘ありとして扱い、reviewdog の `fail_level: error` で差分内の Error だけを失敗とする。  
 Warning のみ・指摘なし・差分外の指摘だけの場合は成功し、ツールの起動・解析・結果の読み取りが失敗した場合は失敗する。  
 
 権限はこのジョブに `contents: read` と `pull-requests: write` を付与し、`GITHUB_TOKEN` で投稿する。  
 fork PR など書き込み権限がない場合、reviewdog は Actions のログ注釈へフォールバックする。  
 
-PR #91 では一時的な Go ファイルを追加し、実際の CI とレビュー投稿を確認した。  
-検証用ファイルは最終差分から削除した。  
-
-| 追加・変更行の指摘 | Static checks |
-| --- | --- |
-| Error と Warning | [失敗](https://github.com/meian/go-seqpipeline/actions/runs/40747015481/job/123023385293) |
-| Warning のみ | [成功](https://github.com/meian/go-seqpipeline/actions/runs/40747653238/job/123025612646) |
-
 ## ローカルでの全体確認
 
 差分外も含めて確認する場合は、ルートで次を実行する。  
-Checkstyle と表示結果を `bin/lint/` に保存し、既存の `/bin/` 除外により生成物を追跡しない。  
+Checkstyle と表示結果は Git の追跡対象外の `bin/lint/` に保存する。  
 
 ```bash
 bash <<'SH'
@@ -106,34 +96,3 @@ bin/reviewdog -f=checkstyle -reporter=local \
   tee bin/lint/report.txt
 SH
 ```
-
-## 初回スキャン結果
-
-2026-10-29 に `origin/main` の `d2e26f4` を基準とし、Go 1.27.3（darwin/arm64）で実行した。  
-ルート・`op`・`seq`・`benchmarks` の全 4 パッケージが対象。  
-
-| チェック | 重大度 | 指摘数 |
-| --- | --- | --- |
-| G115 | Error | 9 |
-| ST1023 | Warning | 27 |
-| QF1011 | Warning | 27 |
-| gocyclo | Warning | 1 |
-| gocognit | Warning | 5 |
-
-SA1012 は `seq/channel_test.go` の `TestFromChannelNilContext` と `TestToChannelNilContext` に対する 2 件をテスト除外で抑制した。  
-ST1023 と QF1011 は同じ 27 箇所への型明示の省略提案で、API の接続型を明示するテストや Example も含む。  
-gosec の G115 は整数変換に対する指摘で、`seq/range.go` に 2 件、`seq/range_test.go` に 2 件、`benchmarks/from_range_test.go` に 5 件ある。  
-実装の 2 件は `uint64(step)` と `uint64(-(step + 1))` に対する指摘で、既存のビット列の加算と減算幅の計算に使われている。  
-既存ソースの修正や G115 の除外追加は行わず、Error 9 件・Warning 60 件を残した。  
-全体確認の終了コードは 1 となるが、これらが差分外であれば PR の `Static checks` は成功する。  
-
-複雑性の基準を超えた 5 関数の値を以下に示す。  
-循環的複雑度の「—」は、そのファイルの報告基準以下を表す。  
-
-| 関数 | 循環的複雑度 | 認知的複雑度 |
-| --- | --- | --- |
-| [zipSequences](../../op/zip.go) | 20 | 46 |
-| [BenchmarkScenarioCacheSeqReuse](../../benchmarks/cache_scenario_test.go) | — | 48 |
-| [BenchmarkScenarioCacheSeq2Reuse](../../benchmarks/cache_scenario_test.go) | — | 48 |
-| [BenchmarkScenarioPipelineSeq](../../benchmarks/pipeline_scenario_test.go) | — | 48 |
-| [BenchmarkScenarioPipelineSeq2](../../benchmarks/pipeline_scenario_test.go) | — | 48 |
