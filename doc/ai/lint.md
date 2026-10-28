@@ -77,6 +77,14 @@ Warning のみ・指摘なし・差分外の指摘だけの場合は成功し、
 権限はこのジョブに `contents: read` と `pull-requests: write` を付与し、`GITHUB_TOKEN` で投稿する。  
 fork PR など書き込み権限がない場合、reviewdog は Actions のログ注釈へフォールバックする。  
 
+PR #91 では一時的な Go ファイルを追加し、実際の CI とレビュー投稿を確認した。  
+検証用ファイルは最終差分から削除した。  
+
+| 追加・変更行の指摘 | Static checks |
+| --- | --- |
+| Error と Warning | [失敗](https://github.com/meian/go-seqpipeline/actions/runs/40747015481/job/123023385293) |
+| Warning のみ | [成功](https://github.com/meian/go-seqpipeline/actions/runs/40747653238/job/123025612646) |
+
 ## ローカルでの全体確認
 
 差分外も含めて確認する場合は、ルートで次を実行する。  
