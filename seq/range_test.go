@@ -1,6 +1,7 @@
 package seq_test
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -88,6 +89,54 @@ func TestFromRangeDefinedTypes(t *testing.T) {
 	assertEqual(t, seq.ToSlice(seq.FromRange(pointer(1), pointer(5), 2)), []pointer{1, 3, 5})
 }
 
+// 狭い型の値域を超える加減算は int64 で独立に計算し、切り詰めを検出する。
+func TestFromRangeNarrowBounds(t *testing.T) {
+	t.Parallel()
+
+	bounds := []int8{math.MinInt8, -1, 0, 1, math.MaxInt8}
+	for _, start := range bounds {
+		for _, stop := range bounds {
+			for _, step := range []int64{-257, -256, -255, -129, -128, -127, -2, -1, 1, 2, 127, 128, 129, 255, 256, 257} {
+				t.Run(fmt.Sprintf("%d_to_%d_step_%d", start, stop, step), func(t *testing.T) {
+					t.Parallel()
+
+					var want []int8
+					value, endpoint := int64(start), int64(stop)
+					for step > 0 && value <= endpoint || step < 0 && value >= endpoint {
+						want = append(want, int8(value))
+						value += step
+					}
+					assertEqual(t, seq.ToSlice(seq.FromRange(start, stop, step)), want)
+				})
+			}
+		}
+	}
+}
+
+// unsigned の下限割れを int64 で計算し、参照値の折り返しを避ける。
+func TestFromRangeUnsignedNarrowBounds(t *testing.T) {
+	t.Parallel()
+
+	bounds := []uint8{0, 1, math.MaxInt8, math.MaxInt8 + 1, math.MaxUint8}
+	for _, start := range bounds {
+		for _, stop := range bounds {
+			for _, step := range []int64{-257, -256, -255, -129, -128, -127, -2, -1, 1, 2, 127, 128, 129, 255, 256, 257} {
+				t.Run(fmt.Sprintf("%d_to_%d_step_%d", start, stop, step), func(t *testing.T) {
+					t.Parallel()
+
+					var want []uint8
+					value, endpoint := int64(start), int64(stop)
+					for step > 0 && value <= endpoint || step < 0 && value >= endpoint {
+						want = append(want, uint8(value))
+						value += step
+					}
+					assertEqual(t, seq.ToSlice(seq.FromRange(start, stop, step)), want)
+				})
+			}
+		}
+	}
+}
+
 // 狭い要素型を超える step と各型の端点でも、値を切り詰めたり折り返したりしない。
 func TestFromRangeBounds(t *testing.T) {
 	t.Parallel()
@@ -103,10 +152,15 @@ func TestFromRangeBounds(t *testing.T) {
 	assertEqual(t, seq.ToSlice(seq.FromRange(min, -1, max)), []int64{min, -1})
 	assertEqual(t, seq.ToSlice(seq.FromRange(min, -2, max)), []int64{min})
 	assertEqual(t, seq.ToSlice(seq.FromRange(min, max, max)), []int64{min, -1, max - 1})
+	assertEqual(t, seq.ToSlice(seq.FromRange(max, min, -max)), []int64{max, 0, -max})
 	assertEqual(t, seq.ToSlice(seq.FromRange(max, -1, min)), []int64{max, -1})
 	assertEqual(t, seq.ToSlice(seq.FromRange(max, 0, min)), []int64{max})
+	assertEqual(t, seq.ToSlice(seq.FromRange(max, min, min)), []int64{max, -1})
 	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(math.MaxUint64-1), uint64(math.MaxUint64), 1)), []uint64{math.MaxUint64 - 1, math.MaxUint64})
 	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(1), uint64(0), -1)), []uint64{1, 0})
+	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(0), uint64(math.MaxUint64), max)), []uint64{0, math.MaxInt64, math.MaxUint64 - 1})
+	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(math.MaxUint64), uint64(0), -max)), []uint64{math.MaxUint64, math.MaxInt64 + 1, 1})
+	assertEqual(t, seq.ToSlice(seq.FromRange(uint64(math.MaxUint64), uint64(0), min)), []uint64{math.MaxUint64, math.MaxInt64})
 
 	bigStep := int64(1) << 40
 	assertEqual(t, seq.ToSlice(seq.FromRange(int64(0), bigStep, bigStep)), []int64{0, bigStep})
@@ -120,16 +174,74 @@ func TestFromRangeBounds(t *testing.T) {
 func TestFromRangeStopAndRepeat(t *testing.T) {
 	t.Parallel()
 
-	source := seq.FromRange(int64(math.MinInt64), int64(math.MaxInt64), 1)
-	for i := 0; i < 2; i++ {
-		var got []int64
-		source(func(v int64) bool {
-			if len(got) == 2 {
-				t.Fatal("FromRange yielded after false")
+	for _, tt := range []struct {
+		name   string
+		source seq.Seq[int64]
+		want   []int64
+	}{
+		{
+			name:   "ascending",
+			source: seq.FromRange(int64(math.MinInt64), int64(math.MaxInt64), 1),
+			want:   []int64{math.MinInt64, math.MinInt64 + 1},
+		},
+		{
+			name:   "descending",
+			source: seq.FromRange(int64(math.MaxInt64), int64(math.MinInt64), -1),
+			want:   []int64{math.MaxInt64, math.MaxInt64 - 1},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			for i := 0; i < 2; i++ {
+				var got []int64
+				tt.source(func(v int64) bool {
+					if len(got) == 2 {
+						t.Fatal("FromRange yielded after false")
+					}
+					got = append(got, v)
+					return len(got) < 2
+				})
+				assertEqual(t, got, tt.want)
 			}
-			got = append(got, v)
-			return len(got) < 2
 		})
-		assertEqual(t, got, []int64{math.MinInt64, math.MinInt64 + 1})
+	}
+}
+
+// uint64 の全幅でも反復回数が折り返さず、停止後の再評価で状態を共有しない。
+func TestFromRangeUnsignedStopAndRepeat(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name   string
+		source seq.Seq[uint64]
+		want   []uint64
+	}{
+		{
+			name:   "ascending",
+			source: seq.FromRange(uint64(0), uint64(math.MaxUint64), 1),
+			want:   []uint64{0, 1},
+		},
+		{
+			name:   "descending",
+			source: seq.FromRange(uint64(math.MaxUint64), uint64(0), -1),
+			want:   []uint64{math.MaxUint64, math.MaxUint64 - 1},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			for i := 0; i < 2; i++ {
+				var got []uint64
+				tt.source(func(v uint64) bool {
+					if len(got) == 2 {
+						t.Fatal("FromRange yielded after false")
+					}
+					got = append(got, v)
+					return len(got) < 2
+				})
+				assertEqual(t, got, tt.want)
+			}
+		})
 	}
 }
