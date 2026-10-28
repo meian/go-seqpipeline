@@ -1,0 +1,53 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - gocognit
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    gocognit:
+      min-complexity: 20
+    gocyclo:
+      min-complexity: 15
+  exclusions:
+    rules:
+      - path: _test\.go$
+        linters:
+          - errcheck
+      - path: _test\.go$
+        linters:
+          - staticcheck
+        text: '^SA1012:'
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false
+
+severity:
+  default: error
+  rules:
+    - linters:
+        - gocognit
+        - gocyclo
+      severity: warning
+    - text: '^(S[0-9]{4}|ST[0-9]{4}|QF[0-9]{4}):'
+      severity: warning
+
+output:
+  formats:
+    checkstyle:
+      path: bin/lint/report.xml
+  show-stats: false
