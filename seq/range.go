@@ -32,9 +32,8 @@ func FromRange[T integer](start, stop T, step int64) Seq[T] {
 			if !yield(current) || remaining == 0 {
 				return
 			}
-			// 終点までの残り回数で更新を止めるため、次の値は T の範囲を超えない。
-			// uint64 で足しても、T の幅に残るビット列は符号付きとして足した場合と同じになる。
-			// T に戻すと、そのビット列から負数を含む次の値を得られる。
+			// 加算結果のビット列は符号の有無で変わらないため、uint64 で足して T に戻せる。
+			// 残り回数で終点までの更新に限るため、次の値は T の範囲に収まる。
 			current = T(uint64(current) + uint64(step))
 			remaining--
 		}
