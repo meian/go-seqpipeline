@@ -30,6 +30,15 @@ linters:
         linters:
           - staticcheck
         text: '^SA1012:'
+      # テストは循環的複雑度30超・認知的複雑度40超を報告する。
+      - path: _test\.go$
+        linters:
+          - gocyclo
+        text: 'cyclomatic complexity (1[6-9]|2[0-9]|30) of func '
+      - path: _test\.go$
+        linters:
+          - gocognit
+        text: 'cognitive complexity (2[1-9]|3[0-9]|40) of func '
 
 issues:
   max-issues-per-linter: 0
