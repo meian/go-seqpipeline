@@ -32,6 +32,8 @@ func FromRange[T integer](start, stop T, step int64) Seq[T] {
 			if !yield(current) || remaining == 0 {
 				return
 			}
+			// 遷移回数により、次の値は T の範囲に収まる。
+			// uint64 の剰余加算は数学的な和の下位ビットを保つため、T への変換で負数も復元できる。
 			current = T(uint64(current) + uint64(step))
 			remaining--
 		}
