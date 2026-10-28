@@ -64,14 +64,15 @@ linter 全体を変更する場合は `linters` を条件とするルールを�
 ## PR の CI
 
 `.github/workflows/ci.yml` の `Static checks` は `pull_request` で実行する。  
-reviewdog Action の `github-pr-review` reporter と `added` フィルターにより、追加・変更行だけをレビューコメントと失敗判定の対象にする。  
+reviewdog Action の `added` フィルターにより、追加・変更行だけを報告と失敗判定の対象にする。  
 
 golangci-lint の指摘は Checkstyle 形式で reviewdog へ渡し、linter・位置・Error / Warning を保持する。  
 golangci-lint の終了コード 1 は指摘ありとして扱い、reviewdog の `fail_level: error` で差分内の Error だけを失敗とする。  
 Warning のみ・指摘なし・差分外の指摘だけの場合は成功し、ツールの起動・解析・結果の読み取りが失敗した場合は失敗する。  
 
 権限はこのジョブに `contents: read` と `pull-requests: write` を付与し、`GITHUB_TOKEN` で投稿する。  
-fork PR など書き込み権限がない場合、reviewdog は Actions のログ注釈へフォールバックする。  
+同一リポジトリの PR では `github-pr-review` でレビューコメントを投稿する。  
+fork PR と Dependabot が起動した実行では `github-pr-annotations` に切り替え、Actions のログ注釈へ直接出力する。  
 
 ## ローカルでの全体確認
 

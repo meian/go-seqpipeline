@@ -51,7 +51,10 @@ jobs:
           reviewdog_version: v0.21.2
           go_version_file: go.mod
           tool_name: golangci-lint
-          reporter: github-pr-review
+          reporter: >-
+            ${{ (github.event.pull_request.head.repo.full_name != github.repository ||
+                 github.actor == 'dependabot[bot]') &&
+                'github-pr-annotations' || 'github-pr-review' }}
           filter_mode: added
           fail_level: error
           cache: false
