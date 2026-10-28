@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check: [gofmt, vet, build, test]
+        check: [gofmt, build, test]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -29,15 +29,41 @@ jobs:
             printf '%s\n' "$unformatted"
             exit 1
           fi
-      - name: go vet
-        if: matrix.check == 'vet'
-        run: go vet ./...
       - name: go build
         if: matrix.check == 'build'
         run: go build ./...
       - name: go test
         if: matrix.check == 'test'
         run: go test ./... -count=1
+
+  lint:
+    name: Static checks
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: reviewdog/action-golangci-lint@216f5c6023089bd277ce168ff7560607ce524658 # v2.10.2
+        with:
+          golangci_lint_version: v2.15.0
+          reviewdog_version: v0.21.2
+          go_version_file: go.mod
+          tool_name: golangci-lint
+          reporter: >-
+            ${{ (github.event.pull_request.head.repo.full_name != github.repository ||
+                 github.actor == 'dependabot[bot]') &&
+                'github-pr-annotations' || 'github-pr-review' }}
+          filter_mode: added
+          fail_level: error
+          cache: false
+          # Checkstyle で指摘ごとの重大度を reviewdog へ渡す。
+          golangci_lint_flags: >-
+            --output.text.path=/dev/null
+            --output.checkstyle.path=stdout
+            ./...
+          reviewdog_flags: -f=checkstyle
 
   readme:
     name: README policy

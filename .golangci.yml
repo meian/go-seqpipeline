@@ -1,0 +1,62 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - gocognit
+    - gocyclo
+    - gosec
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    gocognit:
+      min-complexity: 20
+    gocyclo:
+      min-complexity: 15
+  exclusions:
+    rules:
+      - path: _test\.go$
+        linters:
+          - errcheck
+      - path: _test\.go$
+        linters:
+          - staticcheck
+        text: '^SA1012:'
+      # テストは循環的複雑度30超・認知的複雑度40超を報告する。
+      - path: _test\.go$
+        linters:
+          - gocyclo
+        text: 'cyclomatic complexity (1[6-9]|2[0-9]|30) of func '
+      - path: _test\.go$
+        linters:
+          - gocognit
+        text: 'cognitive complexity (2[1-9]|3[0-9]|40) of func '
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false
+
+severity:
+  default: error
+  rules:
+    - linters:
+        - gocognit
+        - gocyclo
+      severity: warning
+    - text: '^(S[0-9]{4}|ST[0-9]{4}|QF[0-9]{4}):'
+      severity: warning
+
+output:
+  formats:
+    checkstyle:
+      path: bin/lint/report.xml
+  show-stats: false
