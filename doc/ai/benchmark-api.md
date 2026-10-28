@@ -73,7 +73,7 @@ Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照と�
 `Seq` / `Seq2` と `Operator` / `Operator2` / `ToSeqOperator` / `ToSeq2Operator` は関数型で、独立した関数・メソッドを追加しない。  
 それぞれ入力・Map / Map2・MapToSeq2 / MapToSeq と Pipe / Pipe2 の測定で利用する。  
 合成値の各メソッドは単独の費用を分離せず、4 種類の入出力を扱う合成全体で測る。  
-`Compose.Seq` / `Compose2.Seq` は 4 演算、`Compose.Seq2` / `Compose2.Seq2` は 2 演算で、合成値の構築・入力への接続・全件反復を含める。  
+4 種類とも 4 段を合成し、構築・入力への接続・全件反復を含める。  
 対照の Pipe は、同じオペレーターを同じ順序で `Seq` / `Seq2` の Pipe / Pipe2 に直接接続する。  
 FromRange は符号付き・符号なしの代表として int / uint を選び、1 から N までと N から 1 までを stop を含めて生成する。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  

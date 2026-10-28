@@ -6,6 +6,7 @@ import subprocess
 import time
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import publish
@@ -89,6 +90,60 @@ class PublishTest(unittest.TestCase):
         self.assertIn('| 8 | Pipe | 2 ±2% | 2 ±2% |', unit)
         self.assertIn('| 8 | Composed | 1 ±2% | 1 ±2% |', unit)
         self.assertNotIn('倍率は Library / Go', unit)
+
+    def test_compose_partial_update_preserves_other_results(self):
+        all_rows, compose_rows = [], []
+        for metric in publish.METRICS:
+            all_rows += [['', '-', ''], ['', metric, 'CI']]
+            compose_rows += [['', 'Pipe', '', 'Composed', '', '', ''],
+                             ['', metric, 'CI', metric, 'CI', 'vs base', 'P']]
+            for api in ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2'):
+                for n in (64, 4096):
+                    case = f'class=Unit/api={api}/N={n}/phase=Evaluate/ref=DirectPipe'
+                    all_rows += [[f'{api}/{case}/impl={impl}-2', value, '2%']
+                                 for impl, value in (('Pipe', 2), ('Composed', 1))]
+                    compose_rows += [[f'*/{case}-2', 2, '2%', 1, '2%', '-50.00%', 'p=0.000 n=10']]
+        self.write('unit-compose.csv', compose_rows)
+        self.write('all.csv', all_rows)
+        (self.directory/'unit.csv').unlink()
+        (self.directory/'future.csv').unlink()
+        (self.directory/'commit.txt').write_text('a'*40+'\n')
+        (self.directory/'go-version.txt').write_text('go version test\n')
+        (self.directory/'go-env.txt').write_text('darwin\narm64\nv8.0\n\n\n\n\n')
+        cases = publish.Snapshot(self.directory).cases
+        (self.directory/'raw.txt').write_text('cpu: Test CPU\n'+''.join(
+            'Benchmark/class='+case[0]+'/'+ '/'.join(k+'='+v for k, v in case[1])+
+            '-2 1 1 ns/op 0 B/op 0 allocs/op\n' for case in cases)+'PASS\n')
+        sources = publish.SourceLinks({'benchmarks/compose_test.go':
+                                       (publish.ROOT/'compose_test.go').read_text()}, 'a'*40)
+        destination = self.directory/'partial/results'
+        with mock.patch.object(publish.SourceLinks, 'from_commit', return_value=sources):
+            publish.render_compose(self.directory, destination, '500ms', '1', '2')
+        updated = (destination/'unit.md').read_text()
+        self.assertTrue('</details>\n\n### Seq.Pipe：構築・評価\n' in updated)
+        original = (publish.ROOT/'results/unit.md').read_text()
+        self.assertEqual(publish.replace_compose_sections(updated, ''),
+                         publish.replace_compose_sections(original, ''))
+        env = (destination/'environment.md').read_text()
+        for text in ('500ms / 1', 'Test CPU', 'go version test'):
+            self.assertIn(text, env)
+            self.assertNotIn(text, updated)
+        self.assertIn('/blob/'+'a'*40+'/', updated)
+        original_env = (publish.ROOT/'results/environment.md').read_text().split('\n## Compose / Compose2\n', 1)[0]
+        self.assertEqual(env.split('\n## Compose / Compose2\n', 1)[0], original_env.rstrip('\n')+'\n')
+        self.assertEqual(env.count('| 対象コード（ライブラリ・測定） |'), 1)
+        self.assertEqual(env.count('## Compose / Compose2'), 1)
+        self.assertEqual(set(destination.iterdir()), {destination/'unit.md', destination/'environment.md'})
+        publish.environment(self.directory, '500ms', '1', '2', destination/'environment.md')
+        self.assertNotIn('## Compose / Compose2', (destination/'environment.md').read_text())
+        self.assertFalse((destination.parent/'REPORT.md').exists())
+        published_environment = (destination/'environment.md').read_text()
+        self.write('all.csv', [row for row in all_rows if not (row and '/impl=Pipe-' in str(row[0]))])
+        (self.directory/'unit-compose.csv').unlink()
+        with self.assertRaisesRegex(ValueError, 'exactly the 16'):
+            publish.render_compose(self.directory, destination, '500ms', '1', '2')
+        self.assertEqual((destination/'unit.md').read_text(), updated)
+        self.assertEqual((destination/'environment.md').read_text(), published_environment)
 
     def test_result_tables_keep_conditions_and_comparisons_separate(self):
         snapshot = publish.Snapshot(self.directory)

@@ -94,7 +94,9 @@ func TestComposeSeq(t *testing.T) {
 func composeSeq2Composed(values []int) int64 {
 	transform := op.Compose().
 		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 })).
-		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k + 1, v * 2 })).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k * 2, v + 3 }))
 	source := seq.FromSlice(values).Pipe2(transform.Operator)
 	var sum int64
 	for k, v := range source {
@@ -106,7 +108,9 @@ func composeSeq2Composed(values []int) int64 {
 func composeSeq2Pipe(values []int) int64 {
 	source := seq.FromSlice(values).
 		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 })).
-		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k + 1, v * 2 })).
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k * 2, v + 3 }))
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -153,7 +157,7 @@ func TestComposeSeq2(t *testing.T) {
 
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := composeSeq2Composed(values)
-		const want int64 = 54
+		const want int64 = 138
 		if got != want {
 			t.Fatalf("got %d; want %d", got, want)
 		}
@@ -163,7 +167,7 @@ func TestComposeSeq2(t *testing.T) {
 
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := composeSeq2Pipe(values)
-		const want int64 = 54
+		const want int64 = 138
 		if got != want {
 			t.Fatalf("got %d; want %d", got, want)
 		}
@@ -256,7 +260,9 @@ func TestCompose2Seq(t *testing.T) {
 func compose2Seq2Composed(values []int) int64 {
 	transform := op.Compose2().
 		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
-		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
+		Pipe(op.MapToSeq(func(k, v int) int { return k + v })).
+		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 }))
 	source := seq.FromSeq2(slices.All(values)).Pipe2(transform.Operator)
 	var sum int64
 	for k, v := range source {
@@ -268,7 +274,9 @@ func compose2Seq2Composed(values []int) int64 {
 func compose2Seq2Pipe(values []int) int64 {
 	source := seq.FromSeq2(slices.All(values)).
 		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
-		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 }))
+		Pipe2(op.Map2(func(k, v int) (int, int) { return k, v + 1 })).
+		Pipe(op.MapToSeq(func(k, v int) int { return k + v })).
+		Pipe2(op.MapToSeq2(func(v int) (int, int) { return v, v + 1 }))
 	var sum int64
 	for k, v := range source {
 		sum += int64(k) + int64(v)
@@ -315,7 +323,7 @@ func TestCompose2Seq2(t *testing.T) {
 
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := compose2Seq2Composed(values)
-		const want int64 = 48
+		const want int64 = 102
 		if got != want {
 			t.Fatalf("got %d; want %d", got, want)
 		}
@@ -325,7 +333,7 @@ func TestCompose2Seq2(t *testing.T) {
 
 		values := []int{1, 2, 3, 4, 5, 6}
 		got := compose2Seq2Pipe(values)
-		const want int64 = 48
+		const want int64 = 102
 		if got != want {
 			t.Fatalf("got %d; want %d", got, want)
 		}

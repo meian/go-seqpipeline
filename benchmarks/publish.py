@@ -464,6 +464,44 @@ def render(directory, destination):
     return snapshot
 
 
+def replace_compose_sections(current, replacement):
+    sections = re.split(r'(?=^#{2,3} )', current, flags=re.MULTILINE)
+    positions = [i for i, section in enumerate(sections)
+                 if re.match(r'^### Compose(?:2)?\.Seq2?：', section)]
+    if not positions or positions != list(range(positions[0], positions[-1]+1)):
+        raise ValueError('missing or noncontiguous Compose sections')
+    return ''.join(sections[:positions[0]])+replacement+''.join(sections[positions[-1]+1:])
+
+
+def render_compose(directory, destination, benchtime, count, procs):
+    snapshot = Snapshot(directory)
+    expected = {key(f'Unit/api={api}/phase=Evaluate/ref=DirectPipe/impl={impl}/N={n}')
+                for api in ('Compose.Seq', 'Compose.Seq2', 'Compose2.Seq', 'Compose2.Seq2')
+                for impl in ('Pipe', 'Composed') for n in ('64', '4096')}
+    if set(snapshot.cases) != expected:
+        raise ValueError('Compose update requires exactly the 16 cases')
+    if len(snapshot.cases) != validate(directory/'raw.txt', int(count)):
+        raise ValueError('raw and aggregate case counts differ')
+    commit = (directory/'commit.txt').read_text().strip()
+    snapshot.sources = SourceLinks.from_commit(ROOT.parent, commit)
+    unit = render_unit(snapshot)
+    snapshot.verify()
+    snapshot.sources.verify(snapshot.cases)
+    environment(directory, benchtime, count, procs, directory/'compose-environment.md')
+    metadata = (directory/'compose-environment.md').read_text().split('\n\n')[1]
+    metadata = metadata.replace('対象コード（ライブラリ・測定）', '対象コード（Compose のみ）')
+    prior_environment = (ROOT/'results/environment.md').read_text().split('\n## Compose / Compose2\n', 1)[0]
+    updated_environment = prior_environment.rstrip('\n')+'\n\n## Compose / Compose2\n\n'
+    updated_environment += '以下は Compose / Compose2 の測定情報で、他の結果には冒頭の測定情報を適用する。  \n\n'+metadata+'\n'
+    replacement = unit.split('## パイプ接続\n\n', 1)[1]+'\n'
+    updated = replace_compose_sections((ROOT/'results/unit.md').read_text(), replacement)
+    destination.mkdir(parents=True, exist_ok=True)
+    (destination/'unit.md').write_text(updated)
+    (destination/'environment.md').write_text(updated_environment)
+    print(f'{len(snapshot.cases)} Compose cases / {len(snapshot.values)} metrics published')
+    return snapshot
+
+
 def environment(workdir, benchtime, count, procs, destination):
     commit = (workdir/'commit.txt').read_text().strip()
     version = (workdir/'go-version.txt').read_text().strip()
@@ -496,6 +534,9 @@ if __name__ == '__main__':
         validate(Path(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == 'render':
         render(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif sys.argv[1] == 'report-compose':
+        workdir = Path(sys.argv[2])
+        render_compose(workdir, workdir/'published/results', *sys.argv[3:])
     elif sys.argv[1] == 'report':
         workdir = Path(sys.argv[2])
         destination = workdir/'published/results'
@@ -504,4 +545,4 @@ if __name__ == '__main__':
             raise ValueError('raw and aggregate case counts differ')
         environment(workdir, *sys.argv[3:], destination/'environment.md')
     else:
-        raise SystemExit('use validate, render or report')
+        raise SystemExit('use validate, render, report or report-compose')
