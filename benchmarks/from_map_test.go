@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"maps"
 	"testing"
 
@@ -25,34 +26,27 @@ func fromMapGo(values map[int]int) int64 {
 }
 
 func BenchmarkFromMap(b *testing.B) {
-	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Library/N=64", func(b *testing.B) {
-		mapping := mapInput(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromMapLibrary(mapping)
-		}
-	})
-	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Library/N=4096", func(b *testing.B) {
-		mapping := mapInput(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromMapLibrary(mapping)
-		}
-	})
-	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Go/N=64", func(b *testing.B) {
-		mapping := mapInput(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromMapGo(mapping)
-		}
-	})
-	b.Run("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Go/N=4096", func(b *testing.B) {
-		mapping := mapInput(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromMapGo(mapping)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			mapping := mapInput(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromMapLibrary(mapping)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=FromMap/phase=Evaluate/ref=MapRange/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			mapping := mapInput(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromMapGo(mapping)
+			}
+		})
+	}
 }
 
 func TestFromMap(t *testing.T) {

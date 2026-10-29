@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -71,118 +72,66 @@ func scenarioChannelDirect(values []int, capacity int) []pair {
 }
 
 func BenchmarkScenarioChannel(b *testing.B) {
-	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=Seq", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelSeq(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=Seq", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelSeq(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=ToChannel", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelToChannel(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=ToChannel", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelToChannel(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=Direct", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelDirect(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=64/impl=Direct", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelDirect(values, 64)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=Direct", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelDirect(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=64/impl=Direct", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelDirect(values, 64)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=FromChannel", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelFromChannel(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=64/impl=FromChannel", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelFromChannel(values, 64)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=FromChannel", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelFromChannel(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=64/impl=FromChannel", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelFromChannel(values, 64)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=0/impl=RoundTrip", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelRoundTrip(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=64/buffer=64/impl=RoundTrip", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelRoundTrip(values, 64)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=0/impl=RoundTrip", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelRoundTrip(values, 0)
-		}
-	})
-	b.Run("class=ScenarioChannel/N=4096/buffer=64/impl=RoundTrip", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioChannelRoundTrip(values, 64)
-		}
-	})
+	sizes := []int{64, 4096}
+	cases := []struct {
+		n        int
+		capacity int
+	}{
+		{64, 0},
+		{64, 64},
+		{4096, 0},
+		{4096, 64},
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=ScenarioChannel/N=%d/buffer=0/impl=Seq", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioChannelSeq(values, 0)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=ScenarioChannel/N=%d/buffer=0/impl=ToChannel", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioChannelToChannel(values, 0)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioChannel/N=%d/buffer=%d/impl=Direct", tc.n, tc.capacity)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioChannelDirect(values, tc.capacity)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioChannel/N=%d/buffer=%d/impl=FromChannel", tc.n, tc.capacity)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioChannelFromChannel(values, tc.capacity)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioChannel/N=%d/buffer=%d/impl=RoundTrip", tc.n, tc.capacity)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioChannelRoundTrip(values, tc.capacity)
+			}
+		})
+	}
 }
 
 func TestScenarioChannel(t *testing.T) {

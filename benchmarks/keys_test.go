@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"maps"
 	"testing"
 
@@ -27,38 +28,29 @@ func keysGo(values map[int]int) int64 {
 }
 
 func BenchmarkKeys(b *testing.B) {
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Library/N=64", func(b *testing.B) {
-		values := mapInput(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := mapInput(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = keysLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Library/N=4096", func(b *testing.B) {
-		values := mapInput(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = keysLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := mapInput(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = keysLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Go/N=64", func(b *testing.B) {
-		values := mapInput(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = keysGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Keys/phase=Evaluate/ref=MapKeysIterator/impl=Go/N=4096", func(b *testing.B) {
-		values := mapInput(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = keysGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = keysGo(values)
+			}
+		})
+	}
 }
 
 func TestKeys(t *testing.T) {

@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -31,38 +32,29 @@ func toMapGo(values []int) int64 {
 }
 
 func BenchmarkToMap(b *testing.B) {
-	b.Run("class=Unit/api=ToMap/phase=Collect/ref=MapsCollect/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToMap/phase=Collect/ref=MapsCollect/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toMapLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ToMap/phase=Collect/ref=MapsCollect/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toMapLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToMap/phase=Collect/ref=MapsCollect/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toMapLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ToMap/phase=Collect/ref=MapsCollect/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toMapGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ToMap/phase=Collect/ref=MapsCollect/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toMapGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toMapGo(values)
+			}
+		})
+	}
 }
 
 func TestToMap(t *testing.T) {

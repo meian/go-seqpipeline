@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -28,38 +29,29 @@ func zipOperatorGo(values []int) int64 {
 }
 
 func BenchmarkZipOperator(b *testing.B) {
-	b.Run("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipOperatorLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipOperatorGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipOperatorGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipOperatorGo(values)
+			}
+		})
+	}
 }
 
 func TestZipOperator(t *testing.T) {
@@ -114,38 +106,29 @@ func zipAlignByGo(values []int) int64 {
 }
 
 func BenchmarkZipAlignBy(b *testing.B) {
-	b.Run("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipAlignByLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipAlignByLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipAlignByLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipAlignByGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.AlignBy/phase=Evaluate/ref=ZipLeft0/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipAlignByGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipAlignByGo(values)
+			}
+		})
+	}
 }
 
 func TestZipAlignBy(t *testing.T) {
@@ -200,38 +183,29 @@ func zipWithDefaultValueGo(values []int) int64 {
 }
 
 func BenchmarkZipWithDefaultValue(b *testing.B) {
-	b.Run("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultValueLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipWithDefaultValueLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultValueLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultValueGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.WithDefaultValue/phase=Evaluate/ref=ZipLeft7/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultValueGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipWithDefaultValueGo(values)
+			}
+		})
+	}
 }
 
 func TestZipWithDefaultValue(t *testing.T) {
@@ -287,38 +261,29 @@ func zipWithDefaultKeyGo(values []int) int64 {
 }
 
 func BenchmarkZipWithDefaultKey(b *testing.B) {
-	b.Run("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultKeyLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipWithDefaultKeyLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultKeyLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultKeyGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Zip.WithDefaultKey/phase=Evaluate/ref=ZipRight7/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipWithDefaultKeyGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipWithDefaultKeyGo(values)
+			}
+		})
+	}
 }
 
 func TestZipWithDefaultKey(t *testing.T) {
@@ -368,38 +333,29 @@ func zipKeyOperatorGo(values []int) int64 {
 }
 
 func BenchmarkZipKeyOperator(b *testing.B) {
-	b.Run("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyOperatorLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyOperatorGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.Operator/phase=Evaluate/ref=ZipIndex/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyOperatorGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyOperatorGo(values)
+			}
+		})
+	}
 }
 
 func TestZipKeyOperator(t *testing.T) {
@@ -455,38 +411,29 @@ func zipKeyAlignByGo(values []int) int64 {
 }
 
 func BenchmarkZipKeyAlignBy(b *testing.B) {
-	b.Run("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyAlignByLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyAlignByLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyAlignByLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyAlignByGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.AlignBy/phase=Evaluate/ref=ZipRight7/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyAlignByGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyAlignByGo(values)
+			}
+		})
+	}
 }
 
 func TestZipKeyAlignBy(t *testing.T) {
@@ -541,38 +488,29 @@ func zipKeyWithDefaultValueGo(values []int) int64 {
 }
 
 func BenchmarkZipKeyWithDefaultValue(b *testing.B) {
-	b.Run("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultValueLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyWithDefaultValueLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultValueLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultValueGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.WithDefaultValue/phase=Evaluate/ref=ZipLeft9/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultValueGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyWithDefaultValueGo(values)
+			}
+		})
+	}
 }
 
 func TestZipKeyWithDefaultValue(t *testing.T) {
@@ -628,38 +566,29 @@ func zipKeyWithDefaultKeyGo(values []int) int64 {
 }
 
 func BenchmarkZipKeyWithDefaultKey(b *testing.B) {
-	b.Run("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultKeyLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyWithDefaultKeyLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultKeyLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultKeyGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ZipKey.WithDefaultKey/phase=Evaluate/ref=ZipRight9/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = zipKeyWithDefaultKeyGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = zipKeyWithDefaultKeyGo(values)
+			}
+		})
+	}
 }
 
 func TestZipKeyWithDefaultKey(t *testing.T) {

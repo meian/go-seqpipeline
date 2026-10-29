@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -30,38 +31,29 @@ func toSliceGo(values []int) int64 {
 }
 
 func BenchmarkToSlice(b *testing.B) {
-	b.Run("class=Unit/api=ToSlice/phase=Collect/ref=SlicesCollect/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToSlice/phase=Collect/ref=SlicesCollect/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSliceLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSlice/phase=Collect/ref=SlicesCollect/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toSliceLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToSlice/phase=Collect/ref=SlicesCollect/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSliceLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSlice/phase=Collect/ref=SlicesCollect/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSliceGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSlice/phase=Collect/ref=SlicesCollect/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSliceGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toSliceGo(values)
+			}
+		})
+	}
 }
 
 func TestToSlice(t *testing.T) {

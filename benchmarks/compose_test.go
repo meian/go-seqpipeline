@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -36,34 +37,27 @@ func composeSeqPipe(values []int) int64 {
 }
 
 func BenchmarkComposeSeq(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqPipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqPipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeqComposed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeqPipe(values)
+			}
+		})
+	}
 }
 
 func TestComposeSeq(t *testing.T) {
@@ -119,34 +113,27 @@ func composeSeq2Pipe(values []int) int64 {
 }
 
 func BenchmarkComposeSeq2(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Pipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Pipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeq2Composed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeq2Pipe(values)
+			}
+		})
+	}
 }
 
 func TestComposeSeq2(t *testing.T) {
@@ -202,34 +189,27 @@ func compose2SeqPipe(values []int) int64 {
 }
 
 func BenchmarkCompose2Seq(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqPipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqPipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2SeqComposed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2SeqPipe(values)
+			}
+		})
+	}
 }
 
 func TestCompose2Seq(t *testing.T) {
@@ -285,34 +265,27 @@ func compose2Seq2Pipe(values []int) int64 {
 }
 
 func BenchmarkCompose2Seq2(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Pipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Pipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2Seq2Composed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2Seq2Pipe(values)
+			}
+		})
+	}
 }
 
 func TestCompose2Seq2(t *testing.T) {

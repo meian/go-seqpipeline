@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -28,38 +29,29 @@ func takeOperatorGo(values []int) int64 {
 }
 
 func BenchmarkTakeOperator(b *testing.B) {
-	b.Run("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = takeOperatorLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperatorGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Take.Operator/phase=Early8/ref=TakeSlice/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperatorGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = takeOperatorGo(values)
+			}
+		})
+	}
 }
 
 func TestTakeOperator(t *testing.T) {
@@ -109,38 +101,29 @@ func takeOperator2Go(values []int) int64 {
 }
 
 func BenchmarkTakeOperator2(b *testing.B) {
-	b.Run("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperator2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = takeOperator2Library(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperator2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperator2Go(values)
-		}
-	})
-	b.Run("class=Unit/api=Take.Operator2/phase=Early8/ref=Take2Slice/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = takeOperator2Go(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = takeOperator2Go(values)
+			}
+		})
+	}
 }
 
 func TestTakeOperator2(t *testing.T) {

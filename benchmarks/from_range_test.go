@@ -2,6 +2,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -31,54 +32,36 @@ func fromRangeSignedGo(start, stop int, step int64) int64 {
 }
 
 func BenchmarkFromRangeSigned(b *testing.B) {
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(4096, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(4096, 1, -1)
-		}
-	})
+	cases := []struct {
+		phase string
+		n     int
+		start int
+		stop  int
+		step  int64
+	}{
+		{"Ascending", 64, 1, 64, 1},
+		{"Ascending", 4096, 1, 4096, 1},
+		{"Descending", 64, 64, 1, -1},
+		{"Descending", 4096, 4096, 1, -1},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Signed/phase=%s/ref=IntegerLoop/impl=Library/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeSignedLibrary(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Signed/phase=%s/ref=IntegerLoop/impl=Go/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeSignedGo(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
 }
 
 func TestFromRangeSigned(t *testing.T) {
@@ -146,54 +129,36 @@ func fromRangeUnsignedGo(start, stop uint, step int64) int64 {
 }
 
 func BenchmarkFromRangeUnsigned(b *testing.B) {
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(4096, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(4096, 1, -1)
-		}
-	})
+	cases := []struct {
+		phase string
+		n     int
+		start uint
+		stop  uint
+		step  int64
+	}{
+		{"Ascending", 64, 1, 64, 1},
+		{"Ascending", 4096, 1, 4096, 1},
+		{"Descending", 64, 64, 1, -1},
+		{"Descending", 4096, 4096, 1, -1},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Unsigned/phase=%s/ref=IntegerLoop/impl=Library/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeUnsignedLibrary(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Unsigned/phase=%s/ref=IntegerLoop/impl=Go/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeUnsignedGo(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
 }
 
 func TestFromRangeUnsigned(t *testing.T) {
