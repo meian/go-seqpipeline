@@ -67,33 +67,23 @@ func BenchmarkFromRangeSigned(b *testing.B) {
 func TestFromRangeSigned(t *testing.T) {
 	t.Parallel()
 
+	const want int64 = 21
 	cases := []struct {
-		name  string
-		start int
-		stop  int
-		step  int64
-		want  int64
+		name string
+		run  func() int64
 	}{
-		{"Ascending", 1, 6, 1, 21},
-		{"Descending", 6, 1, -1, 21},
+		{"Library/Ascending", func() int64 { return fromRangeSignedLibrary(1, 6, 1) }},
+		{"Library/Descending", func() int64 { return fromRangeSignedLibrary(6, 1, -1) }},
+		{"Go/Ascending", func() int64 { return fromRangeSignedGo(1, 6, 1) }},
+		{"Go/Descending", func() int64 { return fromRangeSignedGo(6, 1, -1) }},
 	}
 	for _, tc := range cases {
-		t.Run("Library/"+tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := fromRangeSignedLibrary(tc.start, tc.stop, tc.step)
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go/"+tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := fromRangeSignedGo(tc.start, tc.stop, tc.step)
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run()
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -158,33 +148,23 @@ func BenchmarkFromRangeUnsigned(b *testing.B) {
 func TestFromRangeUnsigned(t *testing.T) {
 	t.Parallel()
 
+	const want int64 = 21
 	cases := []struct {
-		name  string
-		start uint
-		stop  uint
-		step  int64
-		want  int64
+		name string
+		run  func() int64
 	}{
-		{"Ascending", 1, 6, 1, 21},
-		{"Descending", 6, 1, -1, 21},
+		{"Library/Ascending", func() int64 { return fromRangeUnsignedLibrary(1, 6, 1) }},
+		{"Library/Descending", func() int64 { return fromRangeUnsignedLibrary(6, 1, -1) }},
+		{"Go/Ascending", func() int64 { return fromRangeUnsignedGo(1, 6, 1) }},
+		{"Go/Descending", func() int64 { return fromRangeUnsignedGo(6, 1, -1) }},
 	}
 	for _, tc := range cases {
-		t.Run("Library/"+tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := fromRangeUnsignedLibrary(tc.start, tc.stop, tc.step)
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go/"+tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := fromRangeUnsignedGo(tc.start, tc.stop, tc.step)
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run()
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}

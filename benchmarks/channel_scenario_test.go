@@ -137,64 +137,25 @@ func BenchmarkScenarioChannel(b *testing.B) {
 func TestScenarioChannel(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
 	cases := []struct {
-		values   []int
-		capacity int
-		want     []pair
+		name string
+		run  func([]int) []pair
 	}{
-		{
-			values:   []int{1, 2, 3, 4, 5, 6},
-			capacity: 64,
-			want:     []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}},
-		},
+		{"Seq", func(values []int) []pair { return scenarioChannelSeq(values, 0) }},
+		{"ToChannel", func(values []int) []pair { return scenarioChannelToChannel(values, 0) }},
+		{"Direct", func(values []int) []pair { return scenarioChannelDirect(values, 64) }},
+		{"FromChannel", func(values []int) []pair { return scenarioChannelFromChannel(values, 64) }},
+		{"RoundTrip", func(values []int) []pair { return scenarioChannelRoundTrip(values, 64) }},
 	}
 	for _, tc := range cases {
-		t.Run("Seq", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := scenarioChannelSeq(slices.Clone(tc.values), 0)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("ToChannel", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioChannelToChannel(slices.Clone(tc.values), 0)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Direct", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioChannelDirect(slices.Clone(tc.values), tc.capacity)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("FromChannel", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioChannelFromChannel(slices.Clone(tc.values), tc.capacity)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("RoundTrip", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioChannelRoundTrip(slices.Clone(tc.values), tc.capacity)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if !slices.Equal(got, want) {
+				t.Fatalf("got %v; want %v", got, want)
 			}
 		})
 	}

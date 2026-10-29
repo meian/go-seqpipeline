@@ -60,26 +60,21 @@ func BenchmarkToMap(b *testing.B) {
 func TestToMap(t *testing.T) {
 	t.Parallel()
 
-	// 検証対象がベンチマーク用の collectedMap を共有するため、子テストは直列に実行する。
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 36
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 36},
+		{"Library", toMapLibrary},
+		{"Go", toMapGo},
 	}
+	// 検証対象がベンチマーク用の collectedMap を共有するため、子テストは直列に実行する。
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
-			got := toMapLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			got := toMapGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}

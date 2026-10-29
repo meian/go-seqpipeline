@@ -57,29 +57,22 @@ func BenchmarkZipOperator(b *testing.B) {
 func TestZipOperator(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 42
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 42},
+		{"Library", zipOperatorLibrary},
+		{"Go", zipOperatorGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipOperatorLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipOperatorGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -138,29 +131,22 @@ func BenchmarkZipAlignBy(b *testing.B) {
 func TestZipAlignBy(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 27
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 27},
+		{"Library", zipAlignByLibrary},
+		{"Go", zipAlignByGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipAlignByLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipAlignByGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -219,29 +205,22 @@ func BenchmarkZipWithDefaultValue(b *testing.B) {
 func TestZipWithDefaultValue(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 48
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 48},
+		{"Library", zipWithDefaultValueLibrary},
+		{"Go", zipWithDefaultValueGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipWithDefaultValueLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipWithDefaultValueGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -301,29 +280,22 @@ func BenchmarkZipWithDefaultKey(b *testing.B) {
 func TestZipWithDefaultKey(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 48
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 48},
+		{"Library", zipWithDefaultKeyLibrary},
+		{"Go", zipWithDefaultKeyGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipWithDefaultKeyLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipWithDefaultKeyGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -377,29 +349,22 @@ func BenchmarkZipKeyOperator(b *testing.B) {
 func TestZipKeyOperator(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 42
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 42},
+		{"Library", zipKeyOperatorLibrary},
+		{"Go", zipKeyOperatorGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipKeyOperatorLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipKeyOperatorGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -459,29 +424,22 @@ func BenchmarkZipKeyAlignBy(b *testing.B) {
 func TestZipKeyAlignBy(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 48
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 48},
+		{"Library", zipKeyAlignByLibrary},
+		{"Go", zipKeyAlignByGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipKeyAlignByLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipKeyAlignByGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -540,29 +498,22 @@ func BenchmarkZipKeyWithDefaultValue(b *testing.B) {
 func TestZipKeyWithDefaultValue(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 54
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 54},
+		{"Library", zipKeyWithDefaultValueLibrary},
+		{"Go", zipKeyWithDefaultValueGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipKeyWithDefaultValueLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipKeyWithDefaultValueGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -622,29 +573,22 @@ func BenchmarkZipKeyWithDefaultKey(b *testing.B) {
 func TestZipKeyWithDefaultKey(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 54
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 54},
+		{"Library", zipKeyWithDefaultKeyLibrary},
+		{"Go", zipKeyWithDefaultKeyGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := zipKeyWithDefaultKeyLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := zipKeyWithDefaultKeyGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}

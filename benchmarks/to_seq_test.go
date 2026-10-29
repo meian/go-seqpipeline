@@ -56,29 +56,22 @@ func BenchmarkToSeq(b *testing.B) {
 func TestToSeq(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 21
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 21},
+		{"Library", toSeqLibrary},
+		{"Go", toSeqGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := toSeqLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := toSeqGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -132,29 +125,22 @@ func BenchmarkToSeq2(b *testing.B) {
 func TestToSeq2(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 36
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6}, want: 36},
+		{"Library", toSeq2Library},
+		{"Go", toSeq2Go},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := toSeq2Library(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := toSeq2Go(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}

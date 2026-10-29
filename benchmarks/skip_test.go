@@ -57,29 +57,22 @@ func BenchmarkSkipOperator(b *testing.B) {
 func TestSkipOperator(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	const want int64 = 19
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, want: 19},
+		{"Library", skipOperatorLibrary},
+		{"Go", skipOperatorGo},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := skipOperatorLibrary(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := skipOperatorGo(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}
@@ -133,29 +126,22 @@ func BenchmarkSkipOperator2(b *testing.B) {
 func TestSkipOperator2(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	const want int64 = 36
 	cases := []struct {
-		values []int
-		want   int64
+		name string
+		run  func([]int) int64
 	}{
-		{values: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, want: 36},
+		{"Library", skipOperator2Library},
+		{"Go", skipOperator2Go},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := skipOperator2Library(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Go", func(t *testing.T) {
-			t.Parallel()
-
-			got := skipOperator2Go(slices.Clone(tc.values))
-			if got != tc.want {
-				t.Fatalf("got %d; want %d", got, tc.want)
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
 			}
 		})
 	}

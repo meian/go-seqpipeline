@@ -110,46 +110,23 @@ func BenchmarkScenarioPipelineSeq(b *testing.B) {
 func TestScenarioPipelineSeq(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
 	cases := []struct {
-		values []int
-		depth  int
-		limit  int
-		want   []pair
+		name string
+		run  func([]int, int, int) []pair
 	}{
-		{
-			values: []int{1, 2, 3, 4, 5, 6},
-			depth:  2,
-			limit:  0,
-			want:   []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}},
-		},
+		{"Library", scenarioPipelineSeqLibrary},
+		{"Loop", scenarioPipelineSeqLoop},
+		{"Functions", scenarioPipelineSeqFunctions},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := scenarioPipelineSeqLibrary(slices.Clone(tc.values), tc.depth, tc.limit)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Loop", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioPipelineSeqLoop(slices.Clone(tc.values), tc.depth, tc.limit)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Functions", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioPipelineSeqFunctions(slices.Clone(tc.values), tc.depth, tc.limit)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
+			got := tc.run(slices.Clone(values), 2, 0)
+			if !slices.Equal(got, want) {
+				t.Fatalf("got %v; want %v", got, want)
 			}
 		})
 	}
@@ -256,46 +233,23 @@ func BenchmarkScenarioPipelineSeq2(b *testing.B) {
 func TestScenarioPipelineSeq2(t *testing.T) {
 	t.Parallel()
 
+	values := []int{1, 2, 3, 4, 5, 6}
+	want := []pair{{0, 2}, {2, 4}, {3, 5}, {5, 7}}
 	cases := []struct {
-		values []int
-		depth  int
-		limit  int
-		want   []pair
+		name string
+		run  func([]int, int, int) []pair
 	}{
-		{
-			values: []int{1, 2, 3, 4, 5, 6},
-			depth:  2,
-			limit:  0,
-			want:   []pair{{0, 2}, {2, 4}, {3, 5}, {5, 7}},
-		},
+		{"Library", scenarioPipelineSeq2Library},
+		{"Loop", scenarioPipelineSeq2Loop},
+		{"Functions", scenarioPipelineSeq2Functions},
 	}
 	for _, tc := range cases {
-		t.Run("Library", func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := scenarioPipelineSeq2Library(slices.Clone(tc.values), tc.depth, tc.limit)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Loop", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioPipelineSeq2Loop(slices.Clone(tc.values), tc.depth, tc.limit)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
-			}
-		})
-	}
-	for _, tc := range cases {
-		t.Run("Functions", func(t *testing.T) {
-			t.Parallel()
-
-			got := scenarioPipelineSeq2Functions(slices.Clone(tc.values), tc.depth, tc.limit)
-			if !slices.Equal(got, tc.want) {
-				t.Fatalf("got %v; want %v", got, tc.want)
+			got := tc.run(slices.Clone(values), 2, 0)
+			if !slices.Equal(got, want) {
+				t.Fatalf("got %v; want %v", got, want)
 			}
 		})
 	}
