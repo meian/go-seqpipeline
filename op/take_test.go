@@ -132,8 +132,8 @@ func TestTakeOperator2DownstreamStop(t *testing.T) {
 func TestTakeConfigurationReuse(t *testing.T) {
 	t.Parallel()
 	take := op.Take(2)
-	ope := op.Operator[int, int](take.Operator)
-	ope2 := op.Operator2[[]int, string, []int, string](take.Operator2)
+	ope := take.Operator[int]
+	ope2 := take.Operator2[[]int, string]
 	values := slices.Values([]int{3, 3, 1})
 	pairs := iter.Seq2[[]int, string](func(yield func([]int, string) bool) {
 		for _, p := range []pair[[]int, string]{

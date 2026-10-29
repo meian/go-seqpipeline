@@ -17,7 +17,7 @@ func TestZip(t *testing.T) {
 	left := slices.Values([]int{3, 3, 1})
 	right := slices.Values([]string{"a", "b"})
 	config := op.Zip(right)
-	ope := op.ToSeq2Operator[int, int, string](config.Operator)
+	ope := config.Operator[int]
 	assertEqual(t, collectPairs(ope(left)), []pair[int, string]{{3, "a"}, {3, "b"}})
 	// 同じ設定から異なるキー型を推論できる。
 	stringKeys := config.Operator(slices.Values([]string{"x"}))

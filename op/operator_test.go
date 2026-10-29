@@ -27,14 +27,14 @@ func TestOperator2(t *testing.T) {
 
 func TestToSeqOperator(t *testing.T) {
 	t.Parallel()
-	ope := op.ToSeqOperator[int, string, string](op.Values)
+	ope := op.Values[int, string]
 	assertEqual(t, slices.Collect(ope(slices.All([]string{"a", "bbb"}))), []string{"a", "bbb"})
 	assertEqual(t, slices.Collect(ope(nil)), []string(nil))
 }
 
 func TestToSeq2Operator(t *testing.T) {
 	t.Parallel()
-	ope := op.ToSeq2Operator[int, int, string](op.Zip(slices.Values([]string{"a", "b"})).Operator)
+	ope := op.Zip(slices.Values([]string{"a", "b"})).Operator[int]
 	want := []pair[int, string]{{Key: 1, Value: "a"}, {Key: 2, Value: "b"}}
 	assertEqual(t, collectPairs(ope(slices.Values([]int{1, 2, 3}))), want)
 	assertEqual(t, collectPairs(ope(nil)), []pair[int, string](nil))

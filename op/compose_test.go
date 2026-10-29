@@ -121,7 +121,7 @@ func TestComposedOperator(t *testing.T) {
 		}
 		return op.Map(strconv.Itoa)(src)
 	})
-	operator := op.Operator[int, string](composed.Operator)
+	operator := composed.Operator
 	assertEqual(t, calls, 0)
 	if operator(nil) != nil {
 		t.Fatal("expected nil result")
@@ -167,7 +167,7 @@ func TestComposedToSeq2Operator(t *testing.T) {
 		}
 		return withLength(src)
 	})
-	operator := op.ToSeq2Operator[string, []int, string](composed.Operator)
+	operator := composed.Operator
 	assertEqual(t, calls, 0)
 	if operator(nil) != nil {
 		t.Fatal("expected nil result")
@@ -213,7 +213,7 @@ func TestComposedToSeqOperator(t *testing.T) {
 		}
 		return op.Values(src)
 	})
-	operator := op.ToSeqOperator[int, string, string](composed.Operator)
+	operator := composed.Operator
 	assertEqual(t, calls, 0)
 	if operator(nil) != nil {
 		t.Fatal("expected nil result")
@@ -261,7 +261,7 @@ func TestComposed2Operator(t *testing.T) {
 		}
 		return op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })(src)
 	})
-	operator := op.Operator2[int, string, string, int](composed.Operator)
+	operator := composed.Operator
 	assertEqual(t, calls, 0)
 	if operator(nil) != nil {
 		t.Fatal("expected nil result")
@@ -275,18 +275,18 @@ func TestComposed2Operator(t *testing.T) {
 // 独自オペレーター間で nil をそのまま渡し、戻り値も保持することを確認する。
 func TestCompositionCustomNil(t *testing.T) {
 	t.Parallel()
-	first := op.Operator[int, string](func(src iter.Seq[int]) iter.Seq[string] {
+	first := func(src iter.Seq[int]) iter.Seq[string] {
 		if src != nil {
 			t.Fatal("expected nil input")
 		}
 		return nil
-	})
-	next := op.Operator[string, int](func(src iter.Seq[string]) iter.Seq[int] {
+	}
+	next := func(src iter.Seq[string]) iter.Seq[int] {
 		if src != nil {
 			t.Fatal("expected nil intermediate")
 		}
 		return nil
-	})
+	}
 	if op.Compose().Pipe(first).Pipe(next).Operator(nil) != nil {
 		t.Fatal("expected nil result")
 	}
