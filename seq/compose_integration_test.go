@@ -171,8 +171,8 @@ func TestCompose2CacheTiming(t *testing.T) {
 func TestComposeTakeZero(t *testing.T) {
 	t.Parallel()
 
-	values := seq.Seq[int](func(func(int) bool) { t.Fatal("unexpected value evaluation") })
-	pairs := seq.Seq2[int, string](func(func(int, string) bool) { t.Fatal("unexpected pair evaluation") })
+	values := seq.FromSeq(func(func(int) bool) { t.Fatal("unexpected value evaluation") })
+	pairs := seq.FromSeq2(func(func(int, string) bool) { t.Fatal("unexpected pair evaluation") })
 	fromValues := op.Compose().Pipe[int](op.Take(0).Operator).Pipe(op.Cache)
 	fromPairs := op.Compose2().Pipe2[int, string](op.Take(0).Operator2).Pipe2(op.Cache2)
 	assertEqual(t, seq.ToSlice(values.Pipe(fromValues.Operator)), []int(nil))

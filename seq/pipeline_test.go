@@ -271,7 +271,7 @@ func TestCrossTypePipeline(t *testing.T) {
 			t.Parallel()
 
 			starts, reads, stops := 0, 0, 0
-			src := seq.Seq[int](func(yield func(int) bool) {
+			src := seq.FromSeq(func(yield func(int) bool) {
 				starts++
 				for _, v := range []int{1, 22, 333} {
 					reads++
@@ -316,7 +316,7 @@ func TestSkipAfterFilter(t *testing.T) {
 	t.Parallel()
 
 	reads := 0
-	src := seq.Seq[int](func(yield func(int) bool) {
+	src := seq.FromSeq(func(yield func(int) bool) {
 		for i := 1; i <= 10; i++ {
 			reads++
 			if !yield(i) {
@@ -341,7 +341,7 @@ func TestSkip2AfterFilter(t *testing.T) {
 	t.Parallel()
 
 	reads := 0
-	src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+	src := seq.FromSeq2(func(yield func(int, int) bool) {
 		for i := 1; i <= 10; i++ {
 			reads++
 			if !yield(i, i*10) {
@@ -435,7 +435,7 @@ func TestProjectionWithSkip(t *testing.T) {
 			t.Parallel()
 
 			starts, reads, stops := 0, 0, 0
-			src := seq.Seq2[int, int](func(yield func(int, int) bool) {
+			src := seq.FromSeq2(func(yield func(int, int) bool) {
 				starts++
 				defer func() { stops++ }()
 				for i := 1; i <= 5; i++ {

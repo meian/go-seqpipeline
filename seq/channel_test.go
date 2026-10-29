@@ -178,7 +178,7 @@ func TestToChannelCancelSend(t *testing.T) {
 				defer cancel()
 				reads, stops := 0, 0
 				finished := make(chan struct{})
-				src := seq.Seq[int](func(yield func(int) bool) {
+				src := seq.FromSeq(func(yield func(int) bool) {
 					defer close(finished)
 					for _, v := range []int{1, 2, 3} {
 						reads++
@@ -215,7 +215,7 @@ func TestToChannelCanceled(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	src := seq.Seq[int](func(func(int) bool) { t.Error("canceled input evaluated") })
+	src := seq.FromSeq(func(func(int) bool) { t.Error("canceled input evaluated") })
 	if _, ok := <-seq.ToChannel(ctx, src); ok {
 		t.Fatal("canceled output must be closed")
 	}

@@ -124,7 +124,7 @@ fmt.Println(seq.ToSlice(saved)) // [2 4 6]
 たとえば、次のように無限に値を生成する入力を考えます。  
 
 ```go
-naturals := seq.Seq[int](func(yield func(int) bool) {
+naturals := seq.FromSeq(func(yield func(int) bool) {
     for n := 1; ; n++ {
         if !yield(n) {
             return

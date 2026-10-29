@@ -32,7 +32,7 @@ func TestSeqPipe(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	src := seq.Seq[int](func(yield func(int) bool) {
+	src := seq.FromSeq(func(yield func(int) bool) {
 		reads++
 		yield(7)
 	})
@@ -68,7 +68,7 @@ func TestSeqPipe2(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	src := seq.Seq[int](func(yield func(int) bool) {
+	src := seq.FromSeq(func(yield func(int) bool) {
 		reads++
 		yield(7)
 	})
@@ -131,7 +131,7 @@ func TestSeq2Pipe(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	src := seq.Seq2[int, bool](func(yield func(int, bool) bool) {
+	src := seq.FromSeq2(func(yield func(int, bool) bool) {
 		reads++
 		yield(7, true)
 	})
@@ -168,7 +168,7 @@ func TestSeq2Pipe2(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	src := seq.Seq2[int, bool](func(yield func(int, bool) bool) {
+	src := seq.FromSeq2(func(yield func(int, bool) bool) {
 		reads++
 		yield(7, true)
 	})
