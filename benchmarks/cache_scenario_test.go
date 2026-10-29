@@ -38,38 +38,25 @@ func scenarioCacheSeqFill(values []int, work int) seq.Seq[int] {
 }
 
 func BenchmarkScenarioCacheSeqFill(b *testing.B) {
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Fill", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 0)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Fill", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 32)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Fill", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 0)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Fill", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeqResult = scenarioCacheSeqFill(values, 32)
-		}
-	})
+	cases := []struct {
+		n    int
+		work int
+	}{
+		{64, 0},
+		{64, 32},
+		{4096, 0},
+		{4096, 32},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq/N=%d/work=%d/phase=Fill", tc.n, tc.work)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				scenarioCacheSeqResult = scenarioCacheSeqFill(values, tc.work)
+			}
+		})
+	}
 }
 
 func TestScenarioCacheSeqFill(t *testing.T) {
@@ -94,38 +81,26 @@ func scenarioCacheSeqWarm(source seq.Seq[int]) int64 {
 }
 
 func BenchmarkScenarioCacheSeqWarm(b *testing.B) {
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Warm", func(b *testing.B) {
-		values := input(64)
-		source := scenarioCacheSeqFill(values, 0)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqWarm(source)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Warm", func(b *testing.B) {
-		values := input(64)
-		source := scenarioCacheSeqFill(values, 32)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqWarm(source)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Warm", func(b *testing.B) {
-		values := input(4096)
-		source := scenarioCacheSeqFill(values, 0)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqWarm(source)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Warm", func(b *testing.B) {
-		values := input(4096)
-		source := scenarioCacheSeqFill(values, 32)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqWarm(source)
-		}
-	})
+	cases := []struct {
+		n    int
+		work int
+	}{
+		{64, 0},
+		{64, 32},
+		{4096, 0},
+		{4096, 32},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq/N=%d/work=%d/phase=Warm", tc.n, tc.work)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			source := scenarioCacheSeqFill(values, tc.work)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = scenarioCacheSeqWarm(source)
+			}
+		})
+	}
 }
 
 func TestScenarioCacheSeqWarm(t *testing.T) {
@@ -239,38 +214,25 @@ func scenarioCacheSeq2Fill(values []int, work int) seq.Seq2[int, int] {
 }
 
 func BenchmarkScenarioCacheSeq2Fill(b *testing.B) {
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Fill", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 0)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Fill", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 32)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Fill", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 0)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Fill", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, 32)
-		}
-	})
+	cases := []struct {
+		n    int
+		work int
+	}{
+		{64, 0},
+		{64, 32},
+		{4096, 0},
+		{4096, 32},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq2/N=%d/work=%d/phase=Fill", tc.n, tc.work)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				scenarioCacheSeq2Result = scenarioCacheSeq2Fill(values, tc.work)
+			}
+		})
+	}
 }
 
 func TestScenarioCacheSeq2Fill(t *testing.T) {
@@ -298,38 +260,26 @@ func scenarioCacheSeq2Warm(source seq.Seq2[int, int]) int64 {
 }
 
 func BenchmarkScenarioCacheSeq2Warm(b *testing.B) {
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Warm", func(b *testing.B) {
-		values := input(64)
-		source := scenarioCacheSeq2Fill(values, 0)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Warm(source)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Warm", func(b *testing.B) {
-		values := input(64)
-		source := scenarioCacheSeq2Fill(values, 32)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Warm(source)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Warm", func(b *testing.B) {
-		values := input(4096)
-		source := scenarioCacheSeq2Fill(values, 0)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Warm(source)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Warm", func(b *testing.B) {
-		values := input(4096)
-		source := scenarioCacheSeq2Fill(values, 32)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Warm(source)
-		}
-	})
+	cases := []struct {
+		n    int
+		work int
+	}{
+		{64, 0},
+		{64, 32},
+		{4096, 0},
+		{4096, 32},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq2/N=%d/work=%d/phase=Warm", tc.n, tc.work)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			source := scenarioCacheSeq2Fill(values, tc.work)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = scenarioCacheSeq2Warm(source)
+			}
+		})
+	}
 }
 
 func TestScenarioCacheSeq2Warm(t *testing.T) {
