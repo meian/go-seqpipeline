@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -27,65 +28,53 @@ func toSeqGo(values []int) int64 {
 }
 
 func BenchmarkToSeq(b *testing.B) {
-	b.Run("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeqLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toSeqLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeqLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeqGo(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSeq/phase=Evaluate/ref=IteratorRange/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeqGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toSeqGo(values)
+			}
+		})
+	}
 }
 
 func TestToSeq(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 21
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", toSeqLibrary},
+		{"Go", toSeqGo},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toSeqLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toSeqGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func toSeq2Library(values []int) int64 {
@@ -108,63 +97,51 @@ func toSeq2Go(values []int) int64 {
 }
 
 func BenchmarkToSeq2(b *testing.B) {
-	b.Run("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeq2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toSeq2Library(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeq2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeq2Go(values)
-		}
-	})
-	b.Run("class=Unit/api=ToSeq2/phase=Evaluate/ref=Iterator2Range/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = toSeq2Go(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = toSeq2Go(values)
+			}
+		})
+	}
 }
 
 func TestToSeq2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 36
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", toSeq2Library},
+		{"Go", toSeq2Go},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toSeq2Library(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toSeq2Go(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }

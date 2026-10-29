@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -27,65 +28,53 @@ func mapGo(values []int) int64 {
 }
 
 func BenchmarkMap(b *testing.B) {
-	b.Run("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = mapLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = mapLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = mapLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = mapGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Map/phase=Evaluate/ref=MapLoop/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = mapGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = mapGo(values)
+			}
+		})
+	}
 }
 
 func TestMap(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 27
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", mapLibrary},
+		{"Go", mapGo},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := mapLibrary(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := mapGo(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func map2Library(values []int) int64 {
@@ -107,63 +96,51 @@ func map2Go(values []int) int64 {
 }
 
 func BenchmarkMap2(b *testing.B) {
-	b.Run("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = map2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = map2Library(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = map2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = map2Go(values)
-		}
-	})
-	b.Run("class=Unit/api=Map2/phase=Evaluate/ref=Map2Loop/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = map2Go(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = map2Go(values)
+			}
+		})
+	}
 }
 
 func TestMap2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 42
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", map2Library},
+		{"Go", map2Go},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := map2Library(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := map2Go(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }

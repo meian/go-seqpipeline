@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -25,63 +26,51 @@ func fromSliceGo(values []int) int64 {
 }
 
 func BenchmarkFromSlice(b *testing.B) {
-	b.Run("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromSliceLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromSliceLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromSliceLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromSliceGo(values)
-		}
-	})
-	b.Run("class=Unit/api=FromSlice/phase=Evaluate/ref=SliceRange/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromSliceGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromSliceGo(values)
+			}
+		})
+	}
 }
 
 func TestFromSlice(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 21
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", fromSliceLibrary},
+		{"Go", fromSliceGo},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := fromSliceLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := fromSliceGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }

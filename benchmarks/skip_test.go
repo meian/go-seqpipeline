@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -28,65 +29,53 @@ func skipOperatorGo(values []int) int64 {
 }
 
 func BenchmarkSkipOperator(b *testing.B) {
-	b.Run("class=Unit/api=Skip.Operator/phase=Evaluate/ref=SkipSlice/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Skip.Operator/phase=Evaluate/ref=SkipSlice/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Skip.Operator/phase=Evaluate/ref=SkipSlice/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = skipOperatorLibrary(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Skip.Operator/phase=Evaluate/ref=SkipSlice/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperatorLibrary(values)
-		}
-	})
-	b.Run("class=Unit/api=Skip.Operator/phase=Evaluate/ref=SkipSlice/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperatorGo(values)
-		}
-	})
-	b.Run("class=Unit/api=Skip.Operator/phase=Evaluate/ref=SkipSlice/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperatorGo(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = skipOperatorGo(values)
+			}
+		})
+	}
 }
 
 func TestSkipOperator(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	const want int64 = 19
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", skipOperatorLibrary},
+		{"Go", skipOperatorGo},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-		got := skipOperatorLibrary(values)
-		const want int64 = 19
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-		got := skipOperatorGo(values)
-		const want int64 = 19
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func skipOperator2Library(values []int) int64 {
@@ -109,63 +98,51 @@ func skipOperator2Go(values []int) int64 {
 }
 
 func BenchmarkSkipOperator2(b *testing.B) {
-	b.Run("class=Unit/api=Skip.Operator2/phase=Evaluate/ref=Skip2Slice/impl=Library/N=64", func(b *testing.B) {
-		values := input(64)
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Skip.Operator2/phase=Evaluate/ref=Skip2Slice/impl=Library/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperator2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=Skip.Operator2/phase=Evaluate/ref=Skip2Slice/impl=Library/N=4096", func(b *testing.B) {
-		values := input(4096)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = skipOperator2Library(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Skip.Operator2/phase=Evaluate/ref=Skip2Slice/impl=Go/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
 
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperator2Library(values)
-		}
-	})
-	b.Run("class=Unit/api=Skip.Operator2/phase=Evaluate/ref=Skip2Slice/impl=Go/N=64", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperator2Go(values)
-		}
-	})
-	b.Run("class=Unit/api=Skip.Operator2/phase=Evaluate/ref=Skip2Slice/impl=Go/N=4096", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = skipOperator2Go(values)
-		}
-	})
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = skipOperator2Go(values)
+			}
+		})
+	}
 }
 
 func TestSkipOperator2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	const want int64 = 36
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Library", skipOperator2Library},
+		{"Go", skipOperator2Go},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-		got := skipOperator2Library(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-		got := skipOperator2Go(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }

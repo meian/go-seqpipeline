@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -36,59 +37,51 @@ func composeSeqPipe(values []int) int64 {
 }
 
 func BenchmarkComposeSeq(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqPipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeqPipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeqComposed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeqPipe(values)
+			}
+		})
+	}
 }
 
 func TestComposeSeq(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Composed", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 72
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Composed", composeSeqComposed},
+		{"Pipe", composeSeqPipe},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := composeSeqComposed(values)
-		const want int64 = 72
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Pipe", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := composeSeqPipe(values)
-		const want int64 = 72
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func composeSeq2Composed(values []int) int64 {
@@ -119,59 +112,51 @@ func composeSeq2Pipe(values []int) int64 {
 }
 
 func BenchmarkComposeSeq2(b *testing.B) {
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Pipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = composeSeq2Pipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeq2Composed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = composeSeq2Pipe(values)
+			}
+		})
+	}
 }
 
 func TestComposeSeq2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Composed", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 138
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Composed", composeSeq2Composed},
+		{"Pipe", composeSeq2Pipe},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := composeSeq2Composed(values)
-		const want int64 = 138
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Pipe", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := composeSeq2Pipe(values)
-		const want int64 = 138
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func compose2SeqComposed(values []int) int64 {
@@ -202,59 +187,51 @@ func compose2SeqPipe(values []int) int64 {
 }
 
 func BenchmarkCompose2Seq(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqComposed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqPipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2SeqPipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2SeqComposed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2SeqPipe(values)
+			}
+		})
+	}
 }
 
 func TestCompose2Seq(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Composed", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 90
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Composed", compose2SeqComposed},
+		{"Pipe", compose2SeqPipe},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := compose2SeqComposed(values)
-		const want int64 = 90
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Pipe", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := compose2SeqPipe(values)
-		const want int64 = 90
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func compose2Seq2Composed(values []int) int64 {
@@ -285,57 +262,49 @@ func compose2Seq2Pipe(values []int) int64 {
 }
 
 func BenchmarkCompose2Seq2(b *testing.B) {
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Composed(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=64", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Pipe(values)
-		}
-	})
-	b.Run("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=4096", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = compose2Seq2Pipe(values)
-		}
-	})
+	sizes := []int{64, 4096}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Composed/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2Seq2Composed(values)
+			}
+		})
+	}
+	for _, n := range sizes {
+		name := fmt.Sprintf("class=Unit/api=Compose2.Seq2/phase=Evaluate/ref=DirectPipe/impl=Pipe/N=%d", n)
+		b.Run(name, func(b *testing.B) {
+			values := input(n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = compose2Seq2Pipe(values)
+			}
+		})
+	}
 }
 
 func TestCompose2Seq2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Composed", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 102
+	cases := []struct {
+		name string
+		run  func([]int) int64
+	}{
+		{"Composed", compose2Seq2Composed},
+		{"Pipe", compose2Seq2Pipe},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := compose2Seq2Composed(values)
-		const want int64 = 102
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Pipe", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := compose2Seq2Pipe(values)
-		const want int64 = 102
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values))
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }

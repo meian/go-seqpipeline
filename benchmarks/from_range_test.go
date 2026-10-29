@@ -2,6 +2,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/meian/go-seqpipeline/seq"
@@ -31,95 +32,61 @@ func fromRangeSignedGo(start, stop int, step int64) int64 {
 }
 
 func BenchmarkFromRangeSigned(b *testing.B) {
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedLibrary(4096, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Ascending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Signed/phase=Descending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeSignedGo(4096, 1, -1)
-		}
-	})
+	cases := []struct {
+		phase string
+		n     int
+		start int
+		stop  int
+		step  int64
+	}{
+		{"Ascending", 64, 1, 64, 1},
+		{"Ascending", 4096, 1, 4096, 1},
+		{"Descending", 64, 64, 1, -1},
+		{"Descending", 4096, 4096, 1, -1},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Signed/phase=%s/ref=IntegerLoop/impl=Library/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeSignedLibrary(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Signed/phase=%s/ref=IntegerLoop/impl=Go/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeSignedGo(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
 }
 
 func TestFromRangeSigned(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library/Ascending", func(t *testing.T) {
-		t.Parallel()
+	const want int64 = 21
+	cases := []struct {
+		name string
+		run  func() int64
+	}{
+		{"Library/Ascending", func() int64 { return fromRangeSignedLibrary(1, 6, 1) }},
+		{"Library/Descending", func() int64 { return fromRangeSignedLibrary(6, 1, -1) }},
+		{"Go/Ascending", func() int64 { return fromRangeSignedGo(1, 6, 1) }},
+		{"Go/Descending", func() int64 { return fromRangeSignedGo(6, 1, -1) }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		got := fromRangeSignedLibrary(1, 6, 1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Library/Descending", func(t *testing.T) {
-		t.Parallel()
-
-		got := fromRangeSignedLibrary(6, 1, -1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go/Ascending", func(t *testing.T) {
-		t.Parallel()
-
-		got := fromRangeSignedGo(1, 6, 1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go/Descending", func(t *testing.T) {
-		t.Parallel()
-
-		got := fromRangeSignedGo(6, 1, -1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run()
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 func fromRangeUnsignedLibrary(start, stop uint, step int64) int64 {
@@ -146,93 +113,59 @@ func fromRangeUnsignedGo(start, stop uint, step int64) int64 {
 }
 
 func BenchmarkFromRangeUnsigned(b *testing.B) {
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Library/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Library/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedLibrary(4096, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(1, 64, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Ascending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(1, 4096, 1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Go/N=64", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(64, 1, -1)
-		}
-	})
-	b.Run("class=Unit/api=FromRange.Unsigned/phase=Descending/ref=IntegerLoop/impl=Go/N=4096", func(b *testing.B) {
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = fromRangeUnsignedGo(4096, 1, -1)
-		}
-	})
+	cases := []struct {
+		phase string
+		n     int
+		start uint
+		stop  uint
+		step  int64
+	}{
+		{"Ascending", 64, 1, 64, 1},
+		{"Ascending", 4096, 1, 4096, 1},
+		{"Descending", 64, 64, 1, -1},
+		{"Descending", 4096, 4096, 1, -1},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Unsigned/phase=%s/ref=IntegerLoop/impl=Library/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeUnsignedLibrary(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=Unit/api=FromRange.Unsigned/phase=%s/ref=IntegerLoop/impl=Go/N=%d", tc.phase, tc.n)
+		b.Run(name, func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = fromRangeUnsignedGo(tc.start, tc.stop, tc.step)
+			}
+		})
+	}
 }
 
 func TestFromRangeUnsigned(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library/Ascending", func(t *testing.T) {
-		t.Parallel()
+	const want int64 = 21
+	cases := []struct {
+		name string
+		run  func() int64
+	}{
+		{"Library/Ascending", func() int64 { return fromRangeUnsignedLibrary(1, 6, 1) }},
+		{"Library/Descending", func() int64 { return fromRangeUnsignedLibrary(6, 1, -1) }},
+		{"Go/Ascending", func() int64 { return fromRangeUnsignedGo(1, 6, 1) }},
+		{"Go/Descending", func() int64 { return fromRangeUnsignedGo(6, 1, -1) }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		got := fromRangeUnsignedLibrary(1, 6, 1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Library/Descending", func(t *testing.T) {
-		t.Parallel()
-
-		got := fromRangeUnsignedLibrary(6, 1, -1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go/Ascending", func(t *testing.T) {
-		t.Parallel()
-
-		got := fromRangeUnsignedGo(1, 6, 1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go/Descending", func(t *testing.T) {
-		t.Parallel()
-
-		got := fromRangeUnsignedGo(6, 1, -1)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run()
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }

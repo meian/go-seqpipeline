@@ -181,26 +181,25 @@ func BenchmarkScenarioCacheSeqReuse(b *testing.B) {
 func TestScenarioCacheSeqReuse(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Cached", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 42
+	cases := []struct {
+		name string
+		run  func([]int, int, int) int64
+	}{
+		{"Cached", scenarioCacheSeqCached},
+		{"Uncached", scenarioCacheSeqUncached},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeqCached(values, 0, 2)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Uncached", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeqUncached(values, 0, 2)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values), 0, 2)
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
 
 var scenarioCacheSeq2Result seq.Seq2[int, int]
@@ -360,24 +359,23 @@ func BenchmarkScenarioCacheSeq2Reuse(b *testing.B) {
 func TestScenarioCacheSeq2Reuse(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Cached", func(t *testing.T) {
-		t.Parallel()
+	values := []int{1, 2, 3, 4, 5, 6}
+	const want int64 = 72
+	cases := []struct {
+		name string
+		run  func([]int, int, int) int64
+	}{
+		{"Cached", scenarioCacheSeq2Cached},
+		{"Uncached", scenarioCacheSeq2Uncached},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeq2Cached(values, 0, 2)
-		const want int64 = 72
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Uncached", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeq2Uncached(values, 0, 2)
-		const want int64 = 72
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := tc.run(slices.Clone(values), 0, 2)
+			if got != want {
+				t.Fatalf("got %d; want %d", got, want)
+			}
+		})
+	}
 }
