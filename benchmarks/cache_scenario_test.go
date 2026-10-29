@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -162,198 +163,44 @@ func scenarioCacheSeqUncached(values []int, work int, reuse int) int64 {
 }
 
 func BenchmarkScenarioCacheSeqReuse(b *testing.B) {
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 32, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqCached(values, 32, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=64/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 32, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq/N=4096/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeqUncached(values, 32, 16)
-		}
-	})
+	cases := []struct {
+		n     int
+		work  int
+		reuse int
+	}{
+		{64, 0, 1},
+		{64, 0, 4},
+		{64, 0, 16},
+		{64, 32, 1},
+		{64, 32, 4},
+		{64, 32, 16},
+		{4096, 0, 1},
+		{4096, 0, 4},
+		{4096, 0, 16},
+		{4096, 32, 1},
+		{4096, 32, 4},
+		{4096, 32, 16},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq/N=%d/work=%d/phase=Reuse/reuse=%d/impl=Cached", tc.n, tc.work, tc.reuse)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = scenarioCacheSeqCached(values, tc.work, tc.reuse)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq/N=%d/work=%d/phase=Reuse/reuse=%d/impl=Uncached", tc.n, tc.work, tc.reuse)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = scenarioCacheSeqUncached(values, tc.work, tc.reuse)
+			}
+		})
+	}
 }
 
 func TestScenarioCacheSeqReuse(t *testing.T) {
@@ -520,198 +367,44 @@ func scenarioCacheSeq2Uncached(values []int, work int, reuse int) int64 {
 }
 
 func BenchmarkScenarioCacheSeq2Reuse(b *testing.B) {
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 32, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=1/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=4/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=16/impl=Cached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Cached(values, 32, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=64/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(64)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 32, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 0, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 0, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=0/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 0, 16)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=1/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 32, 1)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=4/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 32, 4)
-		}
-	})
-	b.Run("class=ScenarioCache/kind=Seq2/N=4096/work=32/phase=Reuse/reuse=16/impl=Uncached", func(b *testing.B) {
-		values := input(4096)
-
-		b.ReportAllocs()
-		for b.Loop() {
-			checksum = scenarioCacheSeq2Uncached(values, 32, 16)
-		}
-	})
+	cases := []struct {
+		n     int
+		work  int
+		reuse int
+	}{
+		{64, 0, 1},
+		{64, 0, 4},
+		{64, 0, 16},
+		{64, 32, 1},
+		{64, 32, 4},
+		{64, 32, 16},
+		{4096, 0, 1},
+		{4096, 0, 4},
+		{4096, 0, 16},
+		{4096, 32, 1},
+		{4096, 32, 4},
+		{4096, 32, 16},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq2/N=%d/work=%d/phase=Reuse/reuse=%d/impl=Cached", tc.n, tc.work, tc.reuse)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = scenarioCacheSeq2Cached(values, tc.work, tc.reuse)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioCache/kind=Seq2/N=%d/work=%d/phase=Reuse/reuse=%d/impl=Uncached", tc.n, tc.work, tc.reuse)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				checksum = scenarioCacheSeq2Uncached(values, tc.work, tc.reuse)
+			}
+		})
+	}
 }
 
 func TestScenarioCacheSeq2Reuse(t *testing.T) {

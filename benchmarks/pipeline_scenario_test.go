@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -59,174 +60,51 @@ func scenarioPipelineSeqFunctions(values []int, depth, limit int) []pair {
 }
 
 func BenchmarkScenarioPipelineSeq(b *testing.B) {
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLibrary(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqLoop(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=64/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq/N=4096/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeqFunctions(values, 6, 8)
-		}
-	})
+	cases := []struct {
+		n     int
+		depth int
+		mode  string
+		limit int
+	}{
+		{64, 2, "All", 0},
+		{64, 2, "Early8", 8},
+		{64, 6, "All", 0},
+		{64, 6, "Early8", 8},
+		{4096, 2, "All", 0},
+		{4096, 2, "Early8", 8},
+		{4096, 6, "All", 0},
+		{4096, 6, "Early8", 8},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioPipeline/kind=Seq/N=%d/depth=%d/mode=%s/impl=Pipeline", tc.n, tc.depth, tc.mode)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioPipelineSeqLibrary(values, tc.depth, tc.limit)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioPipeline/kind=Seq/N=%d/depth=%d/mode=%s/impl=Loop", tc.n, tc.depth, tc.mode)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioPipelineSeqLoop(values, tc.depth, tc.limit)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioPipeline/kind=Seq/N=%d/depth=%d/mode=%s/impl=Functions", tc.n, tc.depth, tc.mode)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioPipelineSeqFunctions(values, tc.depth, tc.limit)
+			}
+		})
+	}
 }
 
 func TestScenarioPipelineSeq(t *testing.T) {
@@ -315,174 +193,51 @@ func scenarioPipelineSeq2Functions(values []int, depth, limit int) []pair {
 }
 
 func BenchmarkScenarioPipelineSeq2(b *testing.B) {
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8/impl=Pipeline", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Library(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8/impl=Loop", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Loop(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=64/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(64)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 6, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 2, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=2/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 2, 8)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=All/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 6, 0)
-		}
-	})
-	b.Run("class=ScenarioPipeline/kind=Seq2/N=4096/depth=6/mode=Early8/impl=Functions", func(b *testing.B) {
-		values := input(4096)
-		b.ReportAllocs()
-		for b.Loop() {
-			output = scenarioPipelineSeq2Functions(values, 6, 8)
-		}
-	})
+	cases := []struct {
+		n     int
+		depth int
+		mode  string
+		limit int
+	}{
+		{64, 2, "All", 0},
+		{64, 2, "Early8", 8},
+		{64, 6, "All", 0},
+		{64, 6, "Early8", 8},
+		{4096, 2, "All", 0},
+		{4096, 2, "Early8", 8},
+		{4096, 6, "All", 0},
+		{4096, 6, "Early8", 8},
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioPipeline/kind=Seq2/N=%d/depth=%d/mode=%s/impl=Pipeline", tc.n, tc.depth, tc.mode)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioPipelineSeq2Library(values, tc.depth, tc.limit)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioPipeline/kind=Seq2/N=%d/depth=%d/mode=%s/impl=Loop", tc.n, tc.depth, tc.mode)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioPipelineSeq2Loop(values, tc.depth, tc.limit)
+			}
+		})
+	}
+	for _, tc := range cases {
+		name := fmt.Sprintf("class=ScenarioPipeline/kind=Seq2/N=%d/depth=%d/mode=%s/impl=Functions", tc.n, tc.depth, tc.mode)
+		b.Run(name, func(b *testing.B) {
+			values := input(tc.n)
+			b.ReportAllocs()
+			for b.Loop() {
+				output = scenarioPipelineSeq2Functions(values, tc.depth, tc.limit)
+			}
+		})
+	}
 }
 
 func TestScenarioPipelineSeq2(t *testing.T) {

@@ -178,6 +178,8 @@ func TestZipEvaluation(t *testing.T) {
 	}{
 		{"paired/left", op.AlignShortest, []int{1, 2, 3}, []int{10, 20, 30},
 			[]pair[int, int]{{1, 10}, {2, 20}}, [2]int{2, 2}},
+		{"paired/longest", op.AlignLongest, []int{1, 2, 3}, []int{10, 20, 30},
+			[]pair[int, int]{{1, 10}, {2, 20}}, [2]int{2, 2}},
 		{"paired/right", op.AlignRight, []int{1, 2, 3}, []int{10, 20, 30},
 			[]pair[int, int]{{1, 10}, {2, 20}}, [2]int{2, 2}},
 		{"left", op.AlignLeft, []int{1, 2, 3}, []int{10}, []pair[int, int]{{1, 10}, {2, 0}}, [2]int{2, 1}},
@@ -215,18 +217,21 @@ func TestZipEvaluation(t *testing.T) {
 			})
 		}
 	}
-	t.Run("reevaluate", func(t *testing.T) {
-		t.Parallel()
-		var state zipTrace
-		output := op.Zip(state.input(1, []int{10})).Operator(state.input(0, []int{1}))
-		assertEqual(t, state.started, [2]int{})
-		for i := 1; i <= 2; i++ {
-			assertEqual(t, collectPairs(output), []pair[int, int]{{1, 10}})
-			assertEqual(t, state.started, [2]int{i, i})
-			assertEqual(t, state.reads, state.started)
-			assertEqual(t, state.stopped, state.started)
-		}
-	})
+	for _, alignment := range []op.ZipAlign{op.AlignShortest, op.AlignLeft, op.AlignRight, op.AlignLongest} {
+		t.Run(fmt.Sprintf("reevaluate/align=%d", alignment), func(t *testing.T) {
+			t.Parallel()
+			var state zipTrace
+			config := op.Zip(state.input(1, []int{10})).AlignBy(alignment)
+			output := config.Operator(state.input(0, []int{1}))
+			assertEqual(t, state.started, [2]int{})
+			for i := 1; i <= 2; i++ {
+				assertEqual(t, collectPairs(output), []pair[int, int]{{1, 10}})
+				assertEqual(t, state.started, [2]int{i, i})
+				assertEqual(t, state.reads, state.started)
+				assertEqual(t, state.stopped, state.started)
+			}
+		})
+	}
 }
 
 // 直接反復・Pull の両側と Longest の右残余で、入力 panic の伝播と解放を確認する。
@@ -238,7 +243,9 @@ func TestZipInputPanic(t *testing.T) {
 		lengths    [2]int
 	}{
 		{op.AlignShortest, 0, [2]int{2, 2}}, {op.AlignShortest, 1, [2]int{2, 2}},
+		{op.AlignLeft, 0, [2]int{2, 2}}, {op.AlignLeft, 1, [2]int{2, 2}},
 		{op.AlignRight, 0, [2]int{2, 2}}, {op.AlignRight, 1, [2]int{2, 2}},
+		{op.AlignLongest, 0, [2]int{2, 2}}, {op.AlignLongest, 1, [2]int{2, 2}},
 		{op.AlignLongest, 1, [2]int{1, 2}},
 	} {
 		t.Run(fmt.Sprintf("align=%d/panic=%d", tc.align, tc.panicIndex), func(t *testing.T) {
