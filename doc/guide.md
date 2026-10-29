@@ -123,7 +123,7 @@ For an unbounded input, limit it before caching; a downstream limit cannot stop 
 For example, consider an input that generates values indefinitely.  
 
 ```go
-naturals := seq.Seq[int](func(yield func(int) bool) {
+naturals := seq.FromSeq(func(yield func(int) bool) {
     for n := 1; ; n++ {
         if !yield(n) {
             return

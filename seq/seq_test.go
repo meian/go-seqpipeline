@@ -5,7 +5,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/meian/go-seqpipeline/op"
 	"github.com/meian/go-seqpipeline/seq"
 )
 
@@ -33,12 +32,12 @@ func TestSeqPipe(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq[int] = func(yield func(int) bool) {
+	src := seq.FromSeq(func(yield func(int) bool) {
 		reads++
 		yield(7)
-	}
-	var pipe func(op.Operator[int, string]) seq.Seq[string] = src.Pipe
-	var result seq.Seq[string] = pipe(func(got iter.Seq[int]) iter.Seq[string] {
+	})
+	pipe := src.Pipe[string]
+	result := pipe(func(got iter.Seq[int]) iter.Seq[string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for v := range got {
@@ -69,12 +68,12 @@ func TestSeqPipe2(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq[int] = func(yield func(int) bool) {
+	src := seq.FromSeq(func(yield func(int) bool) {
 		reads++
 		yield(7)
-	}
-	var pipe func(op.ToSeq2Operator[int, []int, string]) seq.Seq2[[]int, string] = src.Pipe2
-	var result seq.Seq2[[]int, string] = pipe(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
+	})
+	pipe := src.Pipe2[[]int, string]
+	result := pipe(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for v := range got {
@@ -132,12 +131,12 @@ func TestSeq2Pipe(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
+	src := seq.FromSeq2(func(yield func(int, bool) bool) {
 		reads++
 		yield(7, true)
-	}
-	var pipe func(op.ToSeqOperator[int, bool, string]) seq.Seq[string] = src.Pipe
-	var result seq.Seq[string] = pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
+	})
+	pipe := src.Pipe[string]
+	result := pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for k, v := range got {
@@ -169,12 +168,12 @@ func TestSeq2Pipe2(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
+	src := seq.FromSeq2(func(yield func(int, bool) bool) {
 		reads++
 		yield(7, true)
-	}
-	var pipe func(op.Operator2[int, bool, []int, string]) seq.Seq2[[]int, string] = src.Pipe2
-	var result seq.Seq2[[]int, string] = pipe(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
+	})
+	pipe := src.Pipe2[[]int, string]
+	result := pipe(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for k, v := range got {

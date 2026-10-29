@@ -23,7 +23,7 @@ func TestKeys(t *testing.T) {
 			}
 		}
 	})
-	var ope op.ToSeqOperator[int, int, int] = op.Keys[int, int]
+	ope := op.Keys[int, int]
 	projected := ope(src)
 	assertEqual(t, started, 0)
 	for i := 1; i <= 2; i++ {
@@ -90,7 +90,7 @@ func TestValues(t *testing.T) {
 			}
 		}
 	})
-	var ope op.ToSeqOperator[int, int, int] = op.Values[int, int]
+	ope := op.Values[int, int]
 	projected := ope(src)
 	assertEqual(t, started, 0)
 	for i := 1; i <= 2; i++ {

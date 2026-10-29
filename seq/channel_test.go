@@ -130,7 +130,7 @@ func TestFromChannelNilContext(t *testing.T) {
 			t.Fatal("nil context must panic during FromChannel")
 		}
 	}()
-	_ = seq.FromChannel[int](nil, make(chan int))
+	_ = seq.FromChannel(nil, make(chan int))
 }
 
 func TestToChannel(t *testing.T) {
@@ -138,7 +138,7 @@ func TestToChannel(t *testing.T) {
 
 	src := seq.FromSlice([]int{3, 1, 1, 2})
 	for round := 0; round < 2; round++ {
-		var ch <-chan int = seq.ToChannel(t.Context(), src)
+		ch := seq.ToChannel(t.Context(), src)
 		assertEqual(t, cap(ch), 0)
 		var got []int
 		for v := range ch {
@@ -178,7 +178,7 @@ func TestToChannelCancelSend(t *testing.T) {
 				defer cancel()
 				reads, stops := 0, 0
 				finished := make(chan struct{})
-				src := seq.Seq[int](func(yield func(int) bool) {
+				src := seq.FromSeq(func(yield func(int) bool) {
 					defer close(finished)
 					for _, v := range []int{1, 2, 3} {
 						reads++
@@ -215,7 +215,7 @@ func TestToChannelCanceled(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	src := seq.Seq[int](func(func(int) bool) { t.Error("canceled input evaluated") })
+	src := seq.FromSeq(func(func(int) bool) { t.Error("canceled input evaluated") })
 	if _, ok := <-seq.ToChannel(ctx, src); ok {
 		t.Fatal("canceled output must be closed")
 	}

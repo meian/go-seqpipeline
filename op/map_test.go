@@ -87,7 +87,7 @@ func TestMapToSeq2(t *testing.T) {
 	var state inputTrace
 	calls := 0
 	src := traceValues([]int{3, 1, 3}, &state)
-	var ope op.ToSeq2Operator[int, []int, []string] = op.MapToSeq2(func(v int) ([]int, []string) {
+	ope := op.MapToSeq2(func(v int) ([]int, []string) {
 		calls++
 		return []int{v}, []string{strconv.Itoa(v)}
 	})
@@ -145,7 +145,7 @@ func TestMapToSeq(t *testing.T) {
 	src := tracePairs([]pair[[]int, []string]{
 		{[]int{3}, []string{"3"}}, {[]int{1}, []string{"1"}}, {[]int{3}, []string{"3"}},
 	}, &state)
-	var ope op.ToSeqOperator[[]int, []string, string] = op.MapToSeq(func(k []int, v []string) string {
+	ope := op.MapToSeq(func(k []int, v []string) string {
 		calls++
 		return strconv.Itoa(k[0]) + ":" + v[0]
 	})

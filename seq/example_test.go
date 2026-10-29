@@ -18,7 +18,7 @@ func ExampleFromRange() {
 }
 
 func ExampleSeq_Pipe() {
-	var pipeline seq.Seq[int] = seq.FromSlice([]int{1, 22, 333, 4444}).
+	pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(op.Map(func(v int) string { return strconv.Itoa(v) })).
 		Pipe(op.Filter(func(v string) bool { return len(v) > 2 })).
 		Pipe(op.Map(func(v string) int { return len(v) }))

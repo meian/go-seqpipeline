@@ -32,12 +32,12 @@ func repeat(src iter.Seq[int]) iter.Seq[string] {
 func TestOperatorDirectCall(t *testing.T) {
 	t.Parallel()
 
-	var mapFactory func(func(int) string) op.Operator[int, string] = op.Map[int, string]
-	var filterFactory func(func(string) bool) op.Operator[string, string] = op.Filter[string]
+	mapFactory := op.Map[int, string]
+	filterFactory := op.Filter[string]
 	mapped := mapFactory(strconv.Itoa)
 	filtered := filterFactory(func(v string) bool { return len(v) > 1 })
-	var limit op.Operator[string, string] = op.Take(1).Operator
-	var custom op.Operator[int, string] = repeat
+	limit := op.Take(1).Operator[string]
+	custom := repeat
 	src := seq.FromSlice([]int{1, 22, 333})
 	assertEqual(t, slices.Collect(limit(filtered(mapped(seq.ToSeq(src))))), []string{"22"})
 	pipeline := src.Pipe(mapped).Pipe(filtered).Pipe(limit)
@@ -101,12 +101,12 @@ func keyText(src iter.Seq2[int, int]) iter.Seq2[string, int] {
 func TestOperator2DirectCall(t *testing.T) {
 	t.Parallel()
 
-	var mapFactory func(func(int, int) (string, string)) op.Operator2[int, int, string, string] = op.Map2[int, int, string, string]
-	var filterFactory func(func(string, string) bool) op.Operator2[string, string, string, string] = op.Filter2[string, string]
+	mapFactory := op.Map2[int, int, string, string]
+	filterFactory := op.Filter2[string, string]
 	mapped := mapFactory(func(k, v int) (string, string) { return strconv.Itoa(k), strconv.Itoa(v) })
 	filtered := filterFactory(func(k, v string) bool { return len(v) > 1 })
-	var limit op.Operator2[string, string, string, string] = op.Take(1).Operator2
-	var custom op.Operator2[int, int, string, int] = keyText
+	limit := op.Take(1).Operator2[string, string]
+	custom := keyText
 	src := seq.FromSeq2(slices.All([]int{1, 22, 333}))
 	want := []pair[string, string]{{Key: "1", Value: "22"}}
 	direct := limit(filtered(mapped(seq.ToSeq2(src))))
@@ -123,7 +123,7 @@ func TestComposedOperator2(t *testing.T) {
 	t.Parallel()
 
 	reads := 0
-	var ope op.Operator2[int, int, int, int] = func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
+	ope := func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
 		return op.Take(2).Operator2(op.Filter2(func(k, v int) bool { return v%2 == 0 })(src))
 	}
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
@@ -188,7 +188,7 @@ func TestExternalTransforms2(t *testing.T) {
 func TestToSeq2OperatorDirectCall(t *testing.T) {
 	t.Parallel()
 
-	var ope op.ToSeq2Operator[string, []int, string] = withLength
+	ope := withLength
 	src := seq.FromSlice([]string{"a", "bbb"})
 	want := []pair[[]int, string]{{Key: []int{1}, Value: "a"}, {Key: []int{3}, Value: "bbb"}}
 	assertEqual(t, collectPairs(ope(seq.ToSeq(src))), want)
@@ -196,11 +196,11 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 	assertEqual(t, collectPairs(ope(nil)), []pair[[]int, string](nil))
 }
 
-// 組を単一値に変換する名前付き関数型を Pipe に接続できる。
+// 組を単一値に変換する関数を Pipe に接続できる。
 func TestToSeqOperatorPipeline(t *testing.T) {
 	t.Parallel()
 
-	var ope op.ToSeqOperator[int, string, string] = op.Values[int, string]
+	ope := op.Values[int, string]
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
 	assertEqual(t, seq.ToSlice(src.Pipe(ope)), []string{"a", "bbb"})
 }
