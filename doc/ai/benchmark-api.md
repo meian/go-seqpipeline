@@ -103,7 +103,7 @@ FromRange は符号付き・符号なしの代表として int / uint を選び�
 [benchmark_helper_test.go](../../benchmarks/benchmark_helper_test.go) は入力データの生成、結果保持用の変数、要素の変換・判定だけを共有する。  
 Unit のケースは機能別の `*_test.go`、Scenario のケースは機能別の `*_scenario_test.go` に分離する。  
 共有の送信処理は `channel_helper_test.go` に置き、異なる測定分類のケースを同じファイルへ混在させない。  
-ケースの登録表、共通のベンチマークループ、テストのディスパッチャーは設けない。  
+処理関数を格納するケースの登録表、共通のベンチマークループ、テストのディスパッチャーは設けない。  
 
 ## 処理と入口
 
@@ -116,7 +116,8 @@ Scenario は `scenarioPipelineSeqLibrary` / `scenarioPipelineSeq2Library` のよ
 
 Cache の Fill / Warm はそれぞれ処理・ベンチマーク・テストをまとめ、Reuse は Cached / Uncached を `BenchmarkScenarioCacheSeqReuse` / `TestScenarioCacheSeqReuse` へまとめる。  
 Seq2 も同じ構成とし、Pipeline は Seq / Seq2 ごと、Channel は 5 実装を一つの機能としてまとめる。  
-各 `b.Run` / `t.Run` は親関数の直下へ個別に記述し、実装だけを囲む中間の `Run` やケース列挙用の `for` は設けない。  
+各 `b.Run` / `t.Run` に実装だけを囲む中間の `Run` を設けず、`t.Run` は親関数の直下へ個別に記述する。  
+ベンチマークの入力条件は表で列挙してよいが、ケース名・順序・測定範囲を保ち、実装ごとに測定ループを記述する。  
 ベンチマークの各ケース名には実装と条件を明記し、`b.Loop()` 内から処理本体を直接呼ぶ。  
 `class=Unit` / `class=ScenarioPipeline` / `class=ScenarioChannel` / `class=ScenarioCache` で分類し、入力や段数などの比較条件も名前へ残す。  
 テストは各処理につき代表入力 1 件で処理本体を直接呼び、簡単な期待値で疎通を確認する。  

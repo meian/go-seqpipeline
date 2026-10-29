@@ -107,60 +107,103 @@ func (z zipKeyOperator[K, V]) Operator(src iter.Seq[K]) iter.Seq2[K, V] {
 	return zipSequences(src, z.zip.values, z.zip.alignment, z.defaultKey, z.zip.defaultValue)
 }
 
+// Pull を片側だけに使い、切り替えの負荷を抑える。
+// AlignRight は右から、それ以外は左から読む順序を保つ。
 func zipSequences[K, V any](left iter.Seq[K], right iter.Seq[V], alignment ZipAlign, defaultKey K, defaultValue V) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
-		if left == nil && alignment <= AlignLeft {
-			return
+		switch alignment {
+		case AlignShortest:
+			zipShortest(left, right, yield)
+		case AlignLeft:
+			zipLeft(left, right, defaultValue, yield)
+		case AlignRight:
+			zipRight(left, right, defaultKey, yield)
+		default:
+			zipLongest(left, right, defaultKey, defaultValue, yield)
 		}
-		if right == nil && (alignment == AlignShortest || alignment == AlignRight) {
-			return
-		}
-		keys := left
-		if keys == nil {
-			keys = func(func(K) bool) {}
-		}
-		values := right
-		if values == nil {
-			values = func(func(V) bool) {}
-		}
-		// Pull を片側だけに使い、切り替えの負荷を抑える。
-		// AlignRight は右から、それ以外は左から読む順序を保つ。
-		if alignment == AlignRight {
-			nextKey, stopKey := iter.Pull(keys)
-			defer stopKey()
-			for v := range values {
-				k, ok := nextKey()
-				if !ok {
-					k = defaultKey
-				}
-				if !yield(k, v) {
-					return
-				}
-			}
-			return
-		}
+	}
+}
 
-		nextValue, stopValue := iter.Pull(values)
-		defer stopValue()
-		for k := range keys {
-			v, ok := nextValue()
-			if !ok {
-				if alignment == AlignShortest {
-					return
-				}
-				v = defaultValue
-			}
-			if !yield(k, v) {
-				return
-			}
+func zipShortest[K, V any](left iter.Seq[K], right iter.Seq[V], yield func(K, V) bool) {
+	if left == nil || right == nil {
+		return
+	}
+	nextValue, stopValue := iter.Pull(right)
+	defer stopValue()
+	for k := range left {
+		v, ok := nextValue()
+		if !ok || !yield(k, v) {
+			return
 		}
-		if alignment == AlignLongest {
-			for {
-				v, ok := nextValue()
-				if !ok || !yield(defaultKey, v) {
-					return
-				}
-			}
+	}
+}
+
+func zipLeft[K, V any](left iter.Seq[K], right iter.Seq[V], defaultValue V, yield func(K, V) bool) {
+	if left == nil {
+		return
+	}
+	values := right
+	if values == nil {
+		values = func(func(V) bool) {}
+	}
+	nextValue, stopValue := iter.Pull(values)
+	defer stopValue()
+	for k := range left {
+		v, ok := nextValue()
+		if !ok {
+			v = defaultValue
+		}
+		if !yield(k, v) {
+			return
+		}
+	}
+}
+
+func zipRight[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, yield func(K, V) bool) {
+	if right == nil {
+		return
+	}
+	keys := left
+	if keys == nil {
+		keys = func(func(K) bool) {}
+	}
+	nextKey, stopKey := iter.Pull(keys)
+	defer stopKey()
+	for v := range right {
+		k, ok := nextKey()
+		if !ok {
+			k = defaultKey
+		}
+		if !yield(k, v) {
+			return
+		}
+	}
+}
+
+func zipLongest[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, defaultValue V, yield func(K, V) bool) {
+	keys := left
+	if keys == nil {
+		keys = func(func(K) bool) {}
+	}
+	values := right
+	if values == nil {
+		values = func(func(V) bool) {}
+	}
+	nextValue, stopValue := iter.Pull(values)
+	defer stopValue()
+	for k := range keys {
+		v, ok := nextValue()
+		if !ok {
+			v = defaultValue
+		}
+		if !yield(k, v) {
+			return
+		}
+	}
+	for {
+		v, ok := nextValue()
+		if !ok || !yield(defaultKey, v) {
+			return
 		}
 	}
 }
