@@ -10,13 +10,13 @@ import (
 // Elements are iterated in their original order.
 // The slice is not copied; iteration reads its elements at evaluation time.
 func FromSlice[T any](values []T) Seq[T] {
-	return FromSeq(slices.Values(values))
+	return Seq[T](slices.Values(values))
 }
 
 // ToSlice evaluates a Seq and collects its elements in iteration order.
 // It returns nil for an empty sequence.
 func ToSlice[T any](s Seq[T]) []T {
-	return slices.Collect(ToSeq(s))
+	return slices.Collect(iter.Seq[T](s))
 }
 
 // FromSeq converts an iter.Seq to a Seq for building a pipeline.
@@ -32,14 +32,14 @@ func ToSeq[T any](s Seq[T]) iter.Seq[T] {
 // FromMap converts a map to a Seq2 for building a pipeline.
 // The map is not copied, and iteration order is unspecified.
 func FromMap[K comparable, V any](values map[K]V) Seq2[K, V] {
-	return FromSeq2(maps.All(values))
+	return Seq2[K, V](maps.All(values))
 }
 
 // ToMap evaluates a Seq2 and collects its key-value pairs into a new map.
 // For duplicate keys, the last value wins.
 // It returns an empty, non-nil map for an empty sequence.
 func ToMap[K comparable, V any](s Seq2[K, V]) map[K]V {
-	return maps.Collect(ToSeq2(s))
+	return maps.Collect(iter.Seq2[K, V](s))
 }
 
 // FromSeq2 converts an iter.Seq2 to a Seq2 for building a pipeline.
