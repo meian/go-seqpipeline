@@ -131,8 +131,8 @@ func TestSkipOperator2DownstreamStop(t *testing.T) {
 func TestSkipConfigurationReuse(t *testing.T) {
 	t.Parallel()
 	skip := op.Skip(1)
-	var ope op.Operator[int, int] = skip.Operator
-	var ope2 op.Operator2[[]int, string, []int, string] = skip.Operator2
+	ope := op.Operator[int, int](skip.Operator)
+	ope2 := op.Operator2[[]int, string, []int, string](skip.Operator2)
 	values := slices.Values([]int{1, 2, 3})
 	pairs := iter.Seq2[[]int, string](func(yield func([]int, string) bool) {
 		if yield([]int{1}, "a") {

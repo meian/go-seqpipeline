@@ -265,7 +265,7 @@ func TestCrossTypePipeline(t *testing.T) {
 	t.Parallel()
 
 	toPairs := withLength
-	var toValues op.ToSeqOperator[[]int, string, string] = op.Values
+	toValues := op.ToSeqOperator[[]int, string, string](op.Values)
 	for _, n := range []int{0, 1, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			t.Parallel()
@@ -462,7 +462,7 @@ func TestCachePipeline(t *testing.T) {
 	t.Parallel()
 
 	upstream, downstream := 0, 0
-	var cache op.Operator[int, int] = op.Cache
+	cache := op.Operator[int, int](op.Cache)
 	cached := seq.FromSlice([]int{1, 2, 3, 4}).
 		Pipe(op.Map(func(v int) int { upstream++; return v * 10 })).
 		Pipe(op.Take(3).Operator).
@@ -489,7 +489,7 @@ func TestCache2Pipeline(t *testing.T) {
 	t.Parallel()
 
 	upstream, downstream := 0, 0
-	var cache op.Operator2[int, int, int, int] = op.Cache2
+	cache := op.Operator2[int, int, int, int](op.Cache2)
 	cached := seq.FromSeq2(slices.All([]int{1, 2, 3, 4})).
 		Pipe2(op.Map2(func(k, v int) (int, int) { upstream++; return k, v * 10 })).
 		Pipe2(op.Take(3).Operator2).

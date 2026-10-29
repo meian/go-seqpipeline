@@ -32,10 +32,10 @@ func TestSeqPipe(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq[int] = func(yield func(int) bool) {
+	src := seq.Seq[int](func(yield func(int) bool) {
 		reads++
 		yield(7)
-	}
+	})
 	pipe := src.Pipe[string]
 	result := pipe(func(got iter.Seq[int]) iter.Seq[string] {
 		calls++
@@ -68,10 +68,10 @@ func TestSeqPipe2(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq[int] = func(yield func(int) bool) {
+	src := seq.Seq[int](func(yield func(int) bool) {
 		reads++
 		yield(7)
-	}
+	})
 	pipe := src.Pipe2[[]int, string]
 	result := pipe(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
 		calls++
@@ -131,10 +131,10 @@ func TestSeq2Pipe(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
+	src := seq.Seq2[int, bool](func(yield func(int, bool) bool) {
 		reads++
 		yield(7, true)
-	}
+	})
 	pipe := src.Pipe[string]
 	result := pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
 		calls++
@@ -168,10 +168,10 @@ func TestSeq2Pipe2(t *testing.T) {
 	t.Parallel()
 
 	reads, calls := 0, 0
-	var src seq.Seq2[int, bool] = func(yield func(int, bool) bool) {
+	src := seq.Seq2[int, bool](func(yield func(int, bool) bool) {
 		reads++
 		yield(7, true)
-	}
+	})
 	pipe := src.Pipe2[[]int, string]
 	result := pipe(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
 		calls++

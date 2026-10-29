@@ -36,8 +36,8 @@ func TestOperatorDirectCall(t *testing.T) {
 	filterFactory := op.Filter[string]
 	mapped := mapFactory(strconv.Itoa)
 	filtered := filterFactory(func(v string) bool { return len(v) > 1 })
-	var limit op.Operator[string, string] = op.Take(1).Operator
-	var custom op.Operator[int, string] = repeat
+	limit := op.Operator[string, string](op.Take(1).Operator)
+	custom := op.Operator[int, string](repeat)
 	src := seq.FromSlice([]int{1, 22, 333})
 	assertEqual(t, slices.Collect(limit(filtered(mapped(seq.ToSeq(src))))), []string{"22"})
 	pipeline := src.Pipe(mapped).Pipe(filtered).Pipe(limit)
@@ -105,8 +105,8 @@ func TestOperator2DirectCall(t *testing.T) {
 	filterFactory := op.Filter2[string, string]
 	mapped := mapFactory(func(k, v int) (string, string) { return strconv.Itoa(k), strconv.Itoa(v) })
 	filtered := filterFactory(func(k, v string) bool { return len(v) > 1 })
-	var limit op.Operator2[string, string, string, string] = op.Take(1).Operator2
-	var custom op.Operator2[int, int, string, int] = keyText
+	limit := op.Operator2[string, string, string, string](op.Take(1).Operator2)
+	custom := op.Operator2[int, int, string, int](keyText)
 	src := seq.FromSeq2(slices.All([]int{1, 22, 333}))
 	want := []pair[string, string]{{Key: "1", Value: "22"}}
 	direct := limit(filtered(mapped(seq.ToSeq2(src))))
@@ -123,9 +123,9 @@ func TestComposedOperator2(t *testing.T) {
 	t.Parallel()
 
 	reads := 0
-	var ope op.Operator2[int, int, int, int] = func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
+	ope := op.Operator2[int, int, int, int](func(src iter.Seq2[int, int]) iter.Seq2[int, int] {
 		return op.Take(2).Operator2(op.Filter2(func(k, v int) bool { return v%2 == 0 })(src))
-	}
+	})
 	pipeline := seq.FromSeq2(slices.All([]int{1, 2, 3, 4, 5, 6})).
 		Pipe2(op.Map2(func(k, v int) (int, int) {
 			reads++
@@ -200,7 +200,7 @@ func TestToSeq2OperatorDirectCall(t *testing.T) {
 func TestToSeqOperatorPipeline(t *testing.T) {
 	t.Parallel()
 
-	var ope op.ToSeqOperator[int, string, string] = op.Values
+	ope := op.ToSeqOperator[int, string, string](op.Values)
 	src := seq.FromSeq2(slices.All([]string{"a", "bbb"}))
 	assertEqual(t, seq.ToSlice(src.Pipe(ope)), []string{"a", "bbb"})
 }
