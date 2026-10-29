@@ -137,54 +137,65 @@ func BenchmarkScenarioChannel(b *testing.B) {
 func TestScenarioChannel(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Seq", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values   []int
+		capacity int
+		want     []pair
+	}{
+		{
+			values:   []int{1, 2, 3, 4, 5, 6},
+			capacity: 64,
+			want:     []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}},
+		},
+	}
+	for _, tc := range cases {
+		t.Run("Seq", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioChannelSeq(values, 0)
-		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
-		if !slices.Equal(got, want) {
-			t.Fatalf("got %v; want %v", got, want)
-		}
-	})
-	t.Run("ToChannel", func(t *testing.T) {
-		t.Parallel()
+			got := scenarioChannelSeq(slices.Clone(tc.values), 0)
+			if !slices.Equal(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("ToChannel", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioChannelToChannel(values, 0)
-		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
-		if !slices.Equal(got, want) {
-			t.Fatalf("got %v; want %v", got, want)
-		}
-	})
-	t.Run("Direct", func(t *testing.T) {
-		t.Parallel()
+			got := scenarioChannelToChannel(slices.Clone(tc.values), 0)
+			if !slices.Equal(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Direct", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioChannelDirect(values, 64)
-		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
-		if !slices.Equal(got, want) {
-			t.Fatalf("got %v; want %v", got, want)
-		}
-	})
-	t.Run("FromChannel", func(t *testing.T) {
-		t.Parallel()
+			got := scenarioChannelDirect(slices.Clone(tc.values), tc.capacity)
+			if !slices.Equal(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("FromChannel", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioChannelFromChannel(values, 64)
-		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
-		if !slices.Equal(got, want) {
-			t.Fatalf("got %v; want %v", got, want)
-		}
-	})
-	t.Run("RoundTrip", func(t *testing.T) {
-		t.Parallel()
+			got := scenarioChannelFromChannel(slices.Clone(tc.values), tc.capacity)
+			if !slices.Equal(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("RoundTrip", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioChannelRoundTrip(values, 64)
-		want := []pair{{value: 2}, {value: 4}, {value: 5}, {value: 7}}
-		if !slices.Equal(got, want) {
-			t.Fatalf("got %v; want %v", got, want)
-		}
-	})
+			got := scenarioChannelRoundTrip(slices.Clone(tc.values), tc.capacity)
+			if !slices.Equal(got, tc.want) {
+				t.Fatalf("got %v; want %v", got, tc.want)
+			}
+		})
+	}
 }

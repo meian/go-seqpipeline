@@ -60,22 +60,26 @@ func TestToSlice(t *testing.T) {
 	t.Parallel()
 
 	// 検証対象がベンチマーク用の collectedValues を共有するため、子テストは直列に実行する。
-	t.Run("Library", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toSliceLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toSliceGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 21},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			got := toSliceLibrary(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			got := toSliceGo(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

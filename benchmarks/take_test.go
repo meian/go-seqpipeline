@@ -57,28 +57,32 @@ func BenchmarkTakeOperator(b *testing.B) {
 func TestTakeOperator(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, want: 36},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+			got := takeOperatorLibrary(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := takeOperatorLibrary(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-		got := takeOperatorGo(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := takeOperatorGo(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
 
 func takeOperator2Library(values []int) int64 {
@@ -129,26 +133,30 @@ func BenchmarkTakeOperator2(b *testing.B) {
 func TestTakeOperator2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, want: 64},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+			got := takeOperator2Library(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := takeOperator2Library(values)
-		const want int64 = 64
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-		got := takeOperator2Go(values)
-		const want int64 = 64
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := takeOperator2Go(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

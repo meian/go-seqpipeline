@@ -56,26 +56,30 @@ func BenchmarkKeys(b *testing.B) {
 func TestKeys(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values map[int]int
+		want   int64
+	}{
+		{values: map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}, want: 15},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
+			got := keysLibrary(maps.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := keysLibrary(values)
-		const want int64 = 15
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
-
-		got := keysGo(values)
-		const want int64 = 15
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := keysGo(maps.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

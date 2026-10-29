@@ -56,28 +56,32 @@ func BenchmarkSeqPipe(b *testing.B) {
 func TestSeqPipe(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 27},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
+			got := seqPipeLibrary(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := seqPipeLibrary(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := seqPipeGo(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := seqPipeGo(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
 
 func seqPipe2Library(values []int) int64 {
@@ -127,28 +131,32 @@ func BenchmarkSeqPipe2(b *testing.B) {
 func TestSeqPipe2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 48},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
+			got := seqPipe2Library(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := seqPipe2Library(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := seqPipe2Go(values)
-		const want int64 = 48
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := seqPipe2Go(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
 
 func seq2PipeLibrary(values []int) int64 {
@@ -198,28 +206,32 @@ func BenchmarkSeq2Pipe(b *testing.B) {
 func TestSeq2Pipe(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 21},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
+			got := seq2PipeLibrary(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := seq2PipeLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := seq2PipeGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := seq2PipeGo(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
 
 func seq2Pipe2Library(values []int) int64 {
@@ -269,26 +281,30 @@ func BenchmarkSeq2Pipe2(b *testing.B) {
 func TestSeq2Pipe2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 42},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
+			got := seq2Pipe2Library(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := seq2Pipe2Library(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := seq2Pipe2Go(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := seq2Pipe2Go(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

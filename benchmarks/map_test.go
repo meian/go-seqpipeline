@@ -56,28 +56,32 @@ func BenchmarkMap(b *testing.B) {
 func TestMap(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 27},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
+			got := mapLibrary(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := mapLibrary(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := mapGo(values)
-		const want int64 = 27
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := mapGo(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
 
 func map2Library(values []int) int64 {
@@ -127,26 +131,30 @@ func BenchmarkMap2(b *testing.B) {
 func TestMap2(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 42},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
+			got := map2Library(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := map2Library(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := map2Go(values)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := map2Go(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

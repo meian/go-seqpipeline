@@ -56,26 +56,30 @@ func BenchmarkValues(b *testing.B) {
 func TestValues(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values map[int]int
+		want   int64
+	}{
+		{values: map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}, want: 21},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
+			got := valuesLibrary(maps.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		got := valuesLibrary(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
-
-		values := map[int]int{0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6}
-
-		got := valuesGo(values)
-		const want int64 = 21
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := valuesGo(maps.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

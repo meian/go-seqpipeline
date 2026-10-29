@@ -52,32 +52,38 @@ func BenchmarkFromMap(b *testing.B) {
 func TestFromMap(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Library", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 36},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		mapping := make(map[int]int, len(values))
-		for k, v := range values {
-			mapping[k] = v
-		}
-		got := fromMapLibrary(mapping)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		t.Parallel()
+			mapping := make(map[int]int, len(tc.values))
+			for k, v := range tc.values {
+				mapping[k] = v
+			}
+			got := fromMapLibrary(mapping)
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		mapping := make(map[int]int, len(values))
-		for k, v := range values {
-			mapping[k] = v
-		}
-		got := fromMapGo(mapping)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			mapping := make(map[int]int, len(tc.values))
+			for k, v := range tc.values {
+				mapping[k] = v
+			}
+			got := fromMapGo(mapping)
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

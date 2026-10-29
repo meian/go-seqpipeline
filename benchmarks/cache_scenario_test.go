@@ -181,26 +181,34 @@ func BenchmarkScenarioCacheSeqReuse(b *testing.B) {
 func TestScenarioCacheSeqReuse(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Cached", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		work   int
+		passes int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 42, work: 0, passes: 2},
+	}
+	for _, tc := range cases {
+		t.Run("Cached", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeqCached(values, 0, 2)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Uncached", func(t *testing.T) {
-		t.Parallel()
+			got := scenarioCacheSeqCached(slices.Clone(tc.values), tc.work, tc.passes)
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Uncached", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeqUncached(values, 0, 2)
-		const want int64 = 42
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := scenarioCacheSeqUncached(slices.Clone(tc.values), tc.work, tc.passes)
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
 
 var scenarioCacheSeq2Result seq.Seq2[int, int]
@@ -360,24 +368,32 @@ func BenchmarkScenarioCacheSeq2Reuse(b *testing.B) {
 func TestScenarioCacheSeq2Reuse(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Cached", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		values []int
+		work   int
+		passes int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 72, work: 0, passes: 2},
+	}
+	for _, tc := range cases {
+		t.Run("Cached", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeq2Cached(values, 0, 2)
-		const want int64 = 72
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Uncached", func(t *testing.T) {
-		t.Parallel()
+			got := scenarioCacheSeq2Cached(slices.Clone(tc.values), tc.work, tc.passes)
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Uncached", func(t *testing.T) {
+			t.Parallel()
 
-		values := []int{1, 2, 3, 4, 5, 6}
-		got := scenarioCacheSeq2Uncached(values, 0, 2)
-		const want int64 = 72
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+			got := scenarioCacheSeq2Uncached(slices.Clone(tc.values), tc.work, tc.passes)
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }

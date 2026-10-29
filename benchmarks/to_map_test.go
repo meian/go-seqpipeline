@@ -61,22 +61,26 @@ func TestToMap(t *testing.T) {
 	t.Parallel()
 
 	// 検証対象がベンチマーク用の collectedMap を共有するため、子テストは直列に実行する。
-	t.Run("Library", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toMapLibrary(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
-	t.Run("Go", func(t *testing.T) {
-		values := []int{1, 2, 3, 4, 5, 6}
-
-		got := toMapGo(values)
-		const want int64 = 36
-		if got != want {
-			t.Fatalf("got %d; want %d", got, want)
-		}
-	})
+	cases := []struct {
+		values []int
+		want   int64
+	}{
+		{values: []int{1, 2, 3, 4, 5, 6}, want: 36},
+	}
+	for _, tc := range cases {
+		t.Run("Library", func(t *testing.T) {
+			got := toMapLibrary(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
+	for _, tc := range cases {
+		t.Run("Go", func(t *testing.T) {
+			got := toMapGo(slices.Clone(tc.values))
+			if got != tc.want {
+				t.Fatalf("got %d; want %d", got, tc.want)
+			}
+		})
+	}
 }
