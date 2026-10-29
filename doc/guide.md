@@ -38,6 +38,10 @@ See the [GoDoc](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#FromRange
 
 Use `ToSeq` / `ToSeq2` when passing a pipeline to a function that accepts the `iter.Seq` / `iter.Seq2` types.  
 
+Compiler optimizations such as inlining depend on how inputs are produced, where sequence values are stored, and how operators connect through `Pipe` / `Pipe2`; the same operation can take more time or allocate more memory.  
+For example, collecting with `ToSlice` / `ToMap` can be slower when reading a sequence from a global variable than when passing a locally created sequence directly or reusing it through a local variable.  
+Generating and iterating with `FromSlice` / `FromMap` can also be affected, so measure the full operation with your Go version and actual inputs and connections.  
+
 ## Connecting operations with Pipe / Pipe2
 
 For either `seq.Seq` or `seq.Seq2` input, use `Pipe` for single-value output and `Pipe2` for key-value output.  
