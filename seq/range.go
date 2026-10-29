@@ -5,6 +5,8 @@ type integer interface {
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
+// #nosec G115 -- 遷移回数で更新を端点間に限り、剰余演算の結果は T に収まる。
+
 // FromRange generates an integer sequence from start toward stop in steps of step.
 // It accepts built-in integer types, including uintptr, and defined types with
 // those underlying types.
@@ -41,6 +43,7 @@ func FromRange[T integer](start, stop T, step int64) Seq[T] {
 }
 
 // 要素数ではなく遷移回数を使い、2^64 要素の範囲でも uint64 に収める。
+// #nosec G115 -- 向き確認後の距離は uint64 に収まり、負の step は最小値の符号反転を避ける。
 func rangeSteps[T integer](start, stop T, step int64) (uint64, bool) {
 	// 向きを T で確認した後の uint64 の差は、負数を含んでも元の整数間の距離になる。
 	if step > 0 {

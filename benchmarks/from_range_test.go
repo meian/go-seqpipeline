@@ -1,3 +1,4 @@
+// #nosec G115 -- 固定入力は 1〜4096、step は ±1 で、整数変換先の範囲に収まる。
 package benchmarks
 
 import (

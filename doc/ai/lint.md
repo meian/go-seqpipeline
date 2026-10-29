@@ -61,6 +61,27 @@ nil context による panic の検証を許容するため、`staticcheck` の S
 既定を Error とし、種類ごとの上書きには指摘文のチェック ID を使う。  
 linter 全体を変更する場合は `linters` を条件とするルールを追加する。  
 
+## gosec の抑制
+
+実装コードの整数変換の `G115` は、安全性を確認した関数に限り `#nosec G115 -- 理由` で抑制する。  
+設定ファイルでの除外や `nolint:gosec` は使わず、対象外関数の `G115` と他の gosec ルールを有効に保つ。  
+テストでは変換の安全性を確認したファイルの `package` 宣言直前に同じ指定を置き、ファイル内の `G115` だけを抑制する。  
+対象は `seq/range_test.go` の端点間の参照値の変換と、`benchmarks/from_range_test.go` の固定入力の変換とする。  
+
+`seq/range.go` では、次の範囲保証を理由に `FromRange` と `rangeSteps` を対象とする。  
+
+- `FromRange`：遷移回数で更新を端点間に限るため、剰余演算で求めた次の値は元の型に収まる
+- `rangeSteps`：向き確認後の差は `uint64` の距離となり、負の `step` の大きさは最小値の符号反転を避けて求める
+
+golangci-lint v2.15.0 に同梱された gosec v2.29.0 では、関数直前のコメント群に指定すると closure を含む関数内の `G115` を抑制できる。  
+公開関数では GoDoc と空行で分けたコメント群に置き、利用者向けの説明に混ぜない。  
+関数宣言行の末尾に置く指定では、関数内の指摘は抑制されない。  
+抑制範囲は [gosec のコメント解析](https://github.com/securego/gosec/blob/v2.29.0/analyzer.go)と固定版の実行結果で確認する。  
+
+更新時は `bin/golangci-lint run --enable-only=gosec ./...` で抑制前後を比較し、既存の境界値テストも実行する。  
+同じファイルの対象外関数に範囲外の整数変換、対象関数内と closure 内に別ルールの違反を一時的に加え、それらの指摘が残ることを確認してから検証コードを戻す。  
+採用版で関数単位の指定が機能しない場合は、警告が出る変換行に理由付きで指定する。  
+
 ## PR の CI
 
 `.github/workflows/ci.yml` の `Static checks` は `pull_request` で実行する。  
