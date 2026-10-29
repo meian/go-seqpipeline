@@ -183,7 +183,7 @@ func TestComposeTakeZero(t *testing.T) {
 func TestComposeEmptyInputs(t *testing.T) {
 	t.Parallel()
 
-	fromValues := op.Compose().Pipe2[string](withLength).Pipe(op.Values)
+	fromValues := op.Compose().Pipe2(withLength).Pipe(op.Values)
 	fromPairs := op.Compose2().Pipe(op.Values[int, string]).Pipe2(withLength)
 	for _, src := range []iter.Seq[string]{nil, slices.Values([]string{})} {
 		result := seq.FromSeq(src).Pipe(fromValues.Operator)

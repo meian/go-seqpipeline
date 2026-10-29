@@ -130,7 +130,7 @@ func TestFromChannelNilContext(t *testing.T) {
 			t.Fatal("nil context must panic during FromChannel")
 		}
 	}()
-	_ = seq.FromChannel[int](nil, make(chan int))
+	_ = seq.FromChannel(nil, make(chan int))
 }
 
 func TestToChannel(t *testing.T) {
@@ -138,7 +138,7 @@ func TestToChannel(t *testing.T) {
 
 	src := seq.FromSlice([]int{3, 1, 1, 2})
 	for round := 0; round < 2; round++ {
-		var ch <-chan int = seq.ToChannel(t.Context(), src)
+		ch := seq.ToChannel(t.Context(), src)
 		assertEqual(t, cap(ch), 0)
 		var got []int
 		for v := range ch {

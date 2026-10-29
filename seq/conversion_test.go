@@ -142,7 +142,7 @@ func TestToMap(t *testing.T) {
 	source := seq.FromSeq2(src)
 	assertEqual(t, reads, 0)
 	for i := 1; i <= 2; i++ {
-		var got map[string]int = seq.ToMap(source)
+		got := seq.ToMap(source)
 		assertEqual(t, got, map[string]int{"a": 3, "b": 2})
 		assertEqual(t, reads, i*3)
 		got["a"] = 99

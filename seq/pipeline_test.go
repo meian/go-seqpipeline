@@ -33,7 +33,7 @@ func TestTakeTypeInferenceAcrossTypeChanges(t *testing.T) {
 	t.Parallel()
 
 	reads := 0
-	var pipeline seq.Seq[string] = seq.FromSlice([]int{1, 22, 333, 4444}).
+	pipeline := seq.FromSlice([]int{1, 22, 333, 4444}).
 		Pipe(op.Take(10).Operator).
 		Pipe(op.Map(func(v int) string {
 			reads++
@@ -156,7 +156,7 @@ func TestSeq2Pipeline(t *testing.T) {
 			}
 		}
 	}
-	var pipeline seq.Seq2[string, int] = seq.FromSeq2(src).
+	pipeline := seq.FromSeq2(src).
 		Pipe2(op.Map2(func(k int, v string) (string, int) { return strconv.Itoa(k), len(v) })).
 		Pipe2(op.Filter2(func(k string, v int) bool { return k == "1" && v > 0 }))
 	want := []pair[string, int]{{Key: "1", Value: 1}, {Key: "1", Value: 3}}
@@ -240,7 +240,7 @@ func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 	t.Parallel()
 
 	reads := 0
-	var pipeline seq.Seq2[string, int] = seq.FromSeq2(slices.All([]int{1, 22, 333, 4444})).
+	pipeline := seq.FromSeq2(slices.All([]int{1, 22, 333, 4444})).
 		Pipe2(op.Take(10).Operator2).
 		Pipe2(op.Map2(func(k, v int) ([]int, string) {
 			reads++
@@ -264,8 +264,8 @@ func TestTakeOperator2TypeInferenceAcrossTypeChanges(t *testing.T) {
 func TestCrossTypePipeline(t *testing.T) {
 	t.Parallel()
 
-	var toPairs op.ToSeq2Operator[string, []int, string] = withLength
-	var toValues op.ToSeqOperator[[]int, string, string] = op.Values[[]int, string]
+	toPairs := withLength
+	var toValues op.ToSeqOperator[[]int, string, string] = op.Values
 	for _, n := range []int{0, 1, 2} {
 		t.Run(strconv.Itoa(n), func(t *testing.T) {
 			t.Parallel()
@@ -281,7 +281,7 @@ func TestCrossTypePipeline(t *testing.T) {
 					}
 				}
 			})
-			var pipeline seq.Seq[string] = src.
+			pipeline := src.
 				Pipe(op.Map(strconv.Itoa)).
 				Pipe2(toPairs).
 				Pipe2(op.Filter2(func(k []int, v string) bool { return k[0] > 1 })).
@@ -324,7 +324,7 @@ func TestSkipAfterFilter(t *testing.T) {
 			}
 		}
 	})
-	var pipeline seq.Seq[string] = src.
+	pipeline := src.
 		Pipe(op.Filter(func(v int) bool { return v%2 == 0 })).
 		Pipe(op.Skip(1).Operator).
 		Pipe(op.Map(strconv.Itoa)).
@@ -349,7 +349,7 @@ func TestSkip2AfterFilter(t *testing.T) {
 			}
 		}
 	})
-	var pipeline seq.Seq2[string, int] = src.
+	pipeline := src.
 		Pipe2(op.Filter2(func(k, v int) bool { return k%2 == 0 })).
 		Pipe2(op.Skip(1).Operator2).
 		Pipe2(op.Map2(func(k, v int) (string, int) { return strconv.Itoa(k), v })).

@@ -37,8 +37,8 @@ func TestSeqPipe(t *testing.T) {
 		reads++
 		yield(7)
 	}
-	var pipe func(op.Operator[int, string]) seq.Seq[string] = src.Pipe
-	var result seq.Seq[string] = pipe(func(got iter.Seq[int]) iter.Seq[string] {
+	var pipe func(op.Operator[int, string]) seq.Seq[string] = src.Pipe //nolint:staticcheck // ST1023/QF1011: ジェネリックメソッドの型推論に代入先の型が必要。
+	result := pipe(func(got iter.Seq[int]) iter.Seq[string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for v := range got {
@@ -73,8 +73,8 @@ func TestSeqPipe2(t *testing.T) {
 		reads++
 		yield(7)
 	}
-	var pipe func(op.ToSeq2Operator[int, []int, string]) seq.Seq2[[]int, string] = src.Pipe2
-	var result seq.Seq2[[]int, string] = pipe(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
+	var pipe func(op.ToSeq2Operator[int, []int, string]) seq.Seq2[[]int, string] = src.Pipe2 //nolint:staticcheck // ST1023/QF1011: ジェネリックメソッドの型推論に代入先の型が必要。
+	result := pipe(func(got iter.Seq[int]) iter.Seq2[[]int, string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for v := range got {
@@ -136,8 +136,8 @@ func TestSeq2Pipe(t *testing.T) {
 		reads++
 		yield(7, true)
 	}
-	var pipe func(op.ToSeqOperator[int, bool, string]) seq.Seq[string] = src.Pipe
-	var result seq.Seq[string] = pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
+	var pipe func(op.ToSeqOperator[int, bool, string]) seq.Seq[string] = src.Pipe //nolint:staticcheck // ST1023/QF1011: ジェネリックメソッドの型推論に代入先の型が必要。
+	result := pipe(func(got iter.Seq2[int, bool]) iter.Seq[string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for k, v := range got {
@@ -173,8 +173,8 @@ func TestSeq2Pipe2(t *testing.T) {
 		reads++
 		yield(7, true)
 	}
-	var pipe func(op.Operator2[int, bool, []int, string]) seq.Seq2[[]int, string] = src.Pipe2
-	var result seq.Seq2[[]int, string] = pipe(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
+	var pipe func(op.Operator2[int, bool, []int, string]) seq.Seq2[[]int, string] = src.Pipe2 //nolint:staticcheck // ST1023/QF1011: ジェネリックメソッドの型推論に代入先の型が必要。
+	result := pipe(func(got iter.Seq2[int, bool]) iter.Seq2[[]int, string] {
 		calls++
 		assertEqual(t, reads, 0)
 		for k, v := range got {
