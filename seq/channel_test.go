@@ -8,32 +8,59 @@ import (
 	"github.com/meian/go-seqpipeline/seq"
 )
 
+// 構築時の遅延受信、途中停止後の残値と入力の所有権、close 後の読み切りを確認する。
 func TestFromChannel(t *testing.T) {
 	t.Parallel()
 
-	ch := make(chan int, 4)
-	for _, v := range []int{3, 1, 1, 2} {
-		ch <- v
+	cases := []struct {
+		name string
+		ctx  context.Context
+	}{
+		{"uncancelable", context.Background()},
+		{"cancelable", t.Context()},
 	}
-	src := seq.FromChannel(t.Context(), ch)
-	assertEqual(t, len(ch), 4) // 構築時には受信しない。
-	for v := range src {
-		assertEqual(t, v, 3)
-		break
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ch := make(chan int, 4)
+			for _, v := range []int{3, 1, 1, 2} {
+				ch <- v
+			}
+			src := seq.FromChannel(tc.ctx, ch)
+			assertEqual(t, len(ch), 4) // 構築時には受信しない。
+			for v := range src {
+				assertEqual(t, v, 3)
+				break
+			}
+			assertEqual(t, len(ch), 3) // yield(false) 後は受信しない。
+			ch <- 4                    // 入力の所有権は呼び出し側にある。
+			close(ch)
+			assertEqual(t, seq.ToSlice(src), []int{1, 1, 2, 4})
+			assertEqual(t, seq.ToSlice(src), []int(nil))
+		})
 	}
-	assertEqual(t, len(ch), 3) // yield(false) 後は受信しない。
-	ch <- 4                    // 入力の所有権は呼び出し側にある。
-	close(ch)
-	assertEqual(t, seq.ToSlice(src), []int{1, 1, 2, 4})
-	assertEqual(t, seq.ToSlice(src), []int(nil))
 }
 
 func TestFromChannelClosed(t *testing.T) {
 	t.Parallel()
 
-	ch := make(chan int)
-	close(ch)
-	assertEqual(t, seq.ToSlice(seq.FromChannel(t.Context(), ch)), []int(nil))
+	cases := []struct {
+		name string
+		ctx  context.Context
+	}{
+		{"uncancelable", context.Background()},
+		{"cancelable", t.Context()},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ch := make(chan int)
+			close(ch)
+			assertEqual(t, seq.ToSlice(seq.FromChannel(tc.ctx, ch)), []int(nil))
+		})
+	}
 }
 
 func TestFromChannelCancelReceive(t *testing.T) {
@@ -82,6 +109,24 @@ func TestFromChannelCanceled(t *testing.T) {
 	ch := make(chan int, 1)
 	ch <- 7
 	assertEqual(t, seq.ToSlice(seq.FromChannel(ctx, ch)), []int(nil))
+	assertEqual(t, len(ch), 1)
+}
+
+func TestFromChannelCancelAfterYield(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	ch := make(chan int, 2)
+	ch <- 3
+	ch <- 1
+	close(ch)
+	var got []int
+	for v := range seq.FromChannel(ctx, ch) {
+		got = append(got, v)
+		cancel()
+	}
+	assertEqual(t, got, []int{3})
 	assertEqual(t, len(ch), 1)
 }
 
@@ -136,30 +181,85 @@ func TestFromChannelNilContext(t *testing.T) {
 func TestToChannel(t *testing.T) {
 	t.Parallel()
 
-	src := seq.FromSlice([]int{3, 1, 1, 2})
-	for round := 0; round < 2; round++ {
-		ch := seq.ToChannel(t.Context(), src)
-		assertEqual(t, cap(ch), 0)
-		var got []int
-		for v := range ch {
-			got = append(got, v)
-		}
-		assertEqual(t, got, []int{3, 1, 1, 2})
+	cases := []struct {
+		name string
+		ctx  context.Context
+	}{
+		{"uncancelable", context.Background()},
+		{"cancelable", t.Context()},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			src := seq.FromSlice([]int{3, 1, 1, 2})
+			for round := 0; round < 2; round++ {
+				ch := seq.ToChannel(tc.ctx, src)
+				assertEqual(t, cap(ch), 0)
+				var got []int
+				for v := range ch {
+					got = append(got, v)
+				}
+				assertEqual(t, got, []int{3, 1, 1, 2})
+			}
+		})
 	}
 }
 
 func TestToChannelEmpty(t *testing.T) {
 	t.Parallel()
 
-	for _, src := range []seq.Seq[int]{nil, seq.FromSlice([]int{})} {
-		ch := seq.ToChannel(t.Context(), src)
-		if ch == nil {
-			t.Fatal("output channel must not be nil")
-		}
-		if _, ok := <-ch; ok {
-			t.Fatal("empty input produced a value")
-		}
+	cases := []struct {
+		name string
+		ctx  context.Context
+	}{
+		{"uncancelable", context.Background()},
+		{"cancelable", t.Context()},
 	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			for _, src := range []seq.Seq[int]{nil, seq.FromSlice([]int{})} {
+				ch := seq.ToChannel(tc.ctx, src)
+				if ch == nil {
+					t.Fatal("output channel must not be nil")
+				}
+				if _, ok := <-ch; ok {
+					t.Fatal("empty input produced a value")
+				}
+			}
+		})
+	}
+}
+
+// キャンセル不能な送信も、受信されるまで次の入力へ進まない。
+func TestToChannelUncancelableSend(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		reads := 0
+		src := seq.FromSeq(func(yield func(int) bool) {
+			for _, v := range []int{3, 1, 2} {
+				reads++
+				if !yield(v) {
+					return
+				}
+			}
+		})
+		ch := seq.ToChannel(context.Background(), src)
+		synctest.Wait()
+		assertEqual(t, reads, 1)
+		assertEqual(t, <-ch, 3)
+		synctest.Wait()
+		assertEqual(t, reads, 2)
+		var got []int
+		for v := range ch {
+			got = append(got, v)
+		}
+		assertEqual(t, got, []int{1, 2})
+		assertEqual(t, reads, 3)
+	})
 }
 
 func TestToChannelCancelSend(t *testing.T) {

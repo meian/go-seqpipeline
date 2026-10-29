@@ -9,16 +9,22 @@ import "context"
 // If multiple sequences read from the same channel, they divide values according
 // to receive timing.
 // FromChannel panics if ctx is nil.
-// A nil channel waits until cancellation.
+// A nil channel waits indefinitely unless ctx can be canceled.
 // A value racing with cancellation may still be yielded; callers are responsible
 // for stopping the sender.
 func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 	done := ctx.Done()
-	return func(yield func(T) bool) {
-		for {
-			if ctx.Err() != nil {
-				return
+	if done == nil {
+		return func(yield func(T) bool) {
+			for v := range ch {
+				if !yield(v) {
+					return
+				}
 			}
+		}
+	}
+	return func(yield func(T) bool) {
+		for ctx.Err() == nil {
 			select {
 			case <-done:
 				return
@@ -35,7 +41,8 @@ func FromChannel[T any](ctx context.Context, ch <-chan T) Seq[T] {
 // in order through an unbuffered channel.
 // The goroutine closes the output channel when evaluation ends.
 // ToChannel panics if ctx is nil.
-// If the receiver stops early, cancel ctx to release a blocked send.
+// If the receiver stops early, use a cancelable ctx and cancel it to release
+// a blocked send.
 // A send racing with cancellation may still complete.
 // The input may be evaluated ahead of the receiver to obtain the next value.
 // To release waits inside the input, provide an upstream stopping mechanism,
@@ -46,6 +53,12 @@ func ToChannel[T any](ctx context.Context, s Seq[T]) <-chan T {
 	go func() {
 		defer close(ch)
 		if s == nil || ctx.Err() != nil {
+			return
+		}
+		if done == nil {
+			for v := range s {
+				ch <- v
+			}
 			return
 		}
 		for v := range s {

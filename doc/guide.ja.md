@@ -161,17 +161,31 @@ fmt.Println(seq.ToSlice(cached)) // [1 2 3]
 
 ## channel との相互変換
 
-channel の通信待ちを含めて途中の中断をサポートするため、channel と相互変換する関数にはコンテキストを渡します。  
-途中で処理をやめる場合は、変換時に渡したコンテキストをキャンセルしてください。  
-
+channel との相互変換には、送受信の待機をキャンセルするためのコンテキストを渡します。  
+値の送受信とキャンセルが競合した場合は、値を受信・送信することがあります。  
 入力の利用例は [ExampleFromChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-FromChannel)、キャンセルを含む出力の利用例は [ExampleToChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-ToChannel) を参照してください。  
 
-キャンセルは channel の通信待ちを解除しますが、入力やコールバック内部の待機は強制中断できません。  
-ただし、送信とキャンセルが競合した場合は送信が選ばれることがあり、タイミングによっては次の値を受信します。  
+### FromChannel の入力
 
-`FromChannel(ctx, ch)` は反復時に受信し、入力を close しません。  
-`ToChannel(ctx, src)` はバッファなしの channel を返し、評価終了時に close します。  
-上流の通信待ちも中断する場合は、上流にも同じコンテキストを渡してください。  
+`FromChannel(ctx, ch)` は反復時に受信し、入力 channel を close しません。  
+入力の close は送信側の責任です。  
+入力が close されると、バッファに残った値を読み切って反復を終了します。  
+下流の途中終了やコンテキストのキャンセルは、外部の送信元を自動では停止しません。  
+送信元が送信待ちでブロックし続けないよう、停止を伝える仕組みを用意してください。  
+
+### ToChannel の出力
+
+`ToChannel(ctx, src)` は呼び出し時に goroutine で評価を開始し、バッファなしの受信専用 channel を返します。  
+入力の反復が終了すると内部の goroutine が出力を close するため、受信側から close しません。  
+受信を途中でやめる場合は、キャンセル可能なコンテキストを使い、キャンセルして送信待ちを解除してください。  
+キャンセルは入力やコールバック内部の待機を強制中断できないため、別の停止手段が必要な場合があります。  
+上流の channel の通信待ちも中断する場合は、上流にも同じコンテキストを渡してください。  
+
+### キャンセル不能なコンテキスト
+
+`context.Background()` など `Done()` が nil のコンテキストでは、キャンセルによって通信待ちを解除できません。  
+`FromChannel → 処理 → ToChannel` は、送信側が入力を close し、受信側が出力を最後まで受信すれば、キャンセルせずに正常終了できます。  
+nil channel、終了しない入力、途中で受信をやめる使い方では、待機や goroutine が残り得るため、終了経路を確保してください。  
 
 ## Compose によるオペレーターの合成
 

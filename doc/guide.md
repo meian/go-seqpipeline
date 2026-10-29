@@ -160,17 +160,31 @@ Cached sequences support interleaved and concurrent iteration, including the fir
 
 ## Channel conversions
 
-Functions that convert to and from channels take a context to support early cancellation, including channel communication waits.  
-To stop processing early, cancel the context passed to the conversion.  
-
+Channel conversions take a context to cancel send and receive waits.  
+A value racing with cancellation may still be received or sent.  
 See [ExampleFromChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-FromChannel) for input and [ExampleToChannel](https://pkg.go.dev/github.com/meian/go-seqpipeline/seq#example-ToChannel) for output with cancellation.  
 
-Cancellation releases channel communication waits, but cannot forcibly interrupt waits inside inputs or callbacks.  
-However, if a send races with cancellation, the send may be selected, so you may receive the next value depending on timing.  
+### FromChannel input
 
-`FromChannel(ctx, ch)` receives during iteration without closing the input.  
-`ToChannel(ctx, src)` returns an unbuffered channel and closes it when evaluation ends.  
-To also interrupt upstream communication waits, pass the same context upstream.  
+`FromChannel(ctx, ch)` receives during iteration and does not close the input channel.  
+The sender is responsible for closing it.  
+After the input is closed, iteration consumes any buffered values before ending.  
+Stopping downstream or canceling the context does not stop external senders automatically.  
+Provide a way to signal them to stop so they do not remain blocked on sends.  
+
+### ToChannel output
+
+`ToChannel(ctx, src)` starts evaluation in a goroutine when called and returns an unbuffered, receive-only channel.  
+The goroutine closes the output when input iteration ends; receivers must not close it.  
+If you stop receiving early, use a cancelable context and cancel it to release a blocked send.  
+Cancellation cannot forcibly interrupt waits inside inputs or callbacks, which may need a separate stopping mechanism.  
+To also interrupt upstream channel waits, pass the same context upstream.  
+
+### Contexts that cannot be canceled
+
+With `context.Background()` or another context whose `Done()` is nil, cancellation cannot release communication waits.  
+A `FromChannel → processing → ToChannel` pipeline can finish normally without cancellation if the sender closes the input and the receiver drains the output.  
+A nil channel, a nonterminating input, or stopping reception early may leave waits or goroutines running, so provide a way for processing to finish.  
 
 ## Composing operators with Compose
 
