@@ -1,3 +1,4 @@
+// #nosec G115 -- 狭い型への参照値の変換は、端点間に収まる値だけを対象とする。
 package seq_test
 
 import (
