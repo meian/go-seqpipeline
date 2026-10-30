@@ -55,19 +55,16 @@ class DiffTests(unittest.TestCase):
                                    "packaging==26.1\nPyYAML==6.0.3\n")}
         dependencies = [dependency(), dependency("PyYAML", "6.0.3", updateType="version-update:semver-patch")]
         self.assertEqual(self.validate(contents, dependencies), ["PyYAML", "packaging"])
-        contents = {path: ("    - uses: actions/checkout@v6.0.0\n",
-                           "    - uses: actions/checkout@v6.0.1\n")
-                    for path in (WORKFLOW, ".github/workflows/lint.yml")}
-        action = dependency("actions/checkout", "6.0.1", packageEcosystem="github_actions", directory="/")
-        self.assertEqual(self.validate(contents, [action]), ["actions/checkout"])
-
-    def test_every_group_member_must_be_present_and_eligible(self):
-        contents = {REQUIREMENTS: ("packaging==26.0\nPyYAML==6.0.2\n", "packaging==26.1\nPyYAML==6.0.3\n")}
         cases = [[dependency()],
                  [dependency(), dependency("PyYAML", "6.0.3", updateType="version-update:semver-major")]]
         for dependencies in cases:
             with self.subTest(dependencies=dependencies), self.assertRaises(ValueError):
                 self.validate(contents, dependencies)
+        contents = {path: ("    - uses: actions/checkout@v6.0.0\n",
+                           "    - uses: actions/checkout@v6.0.1\n")
+                    for path in (WORKFLOW, ".github/workflows/lint.yml")}
+        action = dependency("actions/checkout", "6.0.1", packageEcosystem="github_actions", directory="/")
+        self.assertEqual(self.validate(contents, [action]), ["actions/checkout"])
 
     def test_normalized_requirement_names(self):
         contents = {REQUIREMENTS: ("pack_name==1.0.0\n", "pack_name==1.0.1\n")}

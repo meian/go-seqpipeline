@@ -62,18 +62,20 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 SHA 固定では、変更前後の版番号コメントとリリースタグが指す SHA も照合する。  
 major・downgrade・prerelease・分類不能な更新と、Go の最低要求バージョン・toolchain・CI の Go バージョンの変更は、グループに含まれる場合も対象外にする。  
 
-`gh pr checks --required --watch --fail-fast` で必須チェックを待ち、任意も含めた全チェックの成功を確認する。  
-自動マージ処理自身は確認から除き、任意チェックが未完了なら保留する。  
-`push` 側の Static checks の skip は、同じ head の `pull_request` 側が成功している場合だけ許可する。  
+`gh pr checks --required --watch --fail-fast` で必須チェックを待ち、公式 Octokit Action で最新 head の結果を取得する。  
+Actions の matrix と条件式で任意も含めた全件を確認し、自動マージ workflow 自身を除いて未完了・失敗・キャンセルなどは保留する。  
+`push` 側の Static checks の skip だけを許可し、同じ head の `pull_request` 側の CI 実行成功も必須にする。  
 `gh pr merge --squash --match-head-commit` で確認した head を指定し、最新 `main` への追随要件や署名・未解決スレッドなどの保護設定を守ってマージする。  
 
 `main` への push と毎週月曜 11:00・21:00（Asia/Tokyo）の定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
-head と `main` の組をコメントのマーカーに記録して依頼の重複を防ぎ、rebase 後の新しい head で判定と CI 確認をやり直す。  
+自動マージ成功後も、同じ workflow 実行で残りの PR を確認する。  
+PR の列挙は公式 Octokit Action、各 PR の処理は matrix で行い、rebase 後の新しい head で判定と CI 確認をやり直す。  
 実行するコードは `main` のものに限り、PR のコミットは差分確認用のデータとして取得する。  
 
 ## 保留と再開
 
 分類不能な差分、チェックの失敗・未完了、競合、rebase 失敗、API 取得失敗、保護条件の未達ではマージしない。  
+結果の取りこぼしを避けるため、チェックまたは対象 PR が 100 件を超える場合と、PR 検索結果が不完全な場合も保留する。  
 Actions の `Dependabot auto-merge` の実行ログで保留理由を確認する。  
 CI 失敗は原因を解消して `gh run rerun RUN_ID --failed` で再実行し、判定を再開するときは Actions の `Re-run jobs` を使う。  
 rebase に反応がない場合は Dependabot のログを確認し、必要に応じて `@dependabot rebase` を手動でコメントする。  

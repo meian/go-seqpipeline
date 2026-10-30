@@ -13,22 +13,29 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: read
   checks: read
   statuses: read
 
+concurrency:
+  group: dependabot-${{ github.event.pull_request.number || 'rebase' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  GITHUB_TOKEN: ${{ github.token }}
+
 jobs:
-  merge:
+  inspect:
     if: >-
       github.event_name == 'pull_request_target' &&
       github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    concurrency:
-      group: dependabot-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+    outputs:
+      checks: ${{ toJSON(fromJSON(steps.snapshot.outputs.data).repository.pullRequest.headRef.target.statusCheckRollup.contexts.nodes) }}
     env:
-      GH_TOKEN: ${{ github.token }}
       PR_URL: ${{ github.event.pull_request.html_url }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -37,54 +44,148 @@ jobs:
         with:
           ref: main
           persist-credentials: false
-      - name: Verify the current single-commit PR
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" |
-            jq -e --arg head "$PR_HEAD_SHA" '
-              .state == "open" and .draft == false and .commits == 1 and .head.sha == $head'
       - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         id: metadata
+      - run: git fetch --no-tags --depth=2 origin "$PR_HEAD_SHA"
       - name: Verify dependency-only changes
         env:
           DEPENDENCIES_JSON: ${{ steps.metadata.outputs.updated-dependencies-json }}
-        run: |
-          git fetch --no-tags --depth=2 origin "$PR_HEAD_SHA"
-          python3 ci/scripts/check_dependabot_diff.py
-      - name: Wait for checks and merge the verified head
-        run: |
-          gh pr checks "$PR_URL" --required --watch --fail-fast
-          gh pr checks "$PR_URL" --json name,event,state,workflow |
-            jq -e 'map(select(.workflow != "Dependabot auto-merge")) |
-              any(.[]; .name == "Static checks" and .event == "pull_request" and .state == "SUCCESS") and
-              all(.[]; .state == "SUCCESS" or
-                (.name == "Static checks" and .event == "push" and .state == "SKIPPED"))'
-          gh pr merge "$PR_URL" --squash --match-head-commit "$PR_HEAD_SHA"
+        run: python3 ci/scripts/check_dependabot_diff.py
+      - name: Wait for required checks
+        run: gh pr checks "$PR_URL" --required --watch --fail-fast
+      - uses: octokit/graphql-action@ddde8ebb2493e79f390e6449c725c21663a67505 # v3.0.2
+        id: snapshot
+        with:
+          query: |
+            query($owner:String!,$repo:String!,$number:Int!) {
+              repository(owner:$owner,name:$repo) {
+                pullRequest(number:$number) {
+                  state isDraft headRefOid
+                  commits { totalCount }
+                  headRef { target { ...on Commit {
+                    statusCheckRollup { contexts(first:100) {
+                      pageInfo { hasNextPage }
+                      nodes {
+                        ...on CheckRun {
+                          name status conclusion
+                          checkSuite { workflowRun { event workflow { name } } }
+                        }
+                        ...on StatusContext { context state }
+                      }
+                    } }
+                  } } }
+                }
+              }
+            }
+          variables: |
+            owner: ${{ github.repository_owner }}
+            repo: ${{ github.event.repository.name }}
+            number: ${{ github.event.pull_request.number }}
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: ci
+        with:
+          route: GET /repos/${{ github.repository }}/actions/workflows/ci.yml/runs
+          head_sha: ${{ env.PR_HEAD_SHA }}
+          event: pull_request
+          status: success
+          per_page: 1
+      - name: Require the current PR and its CI results
+        env:
+          PR: ${{ steps.snapshot.outputs.data }}
+          VALID: >-
+            ${{ fromJSON(steps.snapshot.outputs.data).repository.pullRequest.state == 'OPEN' &&
+                !fromJSON(steps.snapshot.outputs.data).repository.pullRequest.isDraft &&
+                fromJSON(steps.snapshot.outputs.data).repository.pullRequest.commits.totalCount == 1 &&
+                fromJSON(steps.snapshot.outputs.data).repository.pullRequest.headRefOid == env.PR_HEAD_SHA &&
+                fromJSON(steps.snapshot.outputs.data).repository.pullRequest.headRef.target.statusCheckRollup.contexts.nodes[0] != null &&
+                !fromJSON(steps.snapshot.outputs.data).repository.pullRequest.headRef.target.statusCheckRollup.contexts.pageInfo.hasNextPage &&
+                fromJSON(steps.ci.outputs.data).total_count > 0 }}
+        run: test "$VALID" = true
 
-  rebase:
-    if: github.event_name != 'pull_request_target'
+  checks:
+    needs: inspect
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    concurrency:
-      group: dependabot-rebase
-      cancel-in-progress: false
-    env:
-      GH_TOKEN: ${{ github.token }}
+    strategy:
+      fail-fast: false
+      matrix:
+        check: ${{ fromJSON(needs.inspect.outputs.checks) }}
     steps:
+      - name: Require each check to succeed
+        env:
+          CHECK: ${{ toJSON(matrix.check) }}
+          VALID: >-
+            ${{ matrix.check.checkSuite.workflowRun.workflow.name == github.workflow ||
+                matrix.check.state == 'SUCCESS' ||
+                (matrix.check.status == 'COMPLETED' &&
+                  (matrix.check.conclusion == 'SUCCESS' ||
+                    (matrix.check.name == 'Static checks' &&
+                     matrix.check.checkSuite.workflowRun.workflow.name == 'CI' &&
+                     matrix.check.checkSuite.workflowRun.event == 'push' &&
+                     matrix.check.conclusion == 'SKIPPED'))) }}
+        run: test "$VALID" = true
+
+  merge:
+    needs: [inspect, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - run: gh pr merge "$PR_URL" --squash --match-head-commit "$PR_HEAD_SHA"
+
+  list:
+    needs: merge
+    if: >-
+      !cancelled() &&
+      (github.event_name != 'pull_request_target' || needs.merge.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      prs: ${{ toJSON(fromJSON(steps.prs.outputs.data).items) }}
+    steps:
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: prs
+        with:
+          route: GET /search/issues
+          q: repo:${{ github.repository }} is:pr is:open author:app/dependabot base:main draft:false
+          per_page: 100
+      - name: Require a complete PR list
+        env:
+          VALID: >-
+            ${{ !fromJSON(steps.prs.outputs.data).incomplete_results &&
+                fromJSON(steps.prs.outputs.data).total_count <= 100 }}
+        run: test "$VALID" = true
+
+  rebase:
+    needs: list
+    if: >-
+      !cancelled() && needs.list.result == 'success' &&
+      needs.list.outputs.prs != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        pr: ${{ fromJSON(needs.list.outputs.prs) }}
+    env:
+      PR_URL: ${{ matrix.pr.html_url }}
+    steps:
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: pr
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ matrix.pr.number }}
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: compare
+        with:
+          route: GET /repos/${{ github.repository }}/compare/main...${{ fromJSON(steps.pr.outputs.data).head.sha }}
       - name: Ask Dependabot to rebase outdated PRs
-        run: |
-          gh pr list --repo "$GITHUB_REPOSITORY" --base main --author 'app/dependabot' \
-            --json number,headRefOid --limit 100 --jq '.[] | [.number, .headRefOid] | @tsv' |
-          while IFS=$'\t' read -r number head; do
-            behind=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...$head" --jq .behind_by)
-            if [ "$behind" -eq 0 ]; then
-              continue
-            fi
-            marker="<!-- dependabot-rebase:$head:$GITHUB_SHA -->"
-            comments=$(gh api "repos/$GITHUB_REPOSITORY/issues/$number/comments" --paginate --jq '.[].body')
-            if printf '%s\n' "$comments" | grep -F -- "$marker" > /dev/null; then
-              continue
-            fi
-            gh pr comment "$number" --repo "$GITHUB_REPOSITORY" --body "@dependabot rebase"$'\n\n'"$marker"
-          done
+        if: >-
+          fromJSON(steps.pr.outputs.data).state == 'open' &&
+          !fromJSON(steps.pr.outputs.data).draft &&
+          fromJSON(steps.pr.outputs.data).base.ref == 'main' &&
+          fromJSON(steps.pr.outputs.data).user.login == 'dependabot[bot]' &&
+          fromJSON(steps.pr.outputs.data).head.repo.full_name == github.repository &&
+          fromJSON(steps.compare.outputs.data).behind_by > 0
+        run: gh pr comment "$PR_URL" --body '@dependabot rebase'

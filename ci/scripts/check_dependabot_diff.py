@@ -58,13 +58,13 @@ def validate(dependencies, head):
     if not re.fullmatch(r"[0-9a-f]{40}", head):
         raise ValueError("PR head SHA が不正です")
     parent = head + "^"
-    files = run("git", "diff", "--no-renames", "--name-status", "-z", parent, head, "--").split("\0")[:-1]
+    files = run("git", "diff", "--name-only", "-z", parent, head, "--").split("\0")[:-1]
     if not files or run("git", "diff", "--summary", parent, head, "--"):
         raise ValueError("変更が空、またはファイルの追加・削除・mode 変更があります")
     changed = set()
-    for status, path in zip(files[::2], files[1::2]):
+    for path in files:
         workflow = re.fullmatch(r"\.github/workflows/[^/]+\.ya?ml", path)
-        if status != "M" or not (workflow or path == "ci/scripts/requirements.txt"):
+        if not (workflow or path == "ci/scripts/requirements.txt"):
             raise ValueError(f"対象外のファイル変更です: {path}")
         ecosystem = "github_actions" if workflow else "pip"
         old = run("git", "show", f"{parent}:{path}").splitlines(keepends=True)
