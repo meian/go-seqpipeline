@@ -45,7 +45,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v7
-      - uses: reviewdog/action-golangci-lint@216f5c6023089bd277ce168ff7560607ce524658 # v2.10.2
+      - uses: reviewdog/action-golangci-lint@284129a3ac23bc5d8ac1522e0b6511df74a8836d # v2.10.2
         with:
           golangci_lint_version: v2.15.0
           reviewdog_version: v0.21.2
