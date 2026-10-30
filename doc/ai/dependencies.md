@@ -67,7 +67,7 @@ major・downgrade・prerelease・分類不能な更新と、Go の最低要求�
 `push` 側の Static checks の skip は、同じ head の `pull_request` 側が成功している場合だけ許可する。  
 `gh pr merge --squash --match-head-commit` で確認した head を指定し、最新 `main` への追随要件や署名・未解決スレッドなどの保護設定を守ってマージする。  
 
-`main` への push と 15 分ごとの定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
+`main` への push と毎週月曜 10:00・21:00（Asia/Tokyo）の定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
 head と `main` の組をコメントのマーカーに記録して依頼の重複を防ぎ、rebase 後の新しい head で判定と CI 確認をやり直す。  
 実行するコードは `main` のものに限り、PR のコミットは差分確認用のデータとして取得する。  
 
