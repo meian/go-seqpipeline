@@ -29,7 +29,7 @@ CI ツールの自動更新のために、ライブラリの `go.mod` へツー�
 
 両エコシステムとも毎週月曜 09:00（Asia/Tokyo）に確認する。  
 minor・patch 更新はエコシステムごとにまとめ、major 更新は個別 PR にする。  
-バージョン更新 PR は各エコシステムで同時に最大 2 件、合計最大 4 件とし、自動マージは設定しない。  
+バージョン更新 PR は各エコシステムで同時に最大 2 件、合計最大 4 件とし、条件を満たす更新は自動マージする。  
 セキュリティ更新はこの週次スケジュールと件数上限の対象外であり、別に確認する。  
 設定項目は [Dependabot の公式リファレンス](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference)に従う。  
 
@@ -56,3 +56,11 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 
 Dependabot の更新検出と実際の更新 PR による CI の確認には、設定が既定ブランチに存在する必要がある。  
 導入 PR の通常 CI の成功だけで、Dependabot による実行まで確認済みとは扱わない。  
+
+## 自動マージと保留
+
+[自動化](../../.github/workflows/dependabot-automerge.yml)は、署名検証済みメタデータと実差分を照合し、全依存が数値の minor / patch 更新である単一コミット PR を対象にする。  
+既存の `uses:` または Python 固定版の置換だけを許可し、Go 設定・major・SHA のみ・分類不能・追加削除を含む更新は保留する。  
+最新 head の必須 PR CI と、自動化自身を除く全チェックの成功を待ち、head SHA を指定して保護設定に従いマージする。  
+main 更新時・各判定後・月曜 11:00 / 21:00（Asia/Tokyo）に、遅れた Dependabot PR へ rebase を依頼し、bot が作る新 head の CI と判定をやり直す。  
+失敗・未完了・競合・取得不能・保護条件未達はマージせず、Actions のログで理由を確認し、解消後に最新 head の判定を Re-run jobs で再開する。  
