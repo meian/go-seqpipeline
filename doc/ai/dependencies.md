@@ -45,6 +45,7 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 ## 更新 PR の CI と確認
 
 `.github/workflows/ci.yml` はパスや作成者で除外せず、`pull_request` で gofmt・build・test・Static checks・README policy を実行する。  
+`push` は `main` のみで実行し、PR の head に重複した CI と skip 結果を作らない。  
 [Dependabot が起動する実行](https://docs.github.com/en/code-security/reference/supply-chain-security/troubleshoot-dependabot/dependabot-on-actions)では通常の Actions secrets を使えず、既定の `GITHUB_TOKEN` も読み取り専用になる。  
 既存の lint ジョブは `dependabot[bot]` の場合に `github-pr-annotations` を使い、レビューコメントの書き込みに依存しない。  
 他の CI ジョブも公開依存の取得と検証だけを行い、追加の secrets は必要ない。  
@@ -57,25 +58,34 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 ## 自動マージ
 
 [Dependabot auto-merge](../../.github/workflows/dependabot-automerge.yml) は、同一リポジトリの Dependabot 作成・`main` 向けの単一コミット PR を `pull_request_target` で判定する。  
-`dependabot/fetch-metadata` の署名検証済みメタデータを使い、グループを含む全依存が minor / patch 更新で、実差分と一致する場合だけ対象にする。  
-許可する差分は、既存の Action の `uses:` と `ci/scripts/requirements.txt` の固定版の置換に限る。  
-SHA 固定では、変更前後の版番号コメントとリリースタグが指す SHA も照合する。  
-major・downgrade・prerelease・分類不能な更新と、Go の最低要求バージョン・toolchain・CI の Go バージョンの変更は、グループに含まれる場合も対象外にする。  
+`dependabot/fetch-metadata` で署名を検証し、グループを含む全依存の更新種別・ecosystem・対象ディレクトリを matrix で確認する。  
+minor / patch と分類された更新だけを対象とし、major・対象外・分類不能の依存が一つでもあればマージしない。  
+実差分は公開 Action で確認し、既存 workflow の `uses:` 行と `ci/scripts/requirements.txt` の数値による固定版の置換だけを許可する。  
+Go の最低要求バージョン・toolchain・CI の Go バージョンなど、依存参照以外の変更はグループに含まれる場合も対象外にする。  
+独自スクリプトや workflow の `run:`・`script:` は追加しない。  
 
-`gh pr checks --required --watch --fail-fast` で必須チェックを待ち、公式 Octokit Action で最新 head の結果を取得する。  
-Actions の matrix と条件式で任意も含めた全件を確認し、自動マージ workflow 自身を除いて未完了・失敗・キャンセルなどは保留する。  
-`push` 側の Static checks の skip だけを許可し、同じ head の `pull_request` 側の CI 実行成功も必須にする。  
-`gh pr merge --squash --match-head-commit` で確認した head を指定し、最新 `main` への追随要件や署名・未解決スレッドなどの保護設定を守ってマージする。  
+`wechuli/allcheckspassed` で head を固定して全チェックと commit status を待ち、未完了・失敗・キャンセル・skip・neutral は保留する。  
+同じ head の `pull_request` CI の成功も確認し、REST API に検証した head の SHA を指定して squash merge する。  
+マージ直前にも PR の head・マージ先・draft 状態・全チェックの集約結果・マージ可否を再確認する。  
+最新 `main` への追随、必須チェック、署名、未解決スレッドなどは既存の ruleset で強制し、管理者 bypass は使わない。  
 
 `main` への push と毎週月曜 11:00・21:00（Asia/Tokyo）の定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
 自動マージ成功後も、同じ workflow 実行で残りの PR を確認する。  
 PR の列挙は公式 Octokit Action、各 PR の処理は matrix で行い、rebase 後の新しい head で判定と CI 確認をやり直す。  
-実行するコードは `main` のものに限り、PR のコミットは差分確認用のデータとして取得する。  
+PR のコードは checkout・実行せず、GitHub API からメタデータと差分だけを取得する。  
+
+### rebase 依頼用の設定
+
+リポジトリの Actions secret `DEPENDABOT_REBASE_TOKEN` に、リポジトリへの push 権限を持つユーザーの fine-grained PAT を登録する。  
+対象リポジトリだけに限定し、Pull requests の Read and write を許可する。  
+[Dependabot は GitHub App からのコマンドを受け付けない](https://github.com/dependabot/dependabot-core/issues/9147)ため、`GITHUB_TOKEN` では代用しない。  
+この PAT は rebase 依頼のコメント投稿だけに使い、マージには通常の `GITHUB_TOKEN` を使う。  
+Secret がない場合は rebase 依頼が失敗して保留となるため、マージ前に登録する。  
 
 ## 保留と再開
 
 分類不能な差分、チェックの失敗・未完了、競合、rebase 失敗、API 取得失敗、保護条件の未達ではマージしない。  
-結果の取りこぼしを避けるため、チェックまたは対象 PR が 100 件を超える場合と、PR 検索結果が不完全な場合も保留する。  
+差分がない場合、変更ファイルまたは対象 PR が 100 件を超える場合、PR 検索結果が不完全な場合も保留する。  
 Actions の `Dependabot auto-merge` の実行ログで保留理由を確認する。  
 CI 失敗は原因を解消して `gh run rerun RUN_ID --failed` で再実行し、判定を再開するときは Actions の `Re-run jobs` を使う。  
 rebase に反応がない場合は Dependabot のログを確認し、必要に応じて `@dependabot rebase` を手動でコメントする。  
