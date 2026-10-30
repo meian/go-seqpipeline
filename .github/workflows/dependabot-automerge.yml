@@ -1,0 +1,62 @@
+name: Dependabot auto-merge
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: 対象 PR 番号（空欄は全 Dependabot PR）
+        type: string
+      dry-run:
+        description: 判定だけ確認する
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  checks: read
+  statuses: read
+
+concurrency:
+  group: dependabot-automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # workflow_run has write permissions: never check out or execute PR code.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install automation dependencies
+        run: python3 -m pip install -r ci/scripts/requirements.txt
+      - name: Reassess Dependabot PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr-number }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+        run: |
+          args=()
+          if [ -n "$PR_NUMBER" ]; then
+            args+=(--pr "$PR_NUMBER")
+          fi
+          if [ "$DRY_RUN" = true ]; then
+            args+=(--dry-run)
+          fi
+          python3 ci/scripts/dependabot_automerge.py --repo "$GITHUB_REPOSITORY" "${args[@]}"
