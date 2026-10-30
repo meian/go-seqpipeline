@@ -1,62 +1,86 @@
 name: Dependabot auto-merge
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize]
   push:
     branches: [main]
   schedule:
     - cron: '7,22,37,52 * * * *'
-  workflow_dispatch:
-    inputs:
-      pr-number:
-        description: 対象 PR 番号（空欄は全 Dependabot PR）
-        type: string
-      dry-run:
-        description: 判定だけ確認する
-        type: boolean
-        default: true
 
 permissions:
   contents: write
   pull-requests: write
-  actions: read
   checks: read
   statuses: read
-
-concurrency:
-  group: dependabot-automerge
-  cancel-in-progress: false
 
 jobs:
   merge:
     if: >-
-      github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    concurrency:
+      group: dependabot-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
-      # workflow_run has write permissions: never check out or execute PR code.
+      # Only execute main's code; fetch the PR commit as data for the diff guard.
       - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-      - name: Install automation dependencies
-        run: python3 -m pip install -r ci/scripts/requirements.txt
-      - name: Reassess Dependabot PRs
+      - name: Verify the current single-commit PR
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ inputs.pr-number }}
-          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          args=()
-          if [ -n "$PR_NUMBER" ]; then
-            args+=(--pr "$PR_NUMBER")
-          fi
-          if [ "$DRY_RUN" = true ]; then
-            args+=(--dry-run)
-          fi
-          python3 ci/scripts/dependabot_automerge.py --repo "$GITHUB_REPOSITORY" "${args[@]}"
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" |
+            jq -e --arg head "$PR_HEAD_SHA" '
+              .state == "open" and .draft == false and .commits == 1 and .head.sha == $head'
+      - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        id: metadata
+      - name: Verify dependency-only changes
+        env:
+          DEPENDENCIES_JSON: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        run: |
+          git fetch --no-tags --depth=2 origin "$PR_HEAD_SHA"
+          python3 ci/scripts/check_dependabot_diff.py
+      - name: Wait for checks and merge the verified head
+        run: |
+          gh pr checks "$PR_URL" --required --watch --fail-fast
+          gh pr checks "$PR_URL" --json name,event,state,workflow |
+            jq -e 'map(select(.workflow != "Dependabot auto-merge")) |
+              any(.[]; .name == "Static checks" and .event == "pull_request" and .state == "SUCCESS") and
+              all(.[]; .state == "SUCCESS" or
+                (.name == "Static checks" and .event == "push" and .state == "SKIPPED"))'
+          gh pr merge "$PR_URL" --squash --match-head-commit "$PR_HEAD_SHA"
+
+  rebase:
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: dependabot-rebase
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Ask Dependabot to rebase outdated PRs
+        run: |
+          gh pr list --repo "$GITHUB_REPOSITORY" --base main --author 'app/dependabot' \
+            --json number,headRefOid,mergeStateStatus --limit 100 \
+            --jq '.[] | select(.mergeStateStatus == "BEHIND") | [.number, .headRefOid] | @tsv' |
+          while IFS=$'\t' read -r number head; do
+            marker="<!-- dependabot-rebase:$head:$GITHUB_SHA -->"
+            comments=$(gh api "repos/$GITHUB_REPOSITORY/issues/$number/comments" --paginate --jq '.[].body')
+            if printf '%s\n' "$comments" | grep -F -- "$marker" > /dev/null; then
+              continue
+            fi
+            gh pr comment "$number" --repo "$GITHUB_REPOSITORY" --body "@dependabot rebase"$'\n\n'"$marker"
+          done

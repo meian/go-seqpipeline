@@ -42,7 +42,7 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 5. lint Action の更新ではバージョン表のリンクも同期し、入力・出力形式・権限の変更を確認する
 6. ツール更新後は lint の運用に従って全体を解析し、gosec の抑制範囲と同梱版の説明も確認する
 
-## 更新 PR の CI
+## 更新 PR の CI と確認
 
 `.github/workflows/ci.yml` はパスや作成者で除外せず、`pull_request` で gofmt・build・test・Static checks・README policy を実行する。  
 [Dependabot が起動する実行](https://docs.github.com/en/code-security/reference/supply-chain-security/troubleshoot-dependabot/dependabot-on-actions)では通常の Actions secrets を使えず、既定の `GITHUB_TOKEN` も読み取り専用になる。  
@@ -54,60 +54,30 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 3. 自動マージの対象外を手動でマージするときも、最新 head の CI と保護設定を確認する
 4. PR が作成されていない週も、更新不要なのか、件数上限や更新エラーで止まっているのかをログで確認する
 
+## 自動マージ
+
+[Dependabot auto-merge](../../.github/workflows/dependabot-automerge.yml) は、同一リポジトリの Dependabot 作成・`main` 向けの単一コミット PR を `pull_request_target` で判定する。  
+`dependabot/fetch-metadata` の署名検証済みメタデータを使い、グループを含む全依存が minor / patch 更新で、実差分と一致する場合だけ対象にする。  
+許可する差分は、既存の Action の `uses:` と `ci/scripts/requirements.txt` の固定版の置換に限る。  
+SHA 固定では、変更前後の版番号コメントとリリースタグが指す SHA も照合する。  
+major・downgrade・prerelease・分類不能な更新と、Go の最低要求バージョン・toolchain・CI の Go バージョンの変更は、グループに含まれる場合も対象外にする。  
+
+`gh pr checks --required --watch --fail-fast` で必須チェックを待ち、任意も含めた全チェックの成功を確認する。  
+自動マージ処理自身は確認から除き、任意チェックが未完了なら保留する。  
+`push` 側の Static checks の skip は、同じ head の `pull_request` 側が成功している場合だけ許可する。  
+`gh pr merge --squash --match-head-commit` で確認した head を指定し、最新 `main` への追随要件や署名・未解決スレッドなどの保護設定を守ってマージする。  
+
+`main` への push と 15 分ごとの定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
+head と `main` の組をコメントのマーカーに記録して依頼の重複を防ぎ、rebase 後の新しい head で判定と CI 確認をやり直す。  
+実行するコードは `main` のものに限り、PR のコミットは差分確認用のデータとして取得する。  
+
+## 保留と再開
+
+分類不能な差分、チェックの失敗・未完了、競合、rebase 失敗、API 取得失敗、保護条件の未達ではマージしない。  
+Actions の `Dependabot auto-merge` の実行ログで保留理由を確認する。  
+CI 失敗は原因を解消して `gh run rerun RUN_ID --failed` で再実行し、判定を再開するときは Actions の `Re-run jobs` を使う。  
+rebase に反応がない場合は Dependabot のログを確認し、必要に応じて `@dependabot rebase` を手動でコメントする。  
+対象外の更新は、自動判定の条件を緩めずに手動で確認する。  
+
 Dependabot の更新検出と実際の更新 PR による CI の確認には、設定が既定ブランチに存在する必要がある。  
 導入 PR の通常 CI の成功だけで、Dependabot による CI・rebase・自動マージまで確認済みとは扱わない。  
-
-## 自動マージの対象
-
-[Dependabot auto-merge](../../.github/workflows/dependabot-automerge.yml) が、同一リポジトリの Dependabot 作成・`main` 向け PR を判定する。  
-署名を検証できる Dependabot コミットの `updated-dependencies` メタデータと実差分を照合し、全依存が minor / patch 更新の場合だけ対象にする。  
-タイトルやラベルだけでは判定しない。  
-
-許可する差分は、既存の Action の `uses:` 参照と `ci/scripts/requirements.txt` の既存の固定版の置換に限る。  
-SHA 固定の Action は、変更前後の版番号コメントと、そのタグが指す SHA も確認する。  
-グループ PR は、全依存のメタデータと差分が一致する必要がある。  
-major・downgrade・prerelease・分類不能な更新や、許可した行以外の変更は手動確認に回す。  
-`go.mod` の `go` / `toolchain`、CI の `go-version` などの Go バージョン更新は、patch でもグループに含まれていても対象外になる。  
-
-## main への追随とマージ条件
-
-PR が `main` に遅れている場合は `@dependabot rebase` を依頼し、新しい head の CI が完了するまで保留する。  
-head と `main` の組をコメントのマーカーに記録し、同じ状態への依頼を重複させない。  
-競合・rebase 失敗・API 取得失敗も保留し、古い head の成功結果を使わない。  
-
-必須の gofmt・build・test・Static checks・README policy と、`main` に適用中の branch rules から取得した追加必須チェックの成功を確認する。  
-必須チェックの未作成・実行中・失敗・キャンセルに加え、任意チェックの失敗や実行中も保留する。  
-`push` 側の Static checks の skip だけは、同じ head の `pull_request` 側が成功していれば許可する。  
-自動マージ処理自身は待機対象から外す。  
-
-マージ直前に head と `main` を再取得し、[非同期マージ API](https://docs.github.com/en/rest/pulls/pulls?apiVersion=2026-03-10#merge-a-pull-request-asynchronously) に head の `sha`、`merge_method: squash`、`merge_action: direct_merge` を指定する。  
-`GITHUB_TOKEN` で `bypass_rules: false` を明示し、strict な必須チェック、署名、未解決スレッドなどの既存の保護設定を守る。  
-応答が `pending` なら結果を 1 回確認し、未完了の場合は UUID と完了未確認をサマリに記録する。  
-`merged` の応答だけをマージ完了として扱う。  
-GitHub の auto-merge 設定は有効化せず、条件がそろった実行で直接マージする。  
-
-## 自動化の権限と再実行
-
-自動化は `CI` の完了、`main` への push、15 分ごとの定期実行、手動実行で開いている対象 PR を再判定する。  
-`main` のコードだけを checkout し、PR のコードや依存は実行しない。  
-`GITHUB_TOKEN` に `contents: write`・`pull-requests: write`・`checks: read`・`statuses: read`・`actions: read` を与え、追加の secret は使わない。  
-権限とイベントの制約は [GitHub 公式の Dependabot 自動化](https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/automate-dependabot-with-actions)も参照する。  
-
-Actions の `Dependabot auto-merge` の実行サマリで、PR ごとの判定と保留理由を確認する。  
-手動実行は `dry-run: true` が既定で、rebase の依頼やマージをせずに判定する。  
-`pr-number` を省略すると全件、指定するとその PR だけを再判定する。  
-
-```sh
-# 全件の判定だけ確認する
-gh workflow run 'Dependabot auto-merge' --ref main -f dry-run=true
-
-# 指定した PR の再判定と、条件を満たす場合の rebase 依頼・マージを行う
-gh workflow run 'Dependabot auto-merge' --ref main -f pr-number=123 -f dry-run=false
-
-# サマリに残った UUID で非同期マージの結果を確認する
-gh api repos/meian/go-seqpipeline/pulls/PR_NUMBER/merge-async/UUID
-```
-
-CI 失敗はログを確認して原因を解消し、必要に応じて `gh run rerun RUN_ID --failed` で再実行する。  
-rebase 依頼に反応がない場合は、PR の状態と Dependabot のログを確認し、必要に応じて `@dependabot rebase` を手動でコメントする。  
-分類不能な差分や保護設定による保留は、内容を手動で確認し、自動判定の条件を緩めずに対応する。  
