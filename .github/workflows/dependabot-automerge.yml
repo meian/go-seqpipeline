@@ -74,9 +74,12 @@ jobs:
       - name: Ask Dependabot to rebase outdated PRs
         run: |
           gh pr list --repo "$GITHUB_REPOSITORY" --base main --author 'app/dependabot' \
-            --json number,headRefOid,mergeStateStatus --limit 100 \
-            --jq '.[] | select(.mergeStateStatus == "BEHIND") | [.number, .headRefOid] | @tsv' |
+            --json number,headRefOid --limit 100 --jq '.[] | [.number, .headRefOid] | @tsv' |
           while IFS=$'\t' read -r number head; do
+            behind=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...$head" --jq .behind_by)
+            if [ "$behind" -eq 0 ]; then
+              continue
+            fi
             marker="<!-- dependabot-rebase:$head:$GITHUB_SHA -->"
             comments=$(gh api "repos/$GITHUB_REPOSITORY/issues/$number/comments" --paginate --jq '.[].body')
             if printf '%s\n' "$comments" | grep -F -- "$marker" > /dev/null; then
