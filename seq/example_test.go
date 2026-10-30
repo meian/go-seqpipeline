@@ -59,8 +59,7 @@ func ExampleSeq2_Pipe2() {
 }
 
 func ExampleFromChannel() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 	input := make(chan int, 4)
 	for _, v := range []int{1, 2, 2, 3} {
 		input <- v
