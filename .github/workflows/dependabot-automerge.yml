@@ -1,0 +1,89 @@
+name: Dependabot auto-merge
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 11,21 * * 1'
+      timezone: Asia/Tokyo
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+env:
+  GH_TOKEN: ${{ github.token }}
+jobs:
+  merge:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        id: metadata
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        with:
+          script: |
+            const assert = require('node:assert/strict');
+            const args = {...context.repo, pull_number: context.issue.number};
+            const {data: pr} = await github.rest.pulls.get(args);
+            assert(pr.state === 'open' && !pr.draft && pr.commits === 1 && pr.head.sha === context.payload.pull_request.head.sha, 'PR changed or is not a single commit');
+            const deps = JSON.parse(process.env.DEPENDENCIES);
+            assert(deps.length && deps.every(d => ['version-update:semver-minor', 'version-update:semver-patch'].includes(d.updateType)), 'Unclassified or major update');
+            const {data: commit} = await github.rest.repos.getCommit({...context.repo, ref: pr.head.sha});
+            const files = await github.paginate(github.rest.pulls.listFiles, args);
+            const seen = new Set();
+            for (const file of files) {
+              const actions = /^\.github\/workflows\/[^/]+\.ya?ml$/.test(file.filename);
+              assert(file.status === 'modified' && (actions || file.filename === 'ci/scripts/requirements.txt'), `Unsupported file: ${file.filename}`);
+              const lines = await Promise.all([commit.parents[0].sha, pr.head.sha].map(async ref => {
+                const {data} = await github.rest.repos.getContent({...context.repo, path: file.filename, ref});
+                assert(data.type === 'file' && data.encoding === 'base64', 'File content unavailable');
+                return Buffer.from(data.content, 'base64').toString('utf8').split('\n');
+              }));
+              assert(lines[0].length === lines[1].length, 'Added or deleted lines');
+              const pattern = actions ? /^(\s*(?:-\s+)?uses:\s+)([\w./-]+)@(v?\d+(?:\.\d+){1,2})(\s*(?:#.*)?)$/ : /^()([\w.-]+)==(\d+(?:\.\d+){1,2})()$/;
+              for (let i = 0; i < lines[0].length; i++) {
+                if (lines[0][i] === lines[1][i]) continue;
+                const [old, next] = lines.map(values => pattern.exec(values[i]));
+                assert(old && next && [1, 2, 4].every(j => old[j] === next[j]), 'Change is not a version replacement');
+                const dep = deps.find(d => d.dependencyName === next[2] && d.packageEcosystem === (actions ? 'github_actions' : 'pip'));
+                assert(dep && dep.targetBranch === 'main' && dep.directory === (actions ? '/' : '/ci/scripts'), 'Metadata mismatch');
+                assert(old[3].replace(/^v/, '') === dep.prevVersion.replace(/^v/, '') && next[3].replace(/^v/, '') === dep.newVersion.replace(/^v/, ''), 'Version mismatch');
+                assert(old[3].split('.')[0] === next[3].split('.')[0] && old[3].localeCompare(next[3], 'en', {numeric: true}) < 0, 'Not a minor/patch upgrade');
+                seen.add(dep);
+              }
+            }
+            assert(files.length && seen.size === deps.length, 'Incomplete dependency group');
+            const required = ['gofmt', 'build', 'test', 'Static checks', 'README policy'];
+            for (;;) {
+              const result = await exec.getExecOutput('gh', ['pr', 'checks', pr.html_url, '--json', 'name,state,event,workflow,bucket'], {ignoreReturnCode: true});
+              const checks = JSON.parse(result.stdout).filter(c => c.workflow !== context.workflow);
+              assert(checks.every(c => c.state === 'SUCCESS' || c.bucket === 'pending'), 'Checks unsuccessful');
+              if (required.every(name => checks.some(c => c.name === name && c.workflow === 'CI' && c.event === 'pull_request' && c.state === 'SUCCESS')) && checks.every(c => c.state === 'SUCCESS')) break;
+              await new Promise(resolve => setTimeout(resolve, 10000));
+            }
+            await exec.exec('gh', ['pr', 'merge', pr.html_url, '--squash', '--match-head-commit', pr.head.sha]);
+  rebase:
+    needs: merge
+    if: ${{ !cancelled() && (github.event_name != 'pull_request_target' || github.event.pull_request.user.login == 'dependabot[bot]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          gh api graphql --paginate -f query='query($endCursor:String) {
+            repository(owner:"${{ github.repository_owner }}",name:"${{ github.event.repository.name }}") {
+              pullRequests(first:100,after:$endCursor,states:OPEN,baseRefName:"main") {
+                nodes { url author { login } isCrossRepository headRef { compare(headRef:"refs/heads/main") { aheadBy } } }
+                pageInfo { hasNextPage endCursor }
+              }
+            }
+          }' --jq '.data.repository.pullRequests.nodes[] | select(.author.login == "dependabot" and .isCrossRepository == false and .headRef.compare.aheadBy > 0) | .url' |
+          xargs -r -I{} gh pr comment '{}' --body '@dependabot rebase'
