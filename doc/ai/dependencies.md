@@ -60,7 +60,8 @@ PR の head ブランチへの追加 push は、Dependabot の rebase 後も含�
 ## 自動マージ
 
 [Dependabot auto-merge](../../.github/workflows/dependabot-automerge.yml) は、同一リポジトリの Dependabot 作成・`main` 向けの単一コミット PR を `pull_request_target` で判定する。  
-`dependabot/fetch-metadata` で署名を検証し、グループを含む全依存の更新種別・ecosystem・対象ディレクトリを matrix で確認する。  
+PR の作成・更新イベントの実行者も `dependabot[bot]` に限定し、人が head を差し替えた実行は自動判定しない。  
+`dependabot/fetch-metadata` でコミットの author と署名の検証結果を確認し、グループを含む全依存の更新種別・ecosystem・対象ディレクトリを matrix で確認する。  
 minor / patch と分類された更新だけを対象とし、major・対象外・分類不能の依存が一つでもあればマージしない。  
 実差分は公開 Action で確認し、既存 workflow の `uses:` 行と `ci/scripts/requirements.txt` の数値による固定版の置換だけを許可する。  
 Go の最低要求バージョン・toolchain・CI の Go バージョンなど、依存参照以外の変更はグループに含まれる場合も対象外にする。  
@@ -72,9 +73,11 @@ Go の最低要求バージョン・toolchain・CI の Go バージョンなど�
 最新 `main` への追随、必須チェック、署名、未解決スレッドなどは既存の ruleset で強制し、管理者 bypass は使わない。  
 
 `main` への push と毎週月曜 11:00・21:00（Asia/Tokyo）の定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
-自動マージ成功後も、同じ workflow 実行で残りの PR を確認する。  
+対象判定を通過した PR は、マージが見送られた場合や API に拒否された場合も、同じ workflow 実行で遅れた PR を再確認する。  
 PR の列挙は公式 Octokit Action、各 PR への rebase 依頼は matrix で行う。  
 Dependabot が自身の権限で rebase と head ブランチへの push を行い、新しい head を対象に CI と自動マージ判定をやり直す。  
+複数 PR は並行して判定するため、一つのマージで他の head が遅れると、残りの PR は再度 rebase と CI を行う。  
+待機中の main 更新はマージ直前の再確認と strict な ruleset で検出し、古い main に基づく成功結果ではマージしない。  
 PR のコードは checkout・実行せず、GitHub API からメタデータと差分だけを取得する。  
 
 ### rebase 依頼用の設定
@@ -89,6 +92,7 @@ Secret がない場合は rebase 依頼が失敗して保留となるため、�
 ## 保留と再開
 
 分類不能な差分、チェックの失敗・未完了、競合、rebase 失敗、API 取得失敗、保護条件の未達ではマージしない。  
+手動で PR を再開した場合も自動マージは保留し、Dependabot による head 更新で再判定する。  
 差分がない場合、変更ファイルまたは対象 PR が 100 件を超える場合、PR 検索結果が不完全な場合も保留する。  
 Actions の `Dependabot auto-merge` の実行ログで保留理由を確認する。  
 CI 失敗は原因を解消して `gh run rerun RUN_ID --failed` で再実行し、判定を再開するときは Actions の `Re-run jobs` を使う。  
