@@ -1,0 +1,246 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 11,21 * * 1'
+      timezone: Asia/Tokyo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+  checks: read
+  statuses: read
+
+concurrency:
+  group: dependabot-${{ github.event.pull_request.number || 'rebase' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+
+jobs:
+  inspect:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      dependencies: ${{ steps.metadata.outputs.updated-dependencies-json }}
+      files: ${{ steps.files.outputs.data }}
+      behind: ${{ fromJSON(steps.compare.outputs.data).behind_by }}
+    steps:
+      - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        id: metadata
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: pr
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: files
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files
+          per_page: 100
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: compare
+        with:
+          route: GET /repos/${{ github.repository }}/compare/main...${{ github.event.pull_request.head.sha }}
+      - name: Require a complete, current Dependabot change
+        uses: nick-fields/assert-action@0efd6166067d9c59d89c710fab4f79fb066f8985 # v4.0.1
+        with:
+          expected: 'true'
+          actual: >-
+            ${{ fromJSON(steps.pr.outputs.data).state == 'open' &&
+                !fromJSON(steps.pr.outputs.data).draft &&
+                fromJSON(steps.pr.outputs.data).base.ref == 'main' &&
+                fromJSON(steps.pr.outputs.data).head.sha == github.event.pull_request.head.sha &&
+                fromJSON(steps.pr.outputs.data).commits == 1 &&
+                fromJSON(steps.pr.outputs.data).changed_files > 0 &&
+                fromJSON(steps.pr.outputs.data).changed_files <= 100 &&
+                fromJSON(steps.files.outputs.data)[0] != null &&
+                fromJSON(steps.metadata.outputs.updated-dependencies-json)[0] != null }}
+
+  dependencies:
+    needs: inspect
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        dependency: ${{ fromJSON(needs.inspect.outputs.dependencies) }}
+    steps:
+      - name: Require every dependency to be a classified minor or patch update
+        uses: nick-fields/assert-action@0efd6166067d9c59d89c710fab4f79fb066f8985 # v4.0.1
+        with:
+          expected: 'true'
+          actual: >-
+            ${{ contains(fromJSON('["version-update:semver-minor","version-update:semver-patch"]'), matrix.dependency.updateType) &&
+                matrix.dependency.targetBranch == 'main' &&
+                matrix.dependency.dependencyName != '' && matrix.dependency.dependencyName != 'unknown' &&
+                matrix.dependency.newVersion != '' &&
+                ((matrix.dependency.packageEcosystem == 'github_actions' && matrix.dependency.directory == '/') ||
+                 (matrix.dependency.packageEcosystem == 'pip' && matrix.dependency.directory == '/ci/scripts')) &&
+                (contains(join(fromJSON(needs.inspect.outputs.files).*.patch), format('{0}@{1}', matrix.dependency.dependencyName, matrix.dependency.newVersion)) ||
+                 contains(join(fromJSON(needs.inspect.outputs.files).*.patch), format('{0}@v{1}', matrix.dependency.dependencyName, matrix.dependency.newVersion)) ||
+                 contains(join(fromJSON(needs.inspect.outputs.files).*.patch), format('{0}=={1}', matrix.dependency.dependencyName, matrix.dependency.newVersion))) }}
+
+  files:
+    needs: inspect
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        file: ${{ fromJSON(needs.inspect.outputs.files) }}
+    steps:
+      - name: Match dependency reference changes only
+        uses: robandpdx/check-value-regex@ce5e8a34861292ecd3ab95d290cbc0f564a18708 # v2.0.0
+        id: diff
+        with:
+          input: ${{ matrix.file.patch }}
+          regex: >-
+            ${{ matrix.file.filename == 'ci/scripts/requirements.txt' &&
+                '^(?:(?:@@[^\n]*| [^\n]*|[-+][A-Za-z0-9_.-]+==[0-9]+(?:\.[0-9]+){1,2})(?:\n|$))+$' ||
+                '^(?:(?:@@[^\n]*| [^\n]*|[-+][ \t]*(?:-[ \t]+)?uses:[ \t]+[A-Za-z0-9_./-]+@[A-Za-z0-9_.-]+(?:[ \t]+#[^\n]*)?)(?:\n|$))+$' }}
+      - name: Reject other files, incomplete patches, and Go configuration changes
+        uses: nick-fields/assert-action@0efd6166067d9c59d89c710fab4f79fb066f8985 # v4.0.1
+        with:
+          expected: 'true'
+          actual: >-
+            ${{ matrix.file.status == 'modified' &&
+                matrix.file.additions > 0 && matrix.file.additions == matrix.file.deletions &&
+                matrix.file.patch != '' && steps.diff.outputs.matches == 'true' &&
+                (matrix.file.filename == 'ci/scripts/requirements.txt' ||
+                 (startsWith(matrix.file.filename, '.github/workflows/') &&
+                  (endsWith(matrix.file.filename, '.yml') || endsWith(matrix.file.filename, '.yaml')))) }}
+
+  checks:
+    needs: [inspect, dependencies, files]
+    if: needs.inspect.outputs.behind == '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: wechuli/allcheckspassed@1e77c91db5ec91faa94bf441f91b91327d269ab0 # v2.6.0
+        with:
+          commit_sha: ${{ github.event.pull_request.head.sha }}
+          include_status_commits: true
+          treat_skipped_as_passed: false
+          treat_neutral_as_passed: false
+          retries: 15
+
+  merge:
+    needs: [inspect, dependencies, files, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+      actions: read
+      checks: read
+      statuses: read
+    steps:
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: ci
+        with:
+          route: GET /repos/${{ github.repository }}/actions/workflows/ci.yml/runs
+          head_sha: ${{ github.event.pull_request.head.sha }}
+          event: pull_request
+          status: success
+          per_page: 1
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: current
+        with:
+          route: POST /graphql
+          query: >-
+            query {
+              repository(owner:"${{ github.repository_owner }}", name:"${{ github.event.repository.name }}") {
+                pullRequest(number:${{ github.event.pull_request.number }}) {
+                  state isDraft baseRefName headRefOid mergeStateStatus
+                  headRef { target { ... on Commit { statusCheckRollup { state } } } }
+                }
+              }
+            }
+      - name: Merge the validated head under the existing ruleset
+        if: >-
+          fromJSON(steps.ci.outputs.data).total_count > 0 &&
+          fromJSON(steps.current.outputs.data).data.repository.pullRequest.state == 'OPEN' &&
+          !fromJSON(steps.current.outputs.data).data.repository.pullRequest.isDraft &&
+          fromJSON(steps.current.outputs.data).data.repository.pullRequest.baseRefName == 'main' &&
+          fromJSON(steps.current.outputs.data).data.repository.pullRequest.headRefOid == github.event.pull_request.head.sha &&
+          fromJSON(steps.current.outputs.data).data.repository.pullRequest.mergeStateStatus == 'CLEAN' &&
+          fromJSON(steps.current.outputs.data).data.repository.pullRequest.headRef.target.statusCheckRollup.state == 'SUCCESS'
+        uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        with:
+          route: PUT /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/merge
+          merge_method: squash
+          sha: ${{ github.event.pull_request.head.sha }}
+
+  list:
+    needs: [inspect, dependencies, files, merge]
+    if: >-
+      !cancelled() &&
+      (github.event_name != 'pull_request_target' ||
+       (needs.inspect.result == 'success' && needs.dependencies.result == 'success' &&
+        needs.files.result == 'success'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      prs: ${{ toJSON(fromJSON(steps.prs.outputs.data).items) }}
+    steps:
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: prs
+        with:
+          route: GET /search/issues
+          q: repo:${{ github.repository }} is:pr is:open author:app/dependabot base:main draft:false
+          per_page: 100
+      - uses: nick-fields/assert-action@0efd6166067d9c59d89c710fab4f79fb066f8985 # v4.0.1
+        with:
+          expected: 'true'
+          actual: ${{ !fromJSON(steps.prs.outputs.data).incomplete_results && fromJSON(steps.prs.outputs.data).total_count <= 100 }}
+
+  rebase:
+    needs: list
+    if: >-
+      !cancelled() && needs.list.result == 'success' &&
+      needs.list.outputs.prs != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        pr: ${{ fromJSON(needs.list.outputs.prs) }}
+    steps:
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: pr
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ matrix.pr.number }}
+      - uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        id: compare
+        with:
+          route: GET /repos/${{ github.repository }}/compare/main...${{ fromJSON(steps.pr.outputs.data).head.sha }}
+      - name: Ask Dependabot to rebase outdated PRs with signed commits
+        if: >-
+          fromJSON(steps.pr.outputs.data).state == 'open' &&
+          !fromJSON(steps.pr.outputs.data).draft &&
+          fromJSON(steps.pr.outputs.data).base.ref == 'main' &&
+          fromJSON(steps.pr.outputs.data).user.login == 'dependabot[bot]' &&
+          fromJSON(steps.pr.outputs.data).head.repo.full_name == github.repository &&
+          fromJSON(steps.compare.outputs.data).behind_by > 0
+        uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEPENDABOT_REBASE_TOKEN }}
+        with:
+          route: POST /repos/${{ github.repository }}/issues/${{ matrix.pr.number }}/comments
+          body: '@dependabot rebase'
