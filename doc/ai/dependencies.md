@@ -45,7 +45,9 @@ minor・patch 更新はエコシステムごとにまとめ、major 更新は個
 ## 更新 PR の CI と確認
 
 `.github/workflows/ci.yml` はパスや作成者で除外せず、`pull_request` で gofmt・build・test・Static checks・README policy を実行する。  
-`push` は `main` のみで実行し、PR の head に重複した CI と skip 結果を作らない。  
+PR の head ブランチへの追加 push は、Dependabot の rebase 後も含めて `pull_request` の `synchronize` で CI を実行する。  
+`push` の対象は `main` に限定し、同じ PR の head に push 起因の CI を重複させない。  
+`main` 以外で PR の head でもないブランチへの push だけでは、この CI は実行しない。  
 [Dependabot が起動する実行](https://docs.github.com/en/code-security/reference/supply-chain-security/troubleshoot-dependabot/dependabot-on-actions)では通常の Actions secrets を使えず、既定の `GITHUB_TOKEN` も読み取り専用になる。  
 既存の lint ジョブは `dependabot[bot]` の場合に `github-pr-annotations` を使い、レビューコメントの書き込みに依存しない。  
 他の CI ジョブも公開依存の取得と検証だけを行い、追加の secrets は必要ない。  
@@ -71,7 +73,8 @@ Go の最低要求バージョン・toolchain・CI の Go バージョンなど�
 
 `main` への push と毎週月曜 11:00・21:00（Asia/Tokyo）の定期実行では、`main` に遅れた Dependabot PR へ `@dependabot rebase` を依頼する。  
 自動マージ成功後も、同じ workflow 実行で残りの PR を確認する。  
-PR の列挙は公式 Octokit Action、各 PR の処理は matrix で行い、rebase 後の新しい head で判定と CI 確認をやり直す。  
+PR の列挙は公式 Octokit Action、各 PR への rebase 依頼は matrix で行う。  
+Dependabot が自身の権限で rebase と head ブランチへの push を行い、新しい head を対象に CI と自動マージ判定をやり直す。  
 PR のコードは checkout・実行せず、GitHub API からメタデータと差分だけを取得する。  
 
 ### rebase 依頼用の設定
@@ -80,6 +83,7 @@ PR のコードは checkout・実行せず、GitHub API からメタデータと
 対象リポジトリだけに限定し、Pull requests の Read and write を許可する。  
 [Dependabot は GitHub App からのコマンドを受け付けない](https://github.com/dependabot/dependabot-core/issues/9147)ため、`GITHUB_TOKEN` では代用しない。  
 この PAT は rebase 依頼のコメント投稿だけに使い、マージには通常の `GITHUB_TOKEN` を使う。  
+rebase ジョブ自身はブランチを書き換えないため、`GITHUB_TOKEN` の `contents` 権限は `read` とする。  
 Secret がない場合は rebase 依頼が失敗して保留となるため、マージ前に登録する。  
 
 ## 保留と再開
