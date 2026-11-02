@@ -76,6 +76,7 @@ Compose / Compose2 は Pipe / Composed、その他は Go / Library を対照と�
 4 種類とも 4 段を合成し、構築・入力への接続・全件反復を含める。  
 対照の Pipe は、同じオペレーターを同じ順序で `Seq` / `Seq2` の Pipe / Pipe2 に直接接続する。  
 FromRange は符号付き・符号なしの代表として int / uint を選び、1 から N までと N から 1 までを stop を含めて生成する。  
+Channel の Unit / Scenario は `context.Background()` によるキャンセル不能な経路を測る。  
 `ZipAlign` と `AlignShortest` / `AlignLeft` / `AlignRight` / `AlignLongest` は型・定数であり、対応する Zip ケースに含める。  
 各ケースの詳しい条件は [測定方法](../../benchmarks/METHOD.md) を参照。  
 

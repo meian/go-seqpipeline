@@ -60,6 +60,7 @@ Direct / FromChannel / RoundTrip の入力容量は 0 / 64。
 ToChannel / RoundTrip の出力容量は常に 0。  
 Direct / FromChannel / ToChannel は送信用 1 goroutine、RoundTrip は 2 goroutine を使う。  
 途中終了・キャンセルの費用はこの Channel 比較に含まない。  
+Channel の Unit / Scenario とも `context.Background()` を使うため、キャンセル可能な context の送受信費用は表さない。  
 
 Cache の負荷 0 は軽い上流、32 は整数の乗算・加算を繰り返す上流を表す。  
 Fill は Cache の構築と初回反復による全件保存を含み、保存後の出力は先頭 1 件で停止する。  
