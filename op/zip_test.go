@@ -193,6 +193,7 @@ func TestZipEvaluation(t *testing.T) {
 		{"nil/left", op.AlignLeft, []int{1, 2, 3}, nil, []pair[int, int]{{1, 0}, {2, 0}}, [2]int{2, 0}},
 		{"nil/right", op.AlignRight, nil, []int{10, 20, 30}, []pair[int, int]{{0, 10}, {0, 20}}, [2]int{0, 2}},
 		{"nil/longest", op.AlignLongest, []int{1, 2, 3}, nil, []pair[int, int]{{1, 0}, {2, 0}}, [2]int{2, 0}},
+		{"nil/longest/right", op.AlignLongest, nil, []int{10, 20, 30}, []pair[int, int]{{0, 10}, {0, 20}}, [2]int{0, 2}},
 	} {
 		for _, panics := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/panic=%t", tc.name, panics), func(t *testing.T) {
@@ -267,7 +268,7 @@ func TestZipInputPanic(t *testing.T) {
 		{op.AlignLongest, 0, [2]int{2, 2}}, {op.AlignLongest, 1, [2]int{2, 2}},
 		{op.AlignLongest, 1, [2]int{1, 2}},
 		{op.AlignLeft, 0, [2]int{2, -1}}, {op.AlignRight, 1, [2]int{-1, 2}},
-		{op.AlignLongest, 0, [2]int{2, -1}},
+		{op.AlignLongest, 0, [2]int{2, -1}}, {op.AlignLongest, 1, [2]int{-1, 2}},
 	} {
 		t.Run(fmt.Sprintf("align=%d/panic=%d/lengths=%v", tc.align, tc.panicIndex, tc.lengths), func(t *testing.T) {
 			t.Parallel()

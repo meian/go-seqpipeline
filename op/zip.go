@@ -157,8 +157,10 @@ func zipLeft[K, V any](left iter.Seq[K], right iter.Seq[V], defaultValue V, yiel
 		var v V
 		if valuesRemain {
 			v, valuesRemain = nextValue()
-		}
-		if !valuesRemain {
+			if !valuesRemain {
+				v = defaultValue
+			}
+		} else {
 			v = defaultValue
 		}
 		if !yield(k, v) {
@@ -186,8 +188,10 @@ func zipRight[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, yield
 		var k K
 		if keysRemain {
 			k, keysRemain = nextKey()
-		}
-		if !keysRemain {
+			if !keysRemain {
+				k = defaultKey
+			}
+		} else {
 			k = defaultKey
 		}
 		if !yield(k, v) {
@@ -201,19 +205,21 @@ func zipLongest[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, def
 		zipLeft(left, right, defaultValue, yield)
 		return
 	}
-	keys := left
-	if keys == nil {
-		keys = func(func(K) bool) {}
+	if left == nil {
+		zipRight(left, right, defaultKey, yield)
+		return
 	}
 	nextValue, stopValue := iter.Pull(right)
 	defer stopValue()
 	valuesRemain := true
-	for k := range keys {
+	for k := range left {
 		var v V
 		if valuesRemain {
 			v, valuesRemain = nextValue()
-		}
-		if !valuesRemain {
+			if !valuesRemain {
+				v = defaultValue
+			}
+		} else {
 			v = defaultValue
 		}
 		if !yield(k, v) {
