@@ -142,15 +142,23 @@ func zipLeft[K, V any](left iter.Seq[K], right iter.Seq[V], defaultValue V, yiel
 	if left == nil {
 		return
 	}
-	values := right
-	if values == nil {
-		values = func(func(V) bool) {}
+	if right == nil {
+		for k := range left {
+			if !yield(k, defaultValue) {
+				return
+			}
+		}
+		return
 	}
-	nextValue, stopValue := iter.Pull(values)
+	nextValue, stopValue := iter.Pull(right)
 	defer stopValue()
+	valuesRemain := true
 	for k := range left {
-		v, ok := nextValue()
-		if !ok {
+		var v V
+		if valuesRemain {
+			v, valuesRemain = nextValue()
+		}
+		if !valuesRemain {
 			v = defaultValue
 		}
 		if !yield(k, v) {
@@ -163,15 +171,23 @@ func zipRight[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, yield
 	if right == nil {
 		return
 	}
-	keys := left
-	if keys == nil {
-		keys = func(func(K) bool) {}
+	if left == nil {
+		for v := range right {
+			if !yield(defaultKey, v) {
+				return
+			}
+		}
+		return
 	}
-	nextKey, stopKey := iter.Pull(keys)
+	nextKey, stopKey := iter.Pull(left)
 	defer stopKey()
+	keysRemain := true
 	for v := range right {
-		k, ok := nextKey()
-		if !ok {
+		var k K
+		if keysRemain {
+			k, keysRemain = nextKey()
+		}
+		if !keysRemain {
 			k = defaultKey
 		}
 		if !yield(k, v) {
@@ -181,26 +197,30 @@ func zipRight[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, yield
 }
 
 func zipLongest[K, V any](left iter.Seq[K], right iter.Seq[V], defaultKey K, defaultValue V, yield func(K, V) bool) {
+	if right == nil {
+		zipLeft(left, right, defaultValue, yield)
+		return
+	}
 	keys := left
 	if keys == nil {
 		keys = func(func(K) bool) {}
 	}
-	values := right
-	if values == nil {
-		values = func(func(V) bool) {}
-	}
-	nextValue, stopValue := iter.Pull(values)
+	nextValue, stopValue := iter.Pull(right)
 	defer stopValue()
+	valuesRemain := true
 	for k := range keys {
-		v, ok := nextValue()
-		if !ok {
+		var v V
+		if valuesRemain {
+			v, valuesRemain = nextValue()
+		}
+		if !valuesRemain {
 			v = defaultValue
 		}
 		if !yield(k, v) {
 			return
 		}
 	}
-	for {
+	for valuesRemain {
 		v, ok := nextValue()
 		if !ok || !yield(defaultKey, v) {
 			return

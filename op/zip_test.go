@@ -68,7 +68,7 @@ func TestZipAlignByInvalid(t *testing.T) {
 	}
 }
 
-// 不等長の左右×4条件で出力・取得数・解放を検証し、順序が異なる経路はイベントも確認する。
+// 不等長の左右×4条件で出力・取得数・解放・再評価を検証し、順序が異なる経路はイベントも確認する。
 func TestZipAlignBy(t *testing.T) {
 	t.Parallel()
 	first := []pair[int, int]{{1, 10}}
@@ -114,6 +114,10 @@ func TestZipAlignBy(t *testing.T) {
 			if tc.events != nil {
 				assertEqual(t, state.events, tc.events)
 			}
+			state = zipTrace{}
+			assertEqual(t, collectPairs(output), tc.want)
+			assertEqual(t, state.reads, tc.reads)
+			assertEqual(t, state.stopped, [2]int{1, 1})
 		})
 	}
 }
@@ -130,17 +134,17 @@ func TestZipEmpty(t *testing.T) {
 		{op.AlignShortest, 0, nil, [2]int{}},
 		{op.AlignShortest, 1, nil, [2]int{1, 0}},
 		{op.AlignLeft, 0, nil, [2]int{}},
-		{op.AlignLeft, 1, []pair[int, int]{{1, 0}}, [2]int{1, 0}},
-		{op.AlignRight, 0, []pair[int, int]{{0, 1}}, [2]int{0, 1}},
+		{op.AlignLeft, 1, []pair[int, int]{{1, 0}, {2, 0}}, [2]int{2, 0}},
+		{op.AlignRight, 0, []pair[int, int]{{0, 1}, {0, 2}}, [2]int{0, 2}},
 		{op.AlignRight, 1, nil, [2]int{}},
-		{op.AlignLongest, 0, []pair[int, int]{{0, 1}}, [2]int{0, 1}},
-		{op.AlignLongest, 1, []pair[int, int]{{1, 0}}, [2]int{1, 0}},
+		{op.AlignLongest, 0, []pair[int, int]{{0, 1}, {0, 2}}, [2]int{0, 2}},
+		{op.AlignLongest, 1, []pair[int, int]{{1, 0}, {2, 0}}, [2]int{2, 0}},
 	} {
 		for _, isNil := range []bool{false, true} {
 			t.Run(fmt.Sprintf("align=%d/empty=%d/nil=%t", tc.align, tc.empty, isNil), func(t *testing.T) {
 				t.Parallel()
 				var state zipTrace
-				inputs := [2]iter.Seq[int]{state.input(0, []int{1}), state.input(1, []int{1})}
+				inputs := [2]iter.Seq[int]{state.input(0, []int{1, 2}), state.input(1, []int{1, 2})}
 				inputs[tc.empty] = state.input(tc.empty, nil)
 				if isNil {
 					inputs[tc.empty] = nil
@@ -184,13 +188,27 @@ func TestZipEvaluation(t *testing.T) {
 			[]pair[int, int]{{1, 10}, {2, 20}}, [2]int{2, 2}},
 		{"left", op.AlignLeft, []int{1, 2, 3}, []int{10}, []pair[int, int]{{1, 10}, {2, 0}}, [2]int{2, 1}},
 		{"right", op.AlignRight, []int{1}, []int{10, 20, 30}, []pair[int, int]{{1, 10}, {0, 20}}, [2]int{1, 2}},
+		{"longest/left", op.AlignLongest, []int{1, 2, 3}, []int{10}, []pair[int, int]{{1, 10}, {2, 0}}, [2]int{2, 1}},
 		{"remainder", op.AlignLongest, []int{1}, []int{10, 20, 30}, []pair[int, int]{{1, 10}, {0, 20}}, [2]int{1, 2}},
+		{"nil/left", op.AlignLeft, []int{1, 2, 3}, nil, []pair[int, int]{{1, 0}, {2, 0}}, [2]int{2, 0}},
+		{"nil/right", op.AlignRight, nil, []int{10, 20, 30}, []pair[int, int]{{0, 10}, {0, 20}}, [2]int{0, 2}},
+		{"nil/longest", op.AlignLongest, []int{1, 2, 3}, nil, []pair[int, int]{{1, 0}, {2, 0}}, [2]int{2, 0}},
 	} {
 		for _, panics := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/panic=%t", tc.name, panics), func(t *testing.T) {
 				t.Parallel()
 				var state zipTrace
-				output := op.Zip(state.input(1, tc.right)).AlignBy(tc.align).Operator(state.input(0, tc.left))
+				left, right := state.input(0, tc.left), state.input(1, tc.right)
+				started := [2]int{1, 1}
+				if tc.left == nil {
+					left = nil
+					started[0] = 0
+				}
+				if tc.right == nil {
+					right = nil
+					started[1] = 0
+				}
+				output := op.Zip(right).AlignBy(tc.align).Operator(left)
 				assertEqual(t, state.started, [2]int{})
 				var got []pair[int, int]
 				func() {
@@ -213,7 +231,8 @@ func TestZipEvaluation(t *testing.T) {
 				}()
 				assertEqual(t, got, tc.want)
 				assertEqual(t, state.reads, tc.reads)
-				assertEqual(t, state.stopped, [2]int{1, 1})
+				assertEqual(t, state.started, started)
+				assertEqual(t, state.stopped, started)
 			})
 		}
 	}
@@ -240,18 +259,25 @@ func TestZipInputPanic(t *testing.T) {
 	for _, tc := range []struct {
 		align      op.ZipAlign
 		panicIndex int
-		lengths    [2]int
+		lengths    [2]int // -1 は nil 入力を表す。
 	}{
 		{op.AlignShortest, 0, [2]int{2, 2}}, {op.AlignShortest, 1, [2]int{2, 2}},
 		{op.AlignLeft, 0, [2]int{2, 2}}, {op.AlignLeft, 1, [2]int{2, 2}},
 		{op.AlignRight, 0, [2]int{2, 2}}, {op.AlignRight, 1, [2]int{2, 2}},
 		{op.AlignLongest, 0, [2]int{2, 2}}, {op.AlignLongest, 1, [2]int{2, 2}},
 		{op.AlignLongest, 1, [2]int{1, 2}},
+		{op.AlignLeft, 0, [2]int{2, -1}}, {op.AlignRight, 1, [2]int{-1, 2}},
+		{op.AlignLongest, 0, [2]int{2, -1}},
 	} {
-		t.Run(fmt.Sprintf("align=%d/panic=%d", tc.align, tc.panicIndex), func(t *testing.T) {
+		t.Run(fmt.Sprintf("align=%d/panic=%d/lengths=%v", tc.align, tc.panicIndex, tc.lengths), func(t *testing.T) {
 			t.Parallel()
 			var state zipTrace
+			started := [2]int{1, 1}
 			input := func(index int) iter.Seq[int] {
+				if tc.lengths[index] < 0 {
+					started[index] = 0
+					return nil
+				}
 				return func(yield func(int) bool) {
 					for v := range state.input(index, []int{1, 2}[:tc.lengths[index]]) {
 						if index == tc.panicIndex && v == 2 {
@@ -267,7 +293,7 @@ func TestZipInputPanic(t *testing.T) {
 				defer func() { assertEqual(t, recover(), any("input")) }()
 				collectPairs(op.Zip(input(1)).AlignBy(tc.align).Operator(input(0)))
 			}()
-			assertEqual(t, state.started, [2]int{1, 1})
+			assertEqual(t, state.started, started)
 			assertEqual(t, state.stopped, state.started)
 		})
 	}
@@ -276,18 +302,33 @@ func TestZipInputPanic(t *testing.T) {
 // 比較不能な入力と補完値を使い、同じ出力の並行評価でも状態が混ざらないことを確認する。
 func TestZipNonComparableAndConcurrentEvaluation(t *testing.T) {
 	t.Parallel()
-	left := slices.Values([][]int{{1}})
+	keys := [][]int{{1}, {2}, {3}}
+	left := slices.Values(keys[:1])
 	right := slices.Values([]map[string]int{{"a": 1}, {"b": 2}})
 	config := op.Zip(right).WithDefaultKey([]int{-1}).WithDefaultValue(map[string]int{"missing": -1})
-	output := config.AlignBy(op.AlignLongest).Operator(left)
 	want := []pair[[]int, map[string]int]{
 		{[]int{1}, map[string]int{"a": 1}}, {[]int{-1}, map[string]int{"b": 2}},
 	}
-	var wg sync.WaitGroup
-	for i := 0; i < 2; i++ {
-		wg.Go(func() { assertEqual(t, collectPairs(output), want) })
+	for _, alignment := range []op.ZipAlign{op.AlignRight, op.AlignLongest} {
+		output := config.AlignBy(alignment).Operator(left)
+		var wg sync.WaitGroup
+		for i := 0; i < 2; i++ {
+			wg.Go(func() { assertEqual(t, collectPairs(output), want) })
+		}
+		wg.Wait()
 	}
-	wg.Wait()
+	want = []pair[[]int, map[string]int]{
+		{[]int{1}, map[string]int{"a": 1}}, {[]int{2}, map[string]int{"b": 2}},
+		{[]int{3}, map[string]int{"missing": -1}},
+	}
+	for _, alignment := range []op.ZipAlign{op.AlignLeft, op.AlignLongest} {
+		output := config.AlignBy(alignment).Operator(slices.Values(keys))
+		var wg sync.WaitGroup
+		for i := 0; i < 2; i++ {
+			wg.Go(func() { assertEqual(t, collectPairs(output), want) })
+		}
+		wg.Wait()
+	}
 	missingValues := op.Zip(iter.Seq[map[string]int](nil)).WithDefaultValue(map[string]int{"missing": -1})
 	assertEqual(t, collectPairs(missingValues.AlignBy(op.AlignLeft).Operator(left)),
 		[]pair[[]int, map[string]int]{{[]int{1}, map[string]int{"missing": -1}}})

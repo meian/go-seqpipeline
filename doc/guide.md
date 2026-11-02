@@ -101,6 +101,18 @@ Channel output starts evaluation in a goroutine when called.
 During `seq.Seq` / `seq.Seq2` iteration, a downstream `yield` returning `false` or a `range` loop ending with `break` propagates a stop upstream.  
 Waits inside inputs or callbacks cannot be forcibly interrupted; callers must provide a way to stop them.  
 
+## Zip performance characteristics
+
+`Zip` advances two inputs alternately and normally uses `iter.Pull` to read one side.  
+Each value fetched through Pull suspends and resumes iteration, so its per-element cost is generally higher than a simple Map / Filter or pairing slices by index.  
+This overhead is more visible with lightweight operations over many elements; its share of the total cost depends on the workload when upstream processing is expensive.  
+
+While both inputs continue, Pull switches between iterations for each pair.  
+After the pulled input ends, Zip stops calling its `next()` and pads with the configured default, saving indirect completion checks rather than iteration switches.  
+For `AlignLeft` / `AlignLongest` with a nil right input, or `AlignRight` with a nil left input, Zip iterates the other side directly without creating a Pull iterator.  
+The benefits depend on the length and proportion of the padded section; completion tracking can add an allocation even for equal-length inputs, whose iteration switches remain.  
+Measure your actual input lengths and upstream processing, and see the [performance report](../benchmarks/REPORT.md) for results under its stated environment and conditions.  
+
 ## Reusing evaluated results with Cache
 
 Use `Pipe(op.Cache)` / `Pipe2(op.Cache2)` to save results at a pipeline boundary and build multiple downstream pipelines from them.  
