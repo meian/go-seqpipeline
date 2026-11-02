@@ -15,27 +15,27 @@ Compose の Pipe は個別接続、Composed は合成したオペレーターを
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L25) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L11) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L26) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 430.25 ±2% | 586.15 ±2% | 1.362× |
-| 4096 | 26,885.5 ±3% | 27,909 ±3% | 1.038× |
+| 64 | 504.1 ±4% | 600.6 ±0% | 1.191× |
+| 4096 | 31,914.5 ±0% | 32,271.5 ±0% | 1.011× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L25) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L11) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L25) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L11) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L26) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L12) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L26) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L12) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +36.23% | p=0.000 n=10 |
+| 64 | sec/op | +19.14% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +3.81% | p=0.007 n=10 |
+| 4096 | sec/op | +1.12% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -45,27 +45,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L108) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L94) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L101) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L87) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 501.3 ±10% | 587.45 ±2% | 1.172× |
-| 4096 | 31,181.5 ±9% | 32,030.5 ±1% | 1.027× |
+| 64 | 523.9 ±1% | 605.85 ±0% | 1.156× |
+| 4096 | 32,554.5 ±0% | 33,530 ±0% | 1.030× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L108) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L94) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L108) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L94) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L101) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L87) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L101) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L87) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +17.19% | p=0.000 n=10 |
+| 64 | sec/op | +15.64% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | ~ | p=0.143 n=10 |
+| 4096 | sec/op | +3.00% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -75,27 +75,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L191) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L177) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L176) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L162) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 468.35 ±1% | 581.55 ±2% | 1.242× |
-| 4096 | 29,217.5 ±1% | 29,290 ±1% | 1.002× |
+| 64 | 507.6 ±0% | 599.8 ±0% | 1.182× |
+| 4096 | 31,843 ±0% | 32,187 ±0% | 1.011× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L191) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L177) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L191) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L177) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L176) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L162) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L176) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L162) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +24.17% | p=0.000 n=10 |
+| 64 | sec/op | +18.16% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | ~ | p=0.315 n=10 |
+| 4096 | sec/op | +1.08% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -105,27 +105,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。  
 
-| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L274) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L260) | 倍率 |
+| N | [Pipe ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L251) | [Composed ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L237) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 445.2 ±1% | 581.65 ±1% | 1.306× |
-| 4096 | 27,950.5 ±1% | 28,295.5 ±1% | 1.012× |
+| 64 | 508.95 ±0% | 599.05 ±0% | 1.177× |
+| 4096 | 31,908.5 ±1% | 32,240 ±0% | 1.010× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L274) | 0 ±0% | 0 ±0% |
-| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L260) | 472 ±0% | 15 ±0% |
-| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L274) | 0 ±0% | 0 ±0% |
-| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/5af3a7865c8257c73ee3309727e6888f203267ad/benchmarks/compose_test.go#L260) | 472 ±0% | 15 ±0% |
+| 64 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L251) | 0 ±0% | 0 ±0% |
+| 64 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L237) | 472 ±0% | 15 ±0% |
+| 4096 | [Pipe](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L251) | 0 ±0% | 0 ±0% |
+| 4096 | [Composed](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/compose_test.go#L237) | 472 ±0% | 15 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +30.65% | p=0.000 n=10 |
+| 64 | sec/op | +17.70% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +1.23% | p=0.000 n=10 |
+| 4096 | sec/op | +1.04% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -135,27 +135,27 @@ Pipe：`Pipe` / `Pipe2` で同じオペレーター列を個別に接続。
 
 Go：`slices.Values` で値を変換。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.425 ±1% | 17.645 ±0% | 1.013× |
-| 4096 | 1,023 ±0% | 1,024 ±0% | 1.001× |
+| 64 | 17.29 ±2% | 17.5 ±1% | 1.012× |
+| 4096 | 1,010.5 ±2% | 1,061.5 ±2% | 1.050× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +1.26% | p=0.000 n=10 |
+| 64 | sec/op | +1.21% | p=0.008 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.512 n=10 |
+| 4096 | sec/op | +5.05% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -165,27 +165,27 @@ Go：`slices.Values` で値を変換。
 
 Go：`slices.Values` の値と変換した値を組にする。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L126) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L87) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L90) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L80) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 18.725 ±0% | 18.55 ±0% | 0.991× |
-| 4096 | 1,146.5 ±2% | 1,152 ±0% | 1.005× |
+| 64 | 18.69 ±1% | 18.56 ±1% | 0.993× |
+| 4096 | 1,151.5 ±0% | 1,155.5 ±0% | 1.003× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L126) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L87) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L126) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L87) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L90) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L80) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L90) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L80) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | -0.93% | p=0.000 n=10 |
+| 64 | sec/op | -0.70% | p=0.011 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +0.48% | p=0.049 n=10 |
+| 4096 | sec/op | ~ | p=0.070 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -195,27 +195,27 @@ Go：`slices.Values` の値と変換した値を組にする。
 
 Go：`slices.All` から値を取得。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L202) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L163) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L158) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L148) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 16.88 ±1% | 16.935 ±1% | 1.003× |
-| 4096 | 979.35 ±1% | 981.55 ±1% | 1.002× |
+| 64 | 16.705 ±2% | 16.635 ±2% | 0.996× |
+| 4096 | 962.65 ±0% | 963.75 ±1% | 1.001× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L202) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L163) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L202) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L163) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L158) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L148) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L158) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L148) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.109 n=10 |
+| 64 | sec/op | ~ | p=0.643 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.183 n=10 |
+| 4096 | sec/op | ~ | p=0.739 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -225,27 +225,27 @@ Go：`slices.All` から値を取得。
 
 Go：`slices.All` で値を変換し、キーを維持。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L278) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L239) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L226) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L216) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 18.735 ±0% | 18.6 ±0% | 0.993× |
-| 4096 | 1,180.5 ±0% | 1,205 ±0% | 1.021× |
+| 64 | 18.735 ±1% | 18.635 ±1% | 0.995× |
+| 4096 | 1,180.5 ±1% | 1,130 ±2% | 0.957× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L278) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L239) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L278) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/pipe_test.go#L239) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L226) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L216) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L226) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/pipe_test.go#L216) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | -0.72% | p=0.000 n=10 |
+| 64 | sec/op | -0.53% | p=0.010 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +2.08% | p=0.000 n=10 |
+| 4096 | sec/op | -4.28% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -257,27 +257,27 @@ Go：`slices.All` で値を変換し、キーを維持。
 
 Go：`slices.Values` で値を選別。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 33.465 ±0% | 28.835 ±2% | 0.862× |
-| 4096 | 2,037 ±0% | 1,697 ±0% | 0.833× |
+| 64 | 36.545 ±9% | 29.04 ±1% | 0.795× |
+| 4096 | 2,059 ±0% | 1,696 ±0% | 0.824× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | -13.84% | p=0.000 n=10 |
+| 64 | sec/op | -20.54% | p=0.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | -16.69% | p=0.000 n=10 |
+| 4096 | sec/op | -17.63% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -287,27 +287,27 @@ Go：`slices.Values` で値を選別。
 
 Go：`slices.All` で組を選別。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L128) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L89) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L92) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L82) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 33.44 ±0% | 28.75 ±0% | 0.860× |
-| 4096 | 2,040 ±0% | 1,697 ±0% | 0.832× |
+| 64 | 33.415 ±0% | 28.73 ±1% | 0.860× |
+| 4096 | 2,039 ±0% | 1,696 ±0% | 0.832× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L128) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L89) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L128) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/filter_test.go#L89) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L92) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L82) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L92) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/filter_test.go#L82) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | -14.03% | p=0.000 n=10 |
+| 64 | sec/op | -14.02% | p=0.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | -16.81% | p=0.000 n=10 |
+| 4096 | sec/op | -16.82% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -317,27 +317,27 @@ Go：`slices.All` で組を選別。
 
 Go：`maps.All` からキーを取得。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/keys_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/keys_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/keys_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/keys_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 307.6 ±10% | 317 ±4% | 1.031× |
-| 4096 | 21,928.5 ±2% | 22,057 ±1% | 1.006× |
+| 64 | 316.5 ±5% | 326.75 ±4% | 1.032× |
+| 4096 | 21,972 ±1% | 21,963 ±1% | 1.000× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/keys_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/keys_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/keys_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/keys_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/keys_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/keys_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/keys_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/keys_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.481 n=10 |
+| 64 | sec/op | ~ | p=0.123 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.912 n=10 |
+| 4096 | sec/op | ~ | p=1.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -347,27 +347,27 @@ Go：`maps.All` からキーを取得。
 
 Go：`slices.Values` で値を変換。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.46 ±0% | 17.72 ±0% | 1.015× |
-| 4096 | 1,026.5 ±2% | 1,025.5 ±0% | 0.999× |
+| 64 | 17.26 ±1% | 17.615 ±2% | 1.021× |
+| 4096 | 1,059 ±1% | 1,043 ±2% | 0.985× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +1.49% | p=0.000 n=10 |
+| 64 | sec/op | +2.06% | p=0.003 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.592 n=10 |
+| 4096 | sec/op | -1.51% | p=0.003 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -377,27 +377,27 @@ Go：`slices.Values` で値を変換。
 
 Go：`slices.All` で値を変換し、キーを維持。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L126) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L87) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L90) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L80) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 18.74 ±0% | 18.66 ±0% | 0.996× |
-| 4096 | 1,180.5 ±0% | 1,131 ±0% | 0.958× |
+| 64 | 18.725 ±1% | 18.62 ±1% | 0.994× |
+| 4096 | 1,182.5 ±1% | 1,205 ±1% | 1.019× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L126) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L87) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L126) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/map_test.go#L87) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L90) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L80) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L90) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/map_test.go#L80) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | -0.43% | p=0.001 n=10 |
+| 64 | sec/op | ~ | p=0.065 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | -4.19% | p=0.000 n=10 |
+| 4096 | sec/op | +1.90% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -407,27 +407,27 @@ Go：`slices.All` で値を変換し、キーを維持。
 
 Go：`maps.All` から値を取得。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/values_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/values_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/values_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/values_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 318.5 ±6% | 314.05 ±6% | 0.986× |
-| 4096 | 22,000.5 ±3% | 21,799 ±1% | 0.991× |
+| 64 | 315.4 ±2% | 323 ±6% | 1.024× |
+| 4096 | 21,976 ±3% | 22,437 ±3% | 1.021× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/values_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/values_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/values_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/values_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/values_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/values_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/values_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/values_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.684 n=10 |
+| 64 | sec/op | ~ | p=0.247 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.143 n=10 |
+| 4096 | sec/op | ~ | p=0.481 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -439,28 +439,28 @@ Go：`maps.All` から値を取得。
 
 Go：channel を直接受信し、送信元の終了を待つ。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_channel_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_channel_test.go#L10) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_channel_test.go#L23) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_channel_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 5,833 ±1% | 6,945.5 ±1% | 1.191× |
-| 4096 | 350,184 ±2% | 418,145 ±2% | 1.194× |
+| 64 | 5,921 ±1% | 5,986.5 ±1% | 1.011× |
+| 4096 | 359,936.5 ±3% | 362,523 ±2% | 1.007× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_channel_test.go#L50) | 272 ±0% | 3 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_channel_test.go#L10) | 360 ±0% | 6 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_channel_test.go#L50) | 272 ±0% | 3 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_channel_test.go#L10) | 360 ±0% | 6 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_channel_test.go#L23) | 272 ±0% | 3 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_channel_test.go#L12) | 336 ±0% | 6 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_channel_test.go#L23) | 272 ±0% | 3 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_channel_test.go#L12) | 336 ±0% | 6 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +19.07% | p=0.000 n=10 |
-| 64 | B/op | +32.35% | p=0.000 n=10 |
+| 64 | sec/op | +1.11% | p=0.030 n=10 |
+| 64 | B/op | +23.53% | p=0.000 n=10 |
 | 64 | allocs/op | +100.00% | p=0.000 n=10 |
-| 4096 | sec/op | +19.41% | p=0.000 n=10 |
-| 4096 | B/op | +32.35% | p=0.000 n=10 |
+| 4096 | sec/op | ~ | p=0.436 n=10 |
+| 4096 | B/op | +23.53% | p=0.000 n=10 |
 | 4096 | allocs/op | +100.00% | p=0.000 n=10 |
 
 </details>
@@ -469,28 +469,28 @@ Go：channel を直接受信し、送信元の終了を待つ。
 
 Go：1 goroutine で送信し、channel を直接受信。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_channel_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_channel_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_channel_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_channel_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 5,819 ±1% | 7,083.5 ±1% | 1.217× |
-| 4096 | 352,309.5 ±1% | 430,760.5 ±1% | 1.223× |
+| 64 | 5,877.5 ±1% | 6,211 ±1% | 1.057× |
+| 4096 | 356,331.5 ±2% | 377,341.5 ±2% | 1.059× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_channel_test.go#L50) | 160 ±0% | 2 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_channel_test.go#L11) | 304 ±0% | 5 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_channel_test.go#L50) | 160 ±0% | 2 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_channel_test.go#L11) | 304 ±0% | 5 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_channel_test.go#L22) | 160 ±0% | 2 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_channel_test.go#L12) | 264 ±0% | 5 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_channel_test.go#L22) | 160 ±0% | 2 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_channel_test.go#L12) | 264 ±0% | 5 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +21.73% | p=0.000 n=10 |
-| 64 | B/op | +90.00% | p=0.000 n=10 |
+| 64 | sec/op | +5.67% | p=0.000 n=10 |
+| 64 | B/op | +65.00% | p=0.000 n=10 |
 | 64 | allocs/op | +150.00% | p=0.000 n=10 |
-| 4096 | sec/op | +22.27% | p=0.000 n=10 |
-| 4096 | B/op | +90.00% | p=0.000 n=10 |
+| 4096 | sec/op | +5.90% | p=0.000 n=10 |
+| 4096 | B/op | +65.00% | p=0.000 n=10 |
 | 4096 | allocs/op | +150.00% | p=0.000 n=10 |
 
 </details>
@@ -501,27 +501,27 @@ Go：1 goroutine で送信し、channel を直接受信。
 
 Go：`maps.All` を反復。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_map_test.go#L49) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_map_test.go#L10) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_map_test.go#L20) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_map_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 316.55 ±8% | 315.9 ±4% | 0.998× |
-| 4096 | 22,131.5 ±2% | 22,005 ±1% | 0.994× |
+| 64 | 316.5 ±9% | 316.5 ±3% | 1.000× |
+| 4096 | 22,019.5 ±1% | 21,882 ±1% | 0.994× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_map_test.go#L49) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_map_test.go#L10) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_map_test.go#L49) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_map_test.go#L10) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_map_test.go#L20) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_map_test.go#L11) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_map_test.go#L20) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_map_test.go#L11) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.579 n=10 |
+| 64 | sec/op | ~ | p=1.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.218 n=10 |
+| 4096 | sec/op | ~ | p=0.448 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -531,29 +531,29 @@ Go：`maps.All` を反復。
 
 Go：同じ範囲を整数ループで加算。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L62) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L9) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L20) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 16.385 ±1% | 101.45 ±1% | 6.192× |
-| 4096 | 947.05 ±1% | 4,819.5 ±1% | 5.089× |
+| 64 | 16.215 ±2% | 17.22 ±1% | 1.062× |
+| 4096 | 929.85 ±2% | 971.3 ±2% | 1.045× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L62) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L9) | 88 ±0% | 3 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L62) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L9) | 88 ±0% | 3 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L20) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L11) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L20) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L11) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +519.16% | p=0.000 n=10 |
-| 64 | B/op | ? | p=0.000 n=10 |
-| 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +408.90% | p=0.000 n=10 |
-| 4096 | B/op | ? | p=0.000 n=10 |
-| 4096 | allocs/op | ? | p=0.000 n=10 |
+| 64 | sec/op | +6.20% | p=0.000 n=10 |
+| 64 | B/op | ~ | p=1.000 n=10 |
+| 64 | allocs/op | ~ | p=1.000 n=10 |
+| 4096 | sec/op | +4.46% | p=0.000 n=10 |
+| 4096 | B/op | ~ | p=1.000 n=10 |
+| 4096 | allocs/op | ~ | p=1.000 n=10 |
 
 </details>
 
@@ -561,29 +561,29 @@ Go：同じ範囲を整数ループで加算。
 
 Go：同じ範囲を整数ループで加算。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L62) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L9) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L20) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 16.105 ±1% | 103.4 ±0% | 6.420× |
-| 4096 | 936.45 ±1% | 4,856 ±1% | 5.186× |
+| 64 | 16.035 ±1% | 17.195 ±2% | 1.072× |
+| 4096 | 928.6 ±1% | 958.25 ±1% | 1.032× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L62) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L9) | 88 ±0% | 3 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L62) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L9) | 88 ±0% | 3 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L20) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L11) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L20) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L11) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +542.04% | p=0.000 n=10 |
-| 64 | B/op | ? | p=0.000 n=10 |
-| 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +418.55% | p=0.000 n=10 |
-| 4096 | B/op | ? | p=0.000 n=10 |
-| 4096 | allocs/op | ? | p=0.000 n=10 |
+| 64 | sec/op | +7.23% | p=0.000 n=10 |
+| 64 | B/op | ~ | p=1.000 n=10 |
+| 64 | allocs/op | ~ | p=1.000 n=10 |
+| 4096 | sec/op | +3.19% | p=0.000 n=10 |
+| 4096 | B/op | ~ | p=1.000 n=10 |
+| 4096 | allocs/op | ~ | p=1.000 n=10 |
 
 </details>
 
@@ -591,29 +591,29 @@ Go：同じ範囲を整数ループで加算。
 
 Go：同じ範囲を整数ループで加算。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L173) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L120) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L101) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L92) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 16.315 ±1% | 108.2 ±1% | 6.632× |
-| 4096 | 942.95 ±1% | 5,036 ±0% | 5.341× |
+| 64 | 16.125 ±5% | 16.965 ±3% | 1.052× |
+| 4096 | 928 ±0% | 967.5 ±2% | 1.043× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L173) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L120) | 88 ±0% | 3 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L173) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L120) | 88 ±0% | 3 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L101) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L92) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L101) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L92) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +563.19% | p=0.000 n=10 |
-| 64 | B/op | ? | p=0.000 n=10 |
-| 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +434.07% | p=0.000 n=10 |
-| 4096 | B/op | ? | p=0.000 n=10 |
-| 4096 | allocs/op | ? | p=0.000 n=10 |
+| 64 | sec/op | +5.21% | p=0.018 n=10 |
+| 64 | B/op | ~ | p=1.000 n=10 |
+| 64 | allocs/op | ~ | p=1.000 n=10 |
+| 4096 | sec/op | +4.26% | p=0.000 n=10 |
+| 4096 | B/op | ~ | p=1.000 n=10 |
+| 4096 | allocs/op | ~ | p=1.000 n=10 |
 
 </details>
 
@@ -621,29 +621,29 @@ Go：同じ範囲を整数ループで加算。
 
 Go：同じ範囲を整数ループで加算。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L173) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L120) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L101) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L92) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 15.805 ±0% | 106.8 ±0% | 6.757× |
-| 4096 | 928.8 ±0% | 5,091.5 ±0% | 5.482× |
+| 64 | 16 ±1% | 17.015 ±1% | 1.063× |
+| 4096 | 928.2 ±1% | 953.25 ±2% | 1.027× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L173) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L120) | 88 ±0% | 3 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L173) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_range_test.go#L120) | 88 ±0% | 3 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L101) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L92) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L101) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_range_test.go#L92) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +575.74% | p=0.000 n=10 |
-| 64 | B/op | ? | p=0.000 n=10 |
-| 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +448.18% | p=0.000 n=10 |
-| 4096 | B/op | ? | p=0.000 n=10 |
-| 4096 | allocs/op | ? | p=0.000 n=10 |
+| 64 | sec/op | +6.34% | p=0.000 n=10 |
+| 64 | B/op | ~ | p=1.000 n=10 |
+| 64 | allocs/op | ~ | p=1.000 n=10 |
+| 4096 | sec/op | +2.70% | p=0.000 n=10 |
+| 4096 | B/op | ~ | p=1.000 n=10 |
+| 4096 | allocs/op | ~ | p=1.000 n=10 |
 
 </details>
 
@@ -651,27 +651,27 @@ Go：同じ範囲を整数ループで加算。
 
 Go：標準 `iter.Seq` を `for range`。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L49) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L10) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L21) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.02 ±1% | 31.73 ±0% | 1.864× |
-| 4096 | 986.3 ±1% | 1,914.5 ±0% | 1.941× |
+| 64 | 16.625 ±1% | 16.615 ±2% | 0.999× |
+| 4096 | 968.2 ±2% | 962.5 ±2% | 0.994× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L49) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L10) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L49) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L10) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L21) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L11) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L21) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L11) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +86.43% | p=0.000 n=10 |
+| 64 | sec/op | ~ | p=0.927 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +94.11% | p=0.000 n=10 |
+| 4096 | sec/op | ~ | p=0.271 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -681,27 +681,27 @@ Go：標準 `iter.Seq` を `for range`。
 
 Go：標準 `iter.Seq2` を `for range`。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L126) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L87) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L90) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L80) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.17 ±0% | 17.18 ±0% | 1.001× |
-| 4096 | 1,092 ±1% | 1,095 ±1% | 1.003× |
+| 64 | 16.955 ±2% | 16.95 ±1% | 1.000× |
+| 4096 | 1,085.5 ±2% | 1,082.5 ±1% | 0.997× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L126) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L87) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L126) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_seq_test.go#L87) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L90) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L80) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L90) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_seq_test.go#L80) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.669 n=10 |
+| 64 | sec/op | ~ | p=0.726 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.266 n=10 |
+| 4096 | sec/op | ~ | p=0.669 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -711,27 +711,27 @@ Go：標準 `iter.Seq2` を `for range`。
 
 Go：`slices.Values` を反復。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_slice_test.go#L48) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_slice_test.go#L10) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_slice_test.go#L20) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_slice_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 16.925 ±1% | 16.935 ±1% | 1.001× |
-| 4096 | 983 ±1% | 983.6 ±1% | 1.001× |
+| 64 | 16.645 ±1% | 16.72 ±3% | 1.005× |
+| 4096 | 965.85 ±2% | 963.35 ±1% | 0.997× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_slice_test.go#L48) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_slice_test.go#L10) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_slice_test.go#L48) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/from_slice_test.go#L10) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_slice_test.go#L20) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_slice_test.go#L11) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_slice_test.go#L20) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/from_slice_test.go#L11) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.810 n=10 |
+| 64 | sec/op | ~ | p=0.724 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.867 n=10 |
+| 4096 | sec/op | ~ | p=0.853 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -741,29 +741,29 @@ Go：`slices.Values` を反復。
 
 Go：`maps.Collect` で収集。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_map_test.go#L52) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_map_test.go#L13) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_map_test.go#L24) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_map_test.go#L14) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 2,268.5 ±1% | 2,350 ±1% | 1.036× |
-| 4096 | 150,096.5 ±1% | 153,767.5 ±1% | 1.024× |
+| 64 | 2,228.5 ±1% | 2,238.5 ±1% | 1.004× |
+| 4096 | 146,444 ±1% | 145,746.5 ±1% | 0.995× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_map_test.go#L52) | 4,648 ±0% | 11 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_map_test.go#L13) | 4,688 ±0% | 13 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_map_test.go#L52) | 296,120 ±0% | 48 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_map_test.go#L13) | 296,160 ±0% | 50 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_map_test.go#L24) | 4,648 ±0% | 11 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_map_test.go#L14) | 4,648 ±0% | 11 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_map_test.go#L24) | 296,120 ±0% | 48 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_map_test.go#L14) | 296,120 ±0% | 48 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +3.59% | p=0.000 n=10 |
-| 64 | B/op | +0.86% | p=0.000 n=10 |
-| 64 | allocs/op | +18.18% | p=0.000 n=10 |
-| 4096 | sec/op | +2.45% | p=0.000 n=10 |
-| 4096 | B/op | +0.01% | p=0.000 n=10 |
-| 4096 | allocs/op | +4.17% | p=0.000 n=10 |
+| 64 | sec/op | ~ | p=0.210 n=10 |
+| 64 | B/op | ~ | p=1.000 n=10 |
+| 64 | allocs/op | ~ | p=1.000 n=10 |
+| 4096 | sec/op | ~ | p=0.529 n=10 |
+| 4096 | B/op | ~ | p=1.000 n=10 |
+| 4096 | allocs/op | ~ | p=1.000 n=10 |
 
 </details>
 
@@ -771,27 +771,27 @@ Go：`maps.Collect` で収集。
 
 Go：標準 `iter.Seq` を `for range`。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L49) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L10) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L21) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L11) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.095 ±1% | 17.31 ±5% | 1.013× |
-| 4096 | 991.05 ±1% | 996.45 ±1% | 1.005× |
+| 64 | 16.89 ±2% | 17.065 ±2% | 1.010× |
+| 4096 | 975.8 ±1% | 980.1 ±1% | 1.004× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L49) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L10) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L49) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L10) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L21) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L11) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L21) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L11) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +1.26% | p=0.000 n=10 |
+| 64 | sec/op | +1.04% | p=0.034 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +0.54% | p=0.009 n=10 |
+| 4096 | sec/op | ~ | p=0.149 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -801,27 +801,27 @@ Go：標準 `iter.Seq` を `for range`。
 
 Go：標準 `iter.Seq2` を `for range`。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L126) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L87) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L90) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L80) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.215 ±0% | 17.22 ±0% | 1.000× |
-| 4096 | 1,093.5 ±1% | 1,095 ±0% | 1.001× |
+| 64 | 17.1 ±2% | 17.095 ±1% | 1.000× |
+| 4096 | 1,092.5 ±3% | 1,092 ±1% | 1.000× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L126) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L87) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L126) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_seq_test.go#L87) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L90) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L80) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L90) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_seq_test.go#L80) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | ~ | p=0.446 n=10 |
+| 64 | sec/op | ~ | p=0.868 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | ~ | p=0.399 n=10 |
+| 4096 | sec/op | ~ | p=0.697 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -831,29 +831,29 @@ Go：標準 `iter.Seq2` を `for range`。
 
 Go：`slices.Collect` で収集。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_slice_test.go#L51) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_slice_test.go#L12) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_slice_test.go#L23) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_slice_test.go#L13) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 156.75 ±1% | 261.2 ±1% | 1.666× |
-| 4096 | 9,731.5 ±1% | 20,577 ±2% | 2.114× |
+| 64 | 152.3 ±1% | 153.9 ±3% | 1.011× |
+| 4096 | 9,497.5 ±4% | 9,536 ±3% | 1.004× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_slice_test.go#L51) | 1,016 ±0% | 7 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_slice_test.go#L12) | 1,080 ±0% | 10 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_slice_test.go#L51) | 128,248 ±0% | 16 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/to_slice_test.go#L12) | 128,312 ±0% | 19 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_slice_test.go#L23) | 1,016 ±0% | 7 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_slice_test.go#L13) | 1,016 ±0% | 7 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_slice_test.go#L23) | 128,248 ±0% | 16 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/to_slice_test.go#L13) | 128,248 ±0% | 16 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +66.63% | p=0.000 n=10 |
-| 64 | B/op | +6.30% | p=0.000 n=10 |
-| 64 | allocs/op | +42.86% | p=0.000 n=10 |
-| 4096 | sec/op | +111.45% | p=0.000 n=10 |
-| 4096 | B/op | +0.05% | p=0.000 n=10 |
-| 4096 | allocs/op | +18.75% | p=0.000 n=10 |
+| 64 | sec/op | ~ | p=0.753 n=10 |
+| 64 | B/op | ~ | p=1.000 n=10 |
+| 64 | allocs/op | ~ | p=1.000 n=10 |
+| 4096 | sec/op | ~ | p=0.631 n=10 |
+| 4096 | B/op | ~ | p=1.000 n=10 |
+| 4096 | allocs/op | ~ | p=1.000 n=10 |
 
 </details>
 
@@ -863,27 +863,27 @@ Go：`slices.Collect` で収集。
 
 Go：先頭 8 件を除き `slices.Values` で反復。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 15.475 ±0% | 30.705 ±0% | 1.984× |
-| 4096 | 993 ±0% | 1,957 ±0% | 1.971× |
+| 64 | 15.3 ±1% | 30.44 ±1% | 1.990× |
+| 4096 | 979.3 ±1% | 1,929 ±2% | 1.970× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +98.42% | p=0.000 n=10 |
+| 64 | sec/op | +98.95% | p=0.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +97.08% | p=0.000 n=10 |
+| 4096 | sec/op | +96.98% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -893,27 +893,27 @@ Go：先頭 8 件を除き `slices.Values` で反復。
 
 Go：先頭 8 件を除き `slices.All` で元の添字・値を取得。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L127) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L88) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L91) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L81) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 16.1 ±1% | 30.705 ±0% | 1.907× |
-| 4096 | 1,157.5 ±0% | 1,969 ±0% | 1.701× |
+| 64 | 15.795 ±1% | 30.55 ±1% | 1.934× |
+| 4096 | 1,157 ±1% | 1,954 ±1% | 1.689× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L127) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L88) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L127) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/skip_test.go#L88) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L91) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L81) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L91) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/skip_test.go#L81) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +90.71% | p=0.000 n=10 |
+| 64 | sec/op | +93.42% | p=0.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +70.11% | p=0.000 n=10 |
+| 4096 | sec/op | +68.89% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -923,27 +923,27 @@ Go：先頭 8 件を除き `slices.All` で元の添字・値を取得。
 
 Go：先頭 8 件を `slices.Values` で反復。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L50) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L22) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 3.0445 ±3% | 3.5315 ±2% | 1.160× |
-| 4096 | 2.9625 ±7% | 3.536 ±1% | 1.194× |
+| 64 | 2.97 ±10% | 3.543 ±1% | 1.193× |
+| 4096 | 3.007 ±5% | 3.55 ±1% | 1.181× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L50) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L11) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L50) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L11) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L22) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L12) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L22) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L12) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +16.00% | p=0.000 n=10 |
+| 64 | sec/op | +19.29% | p=0.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +19.36% | p=0.000 n=10 |
+| 4096 | sec/op | +18.06% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -953,27 +953,27 @@ Go：先頭 8 件を `slices.Values` で反復。
 
 Go：先頭 8 件を `slices.All` で反復。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L127) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L88) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L91) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L81) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 3.063 ±4% | 3.4605 ±0% | 1.130× |
-| 4096 | 3.029 ±6% | 3.42 ±1% | 1.129× |
+| 64 | 2.926 ±14% | 3.4325 ±1% | 1.173× |
+| 4096 | 2.9725 ±6% | 3.432 ±0% | 1.155× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L127) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L88) | 0 ±0% | 0 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L127) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/take_test.go#L88) | 0 ±0% | 0 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L91) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L81) | 0 ±0% | 0 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L91) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/take_test.go#L81) | 0 ±0% | 0 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +12.98% | p=0.000 n=10 |
+| 64 | sec/op | +17.31% | p=0.000 n=10 |
 | 64 | B/op | ~ | p=1.000 n=10 |
 | 64 | allocs/op | ~ | p=1.000 n=10 |
-| 4096 | sec/op | +12.91% | p=0.000 n=10 |
+| 4096 | sec/op | +15.46% | p=0.000 n=10 |
 | 4096 | B/op | ~ | p=1.000 n=10 |
 | 4096 | allocs/op | ~ | p=1.000 n=10 |
 
@@ -983,27 +983,27 @@ Go：先頭 8 件を `slices.All` で反復。
 
 Go：左入力を反復し、右の不足分を 0 で補完。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L128) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L88) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L92) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L81) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 25.92 ±1% | 1,658.5 ±1% | 63.985× |
-| 4096 | 1,580 ±0% | 94,144 ±1% | 59.585× |
+| 64 | 25.76 ±2% | 1,624.5 ±2% | 63.063× |
+| 4096 | 1,641.5 ±1% | 91,969.5 ±2% | 56.028× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L128) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L88) | 424 ±0% | 12 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L128) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L88) | 424 ±0% | 12 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L92) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L81) | 432 ±0% | 13 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L92) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L81) | 432 ±0% | 13 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +6298.53% | p=0.000 n=10 |
+| 64 | sec/op | +6206.29% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +5858.48% | p=0.000 n=10 |
+| 4096 | sec/op | +5502.77% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1013,27 +1013,27 @@ Go：左入力を反復し、右の不足分を 0 で補完。
 
 Go：添字で同じ位置の値を組にする。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L51) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L11) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L23) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L12) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.135 ±0% | 2,904 ±1% | 169.478× |
-| 4096 | 1,008 ±0% | 173,100 ±1% | 171.726× |
+| 64 | 17 ±2% | 2,888.5 ±2% | 169.912× |
+| 4096 | 998.8 ±1% | 171,218.5 ±1% | 171.424× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L51) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L11) | 376 ±0% | 11 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L51) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L11) | 376 ±0% | 11 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L23) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L12) | 360 ±0% | 11 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L23) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L12) | 360 ±0% | 11 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +16847.77% | p=0.000 n=10 |
+| 64 | sec/op | +16891.18% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +17072.62% | p=0.000 n=10 |
+| 4096 | sec/op | +17042.42% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1043,27 +1043,27 @@ Go：添字で同じ位置の値を組にする。
 
 Go：右入力を反復し、左の不足分を 7 で補完。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L293) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L252) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L241) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L229) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 25.9 ±0% | 1,662.5 ±1% | 64.189× |
-| 4096 | 1,577.5 ±0% | 93,917.5 ±1% | 59.536× |
+| 64 | 25.63 ±1% | 1,632 ±1% | 63.675× |
+| 4096 | 1,633 ±1% | 91,256.5 ±1% | 55.883× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L293) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L252) | 488 ±0% | 13 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L293) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L252) | 488 ±0% | 13 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L241) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L229) | 496 ±0% | 14 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L241) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L229) | 496 ±0% | 14 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +6318.92% | p=0.000 n=10 |
+| 64 | sec/op | +6267.54% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +5853.57% | p=0.000 n=10 |
+| 4096 | sec/op | +5488.27% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1073,27 +1073,27 @@ Go：右入力を反復し、左の不足分を 7 で補完。
 
 Go：左入力を反復し、右の不足分を 7 で補完。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L210) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L170) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L166) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L155) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 25.905 ±0% | 1,654.5 ±1% | 63.868× |
-| 4096 | 1,577.5 ±0% | 93,885 ±1% | 59.515× |
+| 64 | 25.61 ±1% | 1,614.5 ±2% | 63.042× |
+| 4096 | 1,638.5 ±1% | 91,299 ±2% | 55.721× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L210) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L170) | 424 ±0% | 12 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L210) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L170) | 424 ±0% | 12 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L166) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L155) | 432 ±0% | 13 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L166) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L155) | 432 ±0% | 13 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +6286.80% | p=0.000 n=10 |
+| 64 | sec/op | +6204.18% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +5851.51% | p=0.000 n=10 |
+| 4096 | sec/op | +5472.11% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1103,27 +1103,27 @@ Go：左入力を反復し、右の不足分を 7 で補完。
 
 Go：右入力を反復し、左の不足分を 7 で補完。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L453) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L412) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L385) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L373) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 25.8 ±0% | 1,666 ±1% | 64.574× |
-| 4096 | 1,575 ±0% | 94,352 ±1% | 59.906× |
+| 64 | 25.915 ±1% | 1,631.5 ±2% | 62.956× |
+| 4096 | 1,635 ±1% | 91,201.5 ±2% | 55.781× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L453) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L412) | 488 ±0% | 13 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L453) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L412) | 488 ±0% | 13 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L385) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L373) | 496 ±0% | 14 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L385) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L373) | 496 ±0% | 14 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +6357.36% | p=0.000 n=10 |
+| 64 | sec/op | +6195.58% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +5890.60% | p=0.000 n=10 |
+| 4096 | sec/op | +5478.07% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1133,27 +1133,27 @@ Go：右入力を反復し、左の不足分を 7 で補完。
 
 Go：添字で同じ位置の値を組にする。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L375) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L335) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L315) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L304) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 17.04 ±1% | 2,882 ±1% | 169.131× |
-| 4096 | 1,003.5 ±0% | 172,664 ±1% | 172.062× |
+| 64 | 17.11 ±2% | 2,877 ±3% | 168.147× |
+| 4096 | 990.2 ±1% | 170,876.5 ±2% | 172.568× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L375) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L335) | 440 ±0% | 12 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L375) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L335) | 440 ±0% | 12 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L315) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L304) | 424 ±0% | 12 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L315) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L304) | 424 ±0% | 12 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +16813.15% | p=0.000 n=10 |
+| 64 | sec/op | +16714.73% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +17106.18% | p=0.000 n=10 |
+| 4096 | sec/op | +17156.77% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1163,27 +1163,27 @@ Go：添字で同じ位置の値を組にする。
 
 Go：右入力を反復し、左の不足分を 9 で補完。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L618) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L577) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L534) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L522) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 25.75 ±0% | 2,805 ±1% | 108.932× |
-| 4096 | 1,575 ±0% | 163,259 ±1% | 103.657× |
+| 64 | 25.685 ±1% | 2,826.5 ±2% | 110.045× |
+| 4096 | 1,632 ±1% | 163,995 ±2% | 100.487× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L618) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L577) | 488 ±0% | 13 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L618) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L577) | 488 ±0% | 13 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L534) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L522) | 496 ±0% | 14 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L534) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L522) | 496 ±0% | 14 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +10793.20% | p=0.000 n=10 |
+| 64 | sec/op | +10904.48% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +10265.65% | p=0.000 n=10 |
+| 4096 | sec/op | +9948.71% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
@@ -1193,27 +1193,27 @@ Go：右入力を反復し、左の不足分を 9 で補完。
 
 Go：左入力を反復し、右の不足分を 9 で補完。  
 
-| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L535) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L495) | 倍率 |
+| N | [Go ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L459) | [Library ns/op](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L448) | 倍率 |
 | --- | --- | --- | --- |
-| 64 | 25.835 ±0% | 1,676 ±1% | 64.873× |
-| 4096 | 1,574 ±0% | 94,472 ±1% | 60.020× |
+| 64 | 25.475 ±1% | 1,641 ±1% | 64.416× |
+| 4096 | 1,635.5 ±1% | 92,289 ±1% | 56.429× |
 
 | N | 実装 | B/op | allocs/op |
 | --- | --- | --- | --- |
-| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L535) | 0 ±0% | 0 ±0% |
-| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L495) | 488 ±0% | 13 ±0% |
-| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L535) | 0 ±0% | 0 ±0% |
-| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/6e84c08e445a5977b33f75bb23ff97a48063892c/benchmarks/zip_test.go#L495) | 488 ±0% | 13 ±0% |
+| 64 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L459) | 0 ±0% | 0 ±0% |
+| 64 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L448) | 496 ±0% | 14 ±0% |
+| 4096 | [Go](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L459) | 0 ±0% | 0 ±0% |
+| 4096 | [Library](https://github.com/meian/go-seqpipeline/blob/202662048ff6cedfe62770faab9d717b860c441d/benchmarks/zip_test.go#L448) | 496 ±0% | 14 ±0% |
 
 <details>
 <summary>検定</summary>
 
 | N | 指標 | 増減率 | 検定 |
 | --- | --- | --- | --- |
-| 64 | sec/op | +6387.32% | p=0.000 n=10 |
+| 64 | sec/op | +6341.61% | p=0.000 n=10 |
 | 64 | B/op | ? | p=0.000 n=10 |
 | 64 | allocs/op | ? | p=0.000 n=10 |
-| 4096 | sec/op | +5902.03% | p=0.000 n=10 |
+| 4096 | sec/op | +5542.86% | p=0.000 n=10 |
 | 4096 | B/op | ? | p=0.000 n=10 |
 | 4096 | allocs/op | ? | p=0.000 n=10 |
 
